@@ -16,9 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
 
-        $middleware->validateCsrfTokens(except: [
-            'engineering-projects',
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

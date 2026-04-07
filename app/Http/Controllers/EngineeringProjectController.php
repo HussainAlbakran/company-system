@@ -109,13 +109,6 @@ class EngineeringProjectController extends Controller
             $pdfPath = $request->file('project_pdf')->store('project_pdfs', 'public');
         }
 
-        dd([
-            'department_id' => $departmentId,
-            'responsible_employee_id' => $request->responsible_employee_id,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ]);
-
         $project = Project::create([
             'department_id' => $departmentId,
             'responsible_employee_id' => $request->responsible_employee_id,

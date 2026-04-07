@@ -33,37 +33,23 @@ class LoginRequest extends FormRequest
         $user = User::where('email', $this->input('email'))->first();
 
         if (! $user) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => 'بيانات الدخول غير صحيحة.',
-            ]);
+            $this->failAuthentication();
         }
 
         if (! Hash::check($this->input('password'), $user->password)) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => 'بيانات الدخول غير صحيحة.',
-            ]);
+            $this->failAuthentication();
         }
 
         if (($user->approval_status ?? null) === 'pending') {
-            throw ValidationException::withMessages([
-                'email' => 'حسابك بانتظار موافقة الإدارة.',
-            ]);
+            $this->failAuthentication();
         }
 
         if (($user->approval_status ?? null) === 'rejected') {
-            throw ValidationException::withMessages([
-                'email' => 'تم رفض طلب حسابك من الإدارة.',
-            ]);
+            $this->failAuthentication();
         }
 
         if (($user->approval_status ?? null) === 'suspended' || (isset($user->is_active) && ! $user->is_active)) {
-            throw ValidationException::withMessages([
-                'email' => 'حسابك موقوف، راجع الإدارة.',
-            ]);
+            $this->failAuthentication();
         }
 
         Auth::login($user, $this->boolean('remember'));
@@ -89,5 +75,14 @@ class LoginRequest extends FormRequest
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')) . '|' . $this->ip());
+    }
+
+    protected function failAuthentication(): never
+    {
+        RateLimiter::hit($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'email' => 'بيانات الدخول غير صحيحة.',
+        ]);
     }
 }
