@@ -1,3 +1,5 @@
+<?php
+
 namespace App\Filament\Resources;
 
 use App\Models\User;
