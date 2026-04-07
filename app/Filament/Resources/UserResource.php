@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\User;
+use App\Filament\Resources\UserResource\Pages;
 use Filament\Forms;
 use Filament\Tables;
 use Filament\Resources\Resource;
@@ -34,7 +35,19 @@ class UserResource extends Resource
                             'hr' => 'HR Manager',
                             'engineer' => 'Site Engineer',
                             'factory_manager' => 'Factory Manager',
+                            'manager' => 'Manager',
                         ])->required(),
+                    Forms\Components\Select::make('approval_status')
+                        ->options([
+                            'pending' => 'Pending',
+                            'approved' => 'Approved',
+                            'rejected' => 'Rejected',
+                            'suspended' => 'Suspended',
+                        ])
+                        ->default('approved')
+                        ->required(),
+                    Forms\Components\Toggle::make('is_active')
+                        ->default(true),
                     Forms\Components\TextInput::make('password')
                         ->password()
                         ->dehydrated(fn ($state) => filled($state))
@@ -55,7 +68,20 @@ class UserResource extends Resource
                         'success' => 'hr',
                         'warning' => 'engineer',
                         'primary' => 'factory_manager',
+                        'gray' => 'manager',
                     ]),
+                Tables\Columns\BadgeColumn::make('approval_status'),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->boolean(),
             ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListUsers::route('/'),
+            'create' => Pages\CreateUser::route('/create'),
+            'edit' => Pages\EditUser::route('/{record}/edit'),
+        ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\Factory;
+use App\Filament\Resources\FactoryResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -28,6 +29,11 @@ class FactoryResource extends Resource
                     Forms\Components\TextInput::make('name')
                         ->label('Factory Name')
                         ->required(),
+                    Forms\Components\TextInput::make('location')
+                        ->label('Location'),
+                    Forms\Components\Textarea::make('description')
+                        ->label('Description')
+                        ->columnSpanFull(),
                     Forms\Components\TextInput::make('quantity')
                         ->label('Total Quantity')
                         ->numeric()
@@ -40,6 +46,8 @@ class FactoryResource extends Resource
                         ->label('Start Date'),
                     Forms\Components\DatePicker::make('end_date')
                         ->label('Production End'),
+                    Forms\Components\DatePicker::make('delivery_date')
+                        ->label('Delivery Date'),
                     Forms\Components\TextInput::make('receiver_name')
                         ->label('Received By'),
                 ])->columns(2),
@@ -57,6 +65,21 @@ class FactoryResource extends Resource
                     ->label('Total Qty'),
                 Tables\Columns\TextColumn::make('supplied_quantity')
                     ->label('Supplied'),
+                Tables\Columns\TextColumn::make('start_date')
+                    ->date()
+                    ->label('Start'),
+                Tables\Columns\TextColumn::make('end_date')
+                    ->date()
+                    ->label('End'),
             ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListFactories::route('/'),
+            'create' => Pages\CreateFactory::route('/create'),
+            'edit' => Pages\EditFactory::route('/{record}/edit'),
+        ];
     }
 }

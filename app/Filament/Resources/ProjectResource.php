@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Models\Project;
+use App\Filament\Resources\ProjectResource\Pages;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -33,6 +34,16 @@ class ProjectResource extends Resource
                     Forms\Components\Textarea::make('description')
                         ->label('Description')
                         ->columnSpanFull(),
+                    Forms\Components\Select::make('department_id')
+                        ->label('Department')
+                        ->relationship('department', 'name')
+                        ->searchable()
+                        ->preload(),
+                    Forms\Components\Select::make('responsible_employee_id')
+                        ->label('Responsible Employee')
+                        ->relationship('responsibleEmployee', 'name')
+                        ->searchable()
+                        ->preload(),
                     Forms\Components\DatePicker::make('start_date')
                         ->label('Start Date'),
                     Forms\Components\DatePicker::make('end_date')
@@ -50,6 +61,22 @@ class ProjectResource extends Resource
                         ->minValue(0)
                         ->maxValue(100)
                         ->default(0),
+                    Forms\Components\TextInput::make('project_value')
+                        ->label('Project Value')
+                        ->numeric()
+                        ->default(0),
+                    Forms\Components\TextInput::make('expenses')
+                        ->label('Expenses')
+                        ->numeric()
+                        ->default(0),
+                    Forms\Components\FileUpload::make('project_pdf')
+                        ->label('Project PDF')
+                        ->acceptedFileTypes(['application/pdf'])
+                        ->directory('project_pdfs')
+                        ->disk('public'),
+                    Forms\Components\Textarea::make('notes')
+                        ->label('Notes')
+                        ->columnSpanFull(),
                 ])
                 ->columns(2),
         ]);
@@ -79,5 +106,14 @@ class ProjectResource extends Resource
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListProjects::route('/'),
+            'create' => Pages\CreateProject::route('/create'),
+            'edit' => Pages\EditProject::route('/{record}/edit'),
+        ];
     }
 }
