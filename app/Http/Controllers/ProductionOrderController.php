@@ -9,7 +9,9 @@ class ProductionOrderController extends Controller
 {
     public function index()
     {
-        $orders = ProductionOrder::latest()->get();
+        $perPage = (int) request()->integer('per_page', 20);
+        $perPage = max(1, min($perPage, 100));
+        $orders = ProductionOrder::latest()->paginate($perPage);
 
         return response()->json($orders);
     }

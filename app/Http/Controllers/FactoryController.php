@@ -9,7 +9,7 @@ class FactoryController extends Controller
 {
     public function index()
     {
-        $orders = ProductionOrder::latest()->get();
+        $orders = ProductionOrder::latest()->paginate(15);
         return view('factory.index', compact('orders'));
     }
 

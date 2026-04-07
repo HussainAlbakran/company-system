@@ -12,7 +12,10 @@ class ProductionEntryController extends Controller
 {
     public function index()
     {
-        $entries = ProductionEntry::with('order')->latest()->get();
+        $perPage = (int) request()->integer('per_page', 20);
+        $perPage = max(1, min($perPage, 100));
+
+        $entries = ProductionEntry::with('order')->latest()->paginate($perPage);
 
         return response()->json($entries);
     }

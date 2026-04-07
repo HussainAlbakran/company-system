@@ -17,11 +17,18 @@ use Carbon\Carbon;
 
 class AiController extends Controller
 {
+    protected const AI_CHATS_PER_PAGE = 20;
+    protected const EMPLOYEES_CONTEXT_LIMIT = 150;
+    protected const DEPARTMENTS_CONTEXT_LIMIT = 80;
+    protected const PROJECTS_CONTEXT_LIMIT = 40;
+    protected const PROJECT_UPDATES_PER_PROJECT = 3;
+    protected const FACTORY_CONTEXT_LIMIT = 30;
+
     public function index()
     {
         $chats = AiChat::where('user_id', auth()->id())
             ->latest()
-            ->get();
+            ->paginate(self::AI_CHATS_PER_PAGE);
 
         return view('ai.index', compact('chats'));
     }
@@ -160,7 +167,19 @@ class AiController extends Controller
     protected function employeesContext(): string
     {
         $employees = Employee::with('department')
+            ->select([
+                'id',
+                'name',
+                'employee_number',
+                'job_title',
+                'phone',
+                'email',
+                'status',
+                'department_id',
+                'residency_expiry_date',
+            ])
             ->orderBy('name')
+            ->limit(self::EMPLOYEES_CONTEXT_LIMIT)
             ->get();
 
         $today = Carbon::today();
@@ -195,7 +214,10 @@ class AiController extends Controller
 
     protected function departmentsContext(): string
     {
-        $departments = Department::orderBy('name')->get();
+        $departments = Department::select(['id', 'name'])
+            ->orderBy('name')
+            ->limit(self::DEPARTMENTS_CONTEXT_LIMIT)
+            ->get();
 
         $text = "قسم الأقسام:\n";
 
@@ -209,13 +231,41 @@ class AiController extends Controller
     protected function projectsContext(): string
     {
         $projects = Project::with(['department', 'responsibleEmployee'])
+            ->select([
+                'id',
+                'department_id',
+                'responsible_employee_id',
+                'name',
+                'status',
+                'start_date',
+                'end_date',
+                'project_value',
+                'expenses',
+                'notes',
+                'created_at',
+            ])
             ->latest()
+            ->limit(self::PROJECTS_CONTEXT_LIMIT)
             ->get();
 
         $projectIds = $projects->pluck('id')->all();
 
         $updates = ProjectUpdate::whereIn('project_id', $projectIds)
+            ->select([
+                'id',
+                'project_id',
+                'title',
+                'description',
+                'progress',
+                'attachment',
+                'processing_status',
+                'extracted_text',
+                'extracted_numbers_json',
+                'ai_summary',
+                'created_at',
+            ])
             ->latest()
+            ->limit(self::PROJECTS_CONTEXT_LIMIT * self::PROJECT_UPDATES_PER_PROJECT)
             ->get()
             ->groupBy('project_id');
 
@@ -265,7 +315,7 @@ class AiController extends Controller
             if ($projectUpdates->count() > 0) {
                 $text .= "آخر تحديثات المشروع:\n";
 
-                foreach ($projectUpdates->take(5) as $update) {
+                foreach ($projectUpdates->take(self::PROJECT_UPDATES_PER_PROJECT) as $update) {
                     $text .= "- عنوان التحديث: " . ($update->title ?? '-') . "\n";
                     $text .= "  الوصف: " . ($update->description ?? '-') . "\n";
                     $text .= "  التقدم: " . ($update->progress ?? '-') . "%\n";
@@ -303,10 +353,22 @@ class AiController extends Controller
 
     protected function factoryContext(): string
     {
-        $factories = Factory::latest()->take(50)->get();
-        $orders = ProductionOrder::latest()->take(50)->get();
-        $entries = ProductionEntry::latest()->take(50)->get();
-        $supplies = ProductionSupply::latest()->take(50)->get();
+        $factories = Factory::select(['id', 'name', 'created_at'])
+            ->latest()
+            ->take(self::FACTORY_CONTEXT_LIMIT)
+            ->get();
+        $orders = ProductionOrder::select(['id', 'product_name', 'status', 'planned_quantity'])
+            ->latest()
+            ->take(self::FACTORY_CONTEXT_LIMIT)
+            ->get();
+        $entries = ProductionEntry::select(['id', 'created_at', 'quantity', 'notes'])
+            ->latest()
+            ->take(self::FACTORY_CONTEXT_LIMIT)
+            ->get();
+        $supplies = ProductionSupply::select(['id', 'receiver_name', 'quantity', 'notes'])
+            ->latest()
+            ->take(self::FACTORY_CONTEXT_LIMIT)
+            ->get();
 
         $text = "قسم المصنع والإنتاج:\n";
 
@@ -324,9 +386,9 @@ class AiController extends Controller
             $text .= "أوامر الإنتاج:\n";
             foreach ($orders as $order) {
                 $text .= "- أمر إنتاج: " . ($order->id ?? '-')
-                    . " | الاسم: " . ($order->name ?? '-')
+                    . " | الاسم: " . ($order->product_name ?? '-')
                     . " | الحالة: " . ($order->status ?? '-')
-                    . " | الكمية: " . ($order->quantity ?? '-') . "\n";
+                    . " | الكمية: " . ($order->planned_quantity ?? '-') . "\n";
             }
         }
 
@@ -344,7 +406,7 @@ class AiController extends Controller
             $text .= "مستلزمات الإنتاج:\n";
             foreach ($supplies as $supply) {
                 $text .= "- مستلزم: " . ($supply->id ?? '-')
-                    . " | الاسم: " . ($supply->name ?? '-')
+                    . " | الاسم: " . ($supply->receiver_name ?? '-')
                     . " | الكمية: " . ($supply->quantity ?? '-')
                     . " | الملاحظات: " . ($supply->notes ?? '-') . "\n";
             }

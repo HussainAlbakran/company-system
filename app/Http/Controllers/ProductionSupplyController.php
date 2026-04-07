@@ -11,7 +11,10 @@ class ProductionSupplyController extends Controller
 {
     public function index()
     {
-        $supplies = ProductionSupply::with('order')->latest()->get();
+        $perPage = (int) request()->integer('per_page', 20);
+        $perPage = max(1, min($perPage, 100));
+
+        $supplies = ProductionSupply::with('order')->latest()->paginate($perPage);
 
         return response()->json($supplies);
     }

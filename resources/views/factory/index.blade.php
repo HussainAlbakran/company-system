@@ -131,5 +131,11 @@
 
     </div>
 
+    @if(method_exists($orders, 'links'))
+        <div style="margin-top:16px;">
+            {{ $orders->links() }}
+        </div>
+    @endif
+
 </div>
 @endsection

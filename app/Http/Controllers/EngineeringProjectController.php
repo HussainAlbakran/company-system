@@ -32,6 +32,8 @@ class EngineeringProjectController extends Controller
             ->when($engineeringDepartment, function ($query) use ($engineeringDepartment) {
                 $query->where('department_id', $engineeringDepartment->id);
             })
+            ->select(['id', 'name', 'department_id'])
+            ->orderBy('name')
             ->get();
     }
 
@@ -46,7 +48,7 @@ class EngineeringProjectController extends Controller
                 $query->where('department_id', $engineeringDepartment->id);
             })
             ->latest()
-            ->get();
+            ->paginate(15);
 
         $employees = $this->getEngineeringEmployees($engineeringDepartment);
 

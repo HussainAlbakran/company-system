@@ -79,5 +79,11 @@
         </table>
     </div>
 
+    @if(method_exists($projects, 'links'))
+        <div style="margin-top:16px;">
+            {{ $projects->links() }}
+        </div>
+    @endif
+
 </div>
 @endsection
