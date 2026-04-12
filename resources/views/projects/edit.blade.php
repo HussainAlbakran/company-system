@@ -6,7 +6,7 @@
         <h1 class="page-title">تعديل مشروع | Edit Project</h1>
     </div>
 
-    <form action="{{ route('engineering.projects.update', $project->id) }}" method="POST" enctype="multipart/form-data" class="form-card">
+    <form action="{{ route('engineering-projects.update', $project->id) }}" method="POST" enctype="multipart/form-data" class="form-card">
         @csrf
         @method('PUT')
 
@@ -81,7 +81,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">تحديث | Update</button>
-            <a href="{{ route('engineering.projects.index') }}" class="btn btn-secondary">رجوع | Back</a>
+            <a href="{{ route('engineering-projects.index') }}" class="btn btn-secondary">رجوع | Back</a>
         </div>
     </form>
 </div>

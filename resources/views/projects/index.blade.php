@@ -9,7 +9,7 @@
             <p>إدارة جميع المشاريع</p>
         </div>
 
-        <a href="{{ route('engineering.projects.create') }}" class="btn btn-primary">
+        <a href="{{ route('engineering-projects.create') }}" class="btn btn-primary">
             ➕ إضافة مشروع
         </a>
     </div>
@@ -34,7 +34,7 @@
                 <tr>
 
                     <td>
-                        <a href="{{ route('engineering.projects.show', $project->id) }}">
+                        <a href="{{ route('engineering-projects.show', $project->id) }}">
                             {{ $project->name }}
                         </a>
                     </td>
@@ -56,11 +56,11 @@
                     <td>{{ number_format($project->expenses, 2) }}</td>
 
                     <td style="display:flex; gap:6px;">
-                        <a href="{{ route('engineering.projects.show', $project->id) }}" class="btn btn-sm btn-blue">عرض</a>
+                        <a href="{{ route('engineering-projects.show', $project->id) }}" class="btn btn-sm btn-blue">عرض</a>
 
-                        <a href="{{ route('engineering.projects.edit', $project->id) }}" class="btn btn-sm btn-orange">تعديل</a>
+                        <a href="{{ route('engineering-projects.edit', $project->id) }}" class="btn btn-sm btn-orange">تعديل</a>
 
-                        <form action="{{ route('engineering.projects.destroy', $project->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد؟')">
+                        <form action="{{ route('engineering-projects.destroy', $project->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد؟')">
                             @csrf
                             @method('DELETE')
                             <button class="btn btn-sm btn-red">حذف</button>

@@ -18,7 +18,7 @@
         </div>
     @endif
 
-    <form action="{{ route('engineering.projects.store') }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('engineering-projects.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
         <div class="form-grid">
@@ -94,7 +94,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">💾 حفظ</button>
-            <a href="{{ route('engineering.projects.index') }}" class="btn btn-secondary">رجوع</a>
+            <a href="{{ route('engineering-projects.index') }}" class="btn btn-secondary">رجوع</a>
         </div>
 
     </form>

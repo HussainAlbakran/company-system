@@ -10,8 +10,8 @@
         </div>
 
         <div class="actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-            <a href="{{ route('engineering.projects.edit', $project->id) }}" class="btn btn-warning">تعديل</a>
-            <a href="{{ route('engineering.projects.index') }}" class="btn btn-secondary">رجوع</a>
+            <a href="{{ route('engineering-projects.edit', $project->id) }}" class="btn btn-warning">تعديل</a>
+            <a href="{{ route('engineering-projects.index') }}" class="btn btn-secondary">رجوع</a>
         </div>
     </div>
 

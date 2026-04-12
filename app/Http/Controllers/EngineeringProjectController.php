@@ -136,7 +136,7 @@ class EngineeringProjectController extends Controller
         );
 
         return redirect()
-            ->route('engineering.projects.index')
+            ->route('engineering-projects.index')
             ->with('success', 'تمت إضافة المشروع بنجاح.');
     }
 
@@ -221,7 +221,7 @@ class EngineeringProjectController extends Controller
         );
 
         return redirect()
-            ->route('engineering.projects.index')
+            ->route('engineering-projects.index')
             ->with('success', 'تم تعديل المشروع بنجاح.');
     }
 
@@ -251,7 +251,7 @@ class EngineeringProjectController extends Controller
         $project->delete();
 
         return redirect()
-            ->route('engineering.projects.index')
+            ->route('engineering-projects.index')
             ->with('success', 'تم حذف المشروع بنجاح.');
     }
 }

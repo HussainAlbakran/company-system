@@ -160,7 +160,7 @@
                 هذا الموظف يتبع قسم الهندسة. يمكنك عرض المشاريع الهندسية من الزر التالي:
             </p>
 
-            <a href="{{ route('engineering.projects.index') }}"
+            <a href="{{ route('engineering-projects.index') }}"
                style="background: #fd7e14; color: white; padding: 10px 16px; border-radius: 6px; text-decoration: none;">
                 عرض مشاريع الهندسة
             </a>
