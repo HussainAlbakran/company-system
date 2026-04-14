@@ -4,42 +4,70 @@
 
 <div class="page-card">
 
-    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-        <div>
-            <h1 class="page-title">إدخال القسم: {{ $section }}</h1>
-            <p style="margin:8px 0 0; color:#6b7280;">
-                جدول إدخال خاص بالقسم — املأ الأعمدة حسب البند والكمية والوحدة والملاحظات
-            </p>
-        </div>
-
+    <div style="margin-bottom:15px;">
         <a href="{{ route('warehouse.index') }}" class="btn btn-secondary">
             رجوع
         </a>
     </div>
 
-    <div class="table-wrap">
-        <table aria-label="جدول إدخال مواد قسم {{ $section }}">
-            <thead>
-                <tr>
-                    <th scope="col">البند</th>
-                    <th scope="col">الكمية</th>
-                    <th scope="col">الوحدة</th>
-                    <th scope="col">ملاحظات</th>
-                </tr>
-            </thead>
+    @if(session('success'))
+        <div class="alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
 
-            <tbody>
-                @for($i = 0; $i < 20; $i++)
+    @if($errors->any())
+        <div class="alert-danger">
+            <ul style="margin:0; padding-right:18px;">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('warehouse.store', $section) }}">
+        @csrf
+
+        <div class="table-wrap">
+            <table>
+                <thead>
                     <tr>
-                        <td contenteditable="true" tabindex="0" style="min-height:2.25rem;"></td>
-                        <td contenteditable="true" tabindex="0" style="min-height:2.25rem;"></td>
-                        <td contenteditable="true" tabindex="0" style="min-height:2.25rem;"></td>
-                        <td contenteditable="true" tabindex="0" style="min-height:2.25rem;"></td>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
                     </tr>
-                @endfor
-            </tbody>
-        </table>
-    </div>
+                </thead>
+
+                <tbody>
+                    @for($i = 0; $i < 20; $i++)
+                        <tr>
+                            <td>
+                                <input type="text" name="items[{{ $i }}][name]" value="{{ old('items.' . $i . '.name') }}">
+                            </td>
+                            <td>
+                                <input type="text" name="items[{{ $i }}][quantity]" value="{{ old('items.' . $i . '.quantity') }}">
+                            </td>
+                            <td>
+                                <input type="text" name="items[{{ $i }}][unit]" value="{{ old('items.' . $i . '.unit') }}">
+                            </td>
+                            <td>
+                                <input type="text" name="items[{{ $i }}][notes]" value="{{ old('items.' . $i . '.notes') }}">
+                            </td>
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">
+                حفظ
+            </button>
+        </div>
+
+    </form>
 
 </div>
 

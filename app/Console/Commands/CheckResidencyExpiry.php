@@ -2,35 +2,25 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\Employee;
-use Illuminate\Support\Facades\Mail;
+use App\Services\ExpiryAlertService;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
 
 class CheckResidencyExpiry extends Command
 {
     protected $signature = 'check:residency-expiry';
-    protected $description = 'Check employees residency expiry and send email before 30 days';
+    protected $description = 'Send residency alerts using unified ExpiryAlertService flow';
 
-    public function handle()
+    public function handle(ExpiryAlertService $expiryAlertService): int
     {
-        $today = Carbon::today();
-        $targetDate = $today->copy()->addDays(30);
+        $targetDate = Carbon::today()->addDays(30);
+        $stats = $expiryAlertService->sendResidencyAlertsForDate($targetDate, true);
 
-        $employees = Employee::whereDate('residency_expiry_date', $targetDate)->get();
+        $this->info("Residency alerts completed for {$stats['target_date']}");
+        $this->line("Employees found: {$stats['employees_found']}");
+        $this->line("Sent: {$stats['success_count']}");
+        $this->line("Failed: {$stats['failure_count']}");
 
-        foreach ($employees as $employee) {
-
-            Mail::raw(
-                "تنبيه: إقامة الموظف {$employee->name} ستنتهي بتاريخ {$employee->residency_expiry_date}",
-                function ($message) {
-                    $message->to('altaqaddum.system@gmail.com')
-                            ->subject('تنبيه انتهاء إقامة');
-                }
-            );
-
-        }
-
-        $this->info('تم فحص الإقامات بنجاح');
+        return self::SUCCESS;
     }
 }

@@ -15,7 +15,12 @@ class SendResidencyAlertsNow extends Command
     public function handle(ExpiryAlertService $expiryAlertService): int
     {
         $dateOption = $this->option('date');
-        $targetDate = $dateOption ? Carbon::parse($dateOption)->startOfDay() : now()->startOfDay();
+        try {
+            $targetDate = $dateOption ? Carbon::parse($dateOption)->startOfDay() : now()->startOfDay();
+        } catch (\Throwable $exception) {
+            $this->error('Invalid --date value. Use Y-m-d format, for example: 2026-04-14');
+            return self::FAILURE;
+        }
 
         $stats = $expiryAlertService->sendResidencyAlertsForDate($targetDate, true);
 

@@ -1,101 +1,48 @@
 @extends('layouts.app')
 
+@section('page_title', 'Factory')
+@section('page_subtitle', 'Production orders and live progress')
+
 @section('content')
-<div class="page-card">
-
-    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-        <div>
-            <h1 class="page-title">قسم المصنع</h1>
-            <p style="margin:8px 0 0; color:#6b7280;">
-                متابعة أوامر الإنتاج والتوريد بشكل كامل
-            </p>
-        </div>
-
-        <a href="{{ route('factory.create') }}" class="btn btn-primary">
-            ➕ إضافة أمر إنتاج
-        </a>
+<x-ui.card title="Factory Orders" subtitle="Required, produced, remaining quantities">
+    <div class="actions-row" style="margin-bottom:12px;">
+        <a href="{{ route('production-orders.create') }}" class="btn btn-primary">+ Add Production Order</a>
     </div>
-
-    @if(session('success'))
-        <div class="alert-success">
-            {{ session('success') }}
-        </div>
-    @endif
-
-    <div class="table-wrap">
-
-        <table>
+    <x-ui.table>
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>رقم الأمر</th>
-                    <th>المنتج</th>
-                    <th>المطلوب</th>
-                    <th>تم الإنتاج</th>
-                    <th>تم التوريد</th>
-                    <th>نسبة الإنتاج</th>
-                    <th>نسبة التوريد</th>
-                    <th>الأيام المتبقية</th>
-                    <th>الحالة</th>
-                    <th>التفاصيل</th>
+                    <th>Project</th>
+                    <th>Order</th>
+                    <th>Product</th>
+                    <th>Required</th>
+                    <th>Produced</th>
+                    <th>Remaining</th>
+                    <th>Progress</th>
+                    <th>Status</th>
+                    <th>Details</th>
                 </tr>
             </thead>
-
             <tbody>
-
                 @forelse($orders as $order)
-
                 <tr>
                     <td>{{ $order->id }}</td>
-
-                    <td>{{ $order->order_number }}</td>
-
                     <td>
-                        <strong>{{ $order->product_name }}</strong>
-                    </td>
-
-                    <td>{{ $order->planned_quantity }}</td>
-
-                    <td>{{ $order->produced_quantity }}</td>
-
-                    <td>
-                        <span class="badge badge-blue">
-                            {{ $order->supplied_quantity }}
-                        </span>
-                    </td>
-
-                    <td>
-                        <span class="badge badge-green">
-                            {{ $order->production_percentage }}%
-                        </span>
-                    </td>
-
-                    <td>
-                        <span class="badge badge-orange">
-                            {{ $order->supply_percentage }}%
-                        </span>
-                    </td>
-
-                    <td>
-                        @if(!is_null($order->remaining_days_to_end))
-                            @if($order->remaining_days_to_end < 0)
-                                <span class="badge badge-red">
-                                    متأخر {{ abs($order->remaining_days_to_end) }} يوم
-                                </span>
-                            @elseif($order->remaining_days_to_end <= 7)
-                                <span class="badge badge-orange">
-                                    {{ $order->remaining_days_to_end }} يوم
-                                </span>
-                            @else
-                                <span class="badge badge-green">
-                                    {{ $order->remaining_days_to_end }} يوم
-                                </span>
-                            @endif
+                        @if($order->project)
+                            <strong>{{ $order->project->project_code }}</strong><br>
+                            <span style="color:#6b7280;">{{ $order->project->name }}</span>
                         @else
-                            -
+                            <span class="badge badge-red">غير مربوط بمشروع</span>
                         @endif
                     </td>
-
+                    <td>{{ $order->order_number }}</td>
+                    <td><strong>{{ $order->product_name }}</strong></td>
+                    <td>{{ number_format((float) $order->planned_quantity, 2) }}</td>
+                    <td>{{ number_format((float) $order->produced_quantity, 2) }}</td>
+                    <td>{{ number_format((float) $order->remaining_quantity, 2) }}</td>
+                    <td style="min-width:160px;">
+                        <x-ui.progress :value="$order->production_percentage" />
+                    </td>
                     <td>
                         @if($order->status == 'completed')
                             <span class="badge badge-green">مكتمل</span>
@@ -107,35 +54,15 @@
                             <span class="badge badge-gray">{{ $order->status }}</span>
                         @endif
                     </td>
-
                     <td>
-                        <a href="{{ route('factory.show', $order->id) }}" class="btn btn-primary btn-sm">
-                            عرض
-                        </a>
+                        <a href="{{ route('production-orders.show', $order->id) }}" class="btn btn-primary btn-sm">View</a>
                     </td>
-
                 </tr>
-
                 @empty
-
-                <tr>
-                    <td colspan="11" class="empty-row">
-                        لا توجد أوامر إنتاج حتى الآن
-                    </td>
-                </tr>
-
+                <tr><td colspan="10" class="empty-row">No production orders yet</td></tr>
                 @endforelse
-
             </tbody>
-        </table>
-
-    </div>
-
-    @if(method_exists($orders, 'links'))
-        <div style="margin-top:16px;">
-            {{ $orders->links() }}
-        </div>
-    @endif
-
-</div>
+    </x-ui.table>
+    @if(method_exists($orders, 'links'))<div style="margin-top:16px;">{{ $orders->links() }}</div>@endif
+</x-ui.card>
 @endsection

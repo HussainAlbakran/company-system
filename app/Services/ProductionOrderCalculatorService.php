@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ProductionOrder;
+use Illuminate\Support\Facades\Log;
 
 class ProductionOrderCalculatorService
 {
@@ -31,6 +32,21 @@ class ProductionOrderCalculatorService
             'actual_end_date' => $producedQuantity >= (float) $order->planned_quantity ? $lastEntryDate : null,
             'status' => $status,
         ]);
+
+        if ($producedQuantity >= (float) $order->planned_quantity && $order->project) {
+            if ($order->project->current_stage !== 'installation') {
+                $order->project->update([
+                    'current_stage' => 'installation',
+                ]);
+
+                Log::info('Project moved to installation stage after production completion.', [
+                    'project_id' => $order->project->id,
+                    'production_order_id' => $order->id,
+                    'planned_quantity' => (float) $order->planned_quantity,
+                    'produced_quantity' => $producedQuantity,
+                ]);
+            }
+        }
 
         return $order->fresh();
     }

@@ -14,9 +14,10 @@ class ExpiryAlertService
     public function sendResidencyAlertsForDate(Carbon $targetDate, bool $isManual = false): array
     {
         $targetDateString = $targetDate->toDateString();
+
         $employees = Employee::query()
             ->whereNotNull('residency_expiry_date')
-            ->whereDate('residency_expiry_date', '=', $targetDateString)
+            ->whereDate('residency_expiry_date', '<=', $targetDateString)
             ->get();
 
         $hrEmails = User::query()
@@ -51,7 +52,11 @@ class ExpiryAlertService
                 $employeeRecipients->push($employee->email);
             }
 
-            $allRecipients = $employeeRecipients->merge($hrEmails)->filter()->unique()->values();
+            $allRecipients = $employeeRecipients
+                ->merge($hrEmails)
+                ->filter()
+                ->unique()
+                ->values();
 
             if ($allRecipients->isEmpty()) {
                 Log::info('Residency alert skipped, no recipients.', [
@@ -67,11 +72,10 @@ class ExpiryAlertService
                 if ($sent) {
                     $stats['success_count']++;
                     $stats['recipients'][] = $recipient;
-                    continue;
+                } else {
+                    $stats['failure_count']++;
+                    $stats['errors'][] = "Failed sending residency alert to {$recipient} for employee #{$employee->id}";
                 }
-
-                $stats['failure_count']++;
-                $stats['errors'][] = "Failed sending residency alert to {$recipient} for employee #{$employee->id}";
             }
         }
 
@@ -85,9 +89,10 @@ class ExpiryAlertService
     public function sendPassportAlertsForDate(Carbon $targetDate, bool $isManual = false): array
     {
         $targetDateString = $targetDate->toDateString();
+
         $employees = Employee::query()
             ->whereNotNull('passport_expiry_date')
-            ->whereDate('passport_expiry_date', '=', $targetDateString)
+            ->whereDate('passport_expiry_date', '<=', $targetDateString)
             ->get();
 
         Log::info('Passport alerts started.', [
@@ -120,11 +125,10 @@ class ExpiryAlertService
             if ($sent) {
                 $stats['success_count']++;
                 $stats['recipients'][] = $employee->email;
-                continue;
+            } else {
+                $stats['failure_count']++;
+                $stats['errors'][] = "Failed sending passport alert to {$employee->email} for employee #{$employee->id}";
             }
-
-            $stats['failure_count']++;
-            $stats['errors'][] = "Failed sending passport alert to {$employee->email} for employee #{$employee->id}";
         }
 
         $stats['recipients'] = array_values(array_unique($stats['recipients']));
@@ -139,7 +143,7 @@ class ExpiryAlertService
         try {
             Mail::send('emails.residency_expiry_alert', [
                 'employee' => $employee,
-                'messageText' => 'تنبيه: تاريخ انتهاء الإقامة هو اليوم. يرجى اتخاذ الإجراء اللازم فورًا.',
+                'messageText' => 'تنبيه: تاريخ انتهاء الإقامة هو اليوم أو مضى. يرجى اتخاذ الإجراء اللازم فورًا.',
             ], function ($message) use ($recipient): void {
                 $message->to($recipient)->subject('تنبيه انتهاء الإقامة');
             });
@@ -168,7 +172,7 @@ class ExpiryAlertService
         try {
             Mail::send('emails.passport_expiry_alert', [
                 'employee' => $employee,
-                'messageText' => 'تنبيه: تاريخ انتهاء الجواز هو اليوم. يرجى تجديد الجواز فورًا.',
+                'messageText' => 'تنبيه: تاريخ انتهاء الجواز هو اليوم أو مضى. يرجى تجديد الجواز فورًا.',
             ], function ($message) use ($recipient): void {
                 $message->to($recipient)->subject('تنبيه انتهاء الجواز');
             });

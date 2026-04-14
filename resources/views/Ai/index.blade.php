@@ -68,6 +68,12 @@
                     </div>
                 @endforeach
             </div>
+
+            @if(method_exists($chats, 'links'))
+                <div style="margin-top:14px;">
+                    {{ $chats->links() }}
+                </div>
+            @endif
         </div>
     @endif
 

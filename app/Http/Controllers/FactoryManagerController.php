@@ -9,14 +9,22 @@ use App\Models\ProductionEntry;
 use App\Models\ProductionOrder;
 use App\Models\ProductionSupply;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class FactoryManagerController extends Controller
 {
     public function dashboard()
     {
         $user = auth()->user();
+        $factory = null;
 
-        $factory = Factory::where('manager_user_id', $user->id)->first();
+        if (Schema::hasColumn('factories', 'manager_user_id')) {
+            $factory = Factory::where('manager_user_id', $user->id)->first();
+        }
+
+        if (! $factory && $user && $user->employee && $user->employee->factory_id) {
+            $factory = Factory::find($user->employee->factory_id);
+        }
 
         if (! $factory) {
             return redirect()->back()->with('error', 'لا يوجد مصنع مربوط بهذا المدير');

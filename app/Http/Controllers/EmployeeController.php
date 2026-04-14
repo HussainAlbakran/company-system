@@ -7,6 +7,7 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use App\Helpers\AuditHelper;
 use App\Models\Factory;
+use App\Models\EmployeeAsset;
 
 class EmployeeController extends Controller
 {
@@ -38,8 +39,8 @@ class EmployeeController extends Controller
     {
         $this->authorizeHR();
 
-        $departments = \App\Models\Department::latest()->get();
-        $factories = \App\Models\Factory::orderBy('id', 'desc')->get();
+        $departments = Department::latest()->get();
+        $factories = Factory::orderBy('id', 'desc')->get();
 
         return view('employees.create', compact('departments', 'factories'));
     }
@@ -59,8 +60,16 @@ class EmployeeController extends Controller
             'salary' => 'nullable|numeric',
             'status' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
+            'factory_id' => 'nullable|exists:factories,id',
+            'manager_id' => 'nullable|exists:employees,id',
+            'user_id' => 'nullable|exists:users,id',
             'residency_expiry_date' => 'nullable|date',
+            'leave_balance' => 'nullable|integer|min:0',
         ]);
+
+        if (!isset($validated['leave_balance']) || $validated['leave_balance'] === null) {
+            $validated['leave_balance'] = 26;
+        }
 
         $employee = Employee::create($validated);
 
@@ -78,7 +87,7 @@ class EmployeeController extends Controller
     {
         $this->authorizeHR();
 
-        $employee->load(['documents', 'department']);
+        $employee->load(['documents', 'department', 'assets']);
 
         return view('employees.show', compact('employee'));
     }
@@ -88,8 +97,9 @@ class EmployeeController extends Controller
         $this->authorizeHR();
 
         $departments = Department::latest()->get();
+        $factories = Factory::orderBy('id', 'desc')->get();
 
-        return view('employees.edit', compact('employee', 'departments'));
+        return view('employees.edit', compact('employee', 'departments', 'factories'));
     }
 
     public function update(Request $request, Employee $employee)
@@ -107,8 +117,16 @@ class EmployeeController extends Controller
             'salary' => 'nullable|numeric',
             'status' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
+            'factory_id' => 'nullable|exists:factories,id',
+            'manager_id' => 'nullable|exists:employees,id',
+            'user_id' => 'nullable|exists:users,id',
             'residency_expiry_date' => 'nullable|date',
+            'leave_balance' => 'nullable|integer|min:0',
         ]);
+
+        if (!isset($validated['leave_balance']) || $validated['leave_balance'] === null) {
+            $validated['leave_balance'] = $employee->leave_balance ?? 26;
+        }
 
         $employee->update($validated);
 
@@ -136,5 +154,68 @@ class EmployeeController extends Controller
         $employee->delete();
 
         return redirect()->route('employees.index')->with('success', 'تم حذف الموظف');
+    }
+
+    public function storeAsset(Request $request, $employeeId)
+    {
+        $this->authorizeHR();
+
+        $employee = Employee::findOrFail($employeeId);
+
+        $validated = $request->validate([
+            'asset_name' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date',
+            'status' => 'required|in:active,ended,lost,damaged',
+            'notes' => 'nullable|string',
+        ]);
+
+        $serialNumber = $this->generateEmployeeAssetSerialNumber();
+
+        $asset = EmployeeAsset::create([
+            'employee_id' => $employee->id,
+            'asset_name' => $validated['asset_name'],
+            'serial_number' => $serialNumber,
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'] ?? null,
+            'status' => $validated['status'],
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        AuditHelper::log(
+            'create',
+            'EmployeeAsset',
+            $asset->id,
+            'تم إضافة عهدة للموظف: ' . $employee->name . ' - ' . $validated['asset_name'] . ' - ' . $serialNumber
+        );
+
+        return back()->with('success', 'تمت إضافة العهدة بنجاح');
+    }
+
+    public function destroyAsset($id)
+    {
+        $this->authorizeHR();
+
+        $asset = EmployeeAsset::findOrFail($id);
+
+        AuditHelper::log(
+            'delete',
+            'EmployeeAsset',
+            $asset->id,
+            'تم حذف عهدة لموظف رقم: ' . $asset->employee_id
+        );
+
+        $asset->delete();
+
+        return back()->with('success', 'تم حذف العهدة');
+    }
+
+    private function generateEmployeeAssetSerialNumber(): string
+    {
+        do {
+            $serial = 'AST-' . str_pad((string) (EmployeeAsset::max('id') + 1), 4, '0', STR_PAD_LEFT);
+        } while (EmployeeAsset::where('serial_number', $serial)->exists());
+
+        return $serial;
     }
 }

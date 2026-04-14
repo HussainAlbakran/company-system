@@ -1,32 +1,20 @@
 @extends('layouts.app')
 
+@section('page_title', 'Factory Order Details')
+@section('page_subtitle', 'Production execution and progress')
+
 @section('content')
-<div class="page-card">
-
-    <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-        <div>
-            <h1 class="page-title">تفاصيل أمر الإنتاج</h1>
-            <p style="margin:8px 0 0; color:#6b7280;">
-                متابعة تفاصيل الأمر، تسجيل الإنتاج، وتسجيل التوريد
-            </p>
-        </div>
-
-        <div class="actions">
-            <a href="{{ route('factory.index') }}" class="btn btn-secondary">رجوع</a>
-            <a href="{{ route('factory.edit', $order->id) }}" class="btn btn-warning">تعديل الأمر</a>
-        </div>
+<x-ui.card title="Production Order Details" subtitle="متابعة تفاصيل الأمر، المقاسات، تسجيل الإنتاج، وتسجيل التوريد">
+    <div class="actions-row" style="margin-bottom:12px;">
+        <a href="{{ route('factory.index') }}" class="btn btn-secondary">رجوع</a>
+        <a href="{{ route('production-orders.edit', $order->id) }}" class="btn btn-warning">تعديل الأمر</a>
     </div>
-
     @if(session('success'))
-        <div class="alert-success">
-            {{ session('success') }}
-        </div>
+        <div class="alert-success">{{ session('success') }}</div>
     @endif
 
     @if(session('error'))
-        <div class="alert-danger">
-            {{ session('error') }}
-        </div>
+        <div class="alert-danger">{{ session('error') }}</div>
     @endif
 
     @if($errors->any())
@@ -38,14 +26,30 @@
             </ul>
         </div>
     @endif
+ </x-ui.card>
 
-    {{-- بيانات الأمر --}}
-    <div class="page-card" style="margin-bottom:24px;">
-        <div class="page-header">
-            <h2 style="margin:0; font-size:24px;">بيانات أمر الإنتاج</h2>
-        </div>
+<x-ui.card title="بيانات المشروع وأمر الإنتاج" subtitle="Enterprise snapshot">
+    <div class="details-grid">
+            <div class="detail-box">
+                <strong>رقم المشروع</strong>
+                <div>{{ optional($project)->project_code ?? '-' }}</div>
+            </div>
 
-        <div class="details-grid">
+            <div class="detail-box">
+                <strong>اسم المشروع</strong>
+                <div>{{ optional($project)->name ?? '-' }}</div>
+            </div>
+
+            <div class="detail-box">
+                <strong>العميل</strong>
+                <div>{{ optional($project)->client_name ?? '-' }}</div>
+            </div>
+
+            <div class="detail-box">
+                <strong>المقاول الرئيسي</strong>
+                <div>{{ optional($project)->main_contractor ?? '-' }}</div>
+            </div>
+
             <div class="detail-box">
                 <strong>اسم المنتج</strong>
                 <div>{{ $order->product_name ?? '-' }}</div>
@@ -77,20 +81,16 @@
             </div>
 
             <div class="detail-box">
-                <strong>نسبة الإنتاج</strong>
+                <strong>Production Progress</strong>
                 <div>
-                    <span class="badge badge-green">
-                        {{ $order->production_percentage ?? 0 }}%
-                    </span>
+                    <x-ui.progress :value="$order->production_percentage" />
                 </div>
             </div>
 
             <div class="detail-box">
-                <strong>نسبة التوريد</strong>
+                <strong>Supply Progress</strong>
                 <div>
-                    <span class="badge badge-orange">
-                        {{ $order->supply_percentage ?? 0 }}%
-                    </span>
+                    <x-ui.progress :value="$order->supply_percentage" color="#f59e0b" />
                 </div>
             </div>
 
@@ -136,21 +136,108 @@
                     @endif
                 </div>
             </div>
-        </div>
     </div>
+</x-ui.card>
 
-    {{-- النماذج --}}
-    <div class="form-grid" style="margin-bottom:24px;">
-
-        {{-- تسجيل إنتاج --}}
-        <div class="page-card">
-            <div class="page-header">
-                <h2 style="margin:0; font-size:22px;">تسجيل إنتاج</h2>
-                <p style="margin-top:8px; color:#6b7280;">إضافة كمية إنتاج جديدة لهذا الأمر</p>
+<x-ui.card title="بيانات المعماري" subtitle="المقاسات والمخططات القادمة من المعماري لهذا المشروع">
+    <div class="details-grid">
+            <div class="detail-box">
+                <strong>نوع الرسم</strong>
+                <div>{{ optional($architectTask)->drawing_type ?? '-' }}</div>
             </div>
 
-            <form action="{{ route('factory.entries.store', $order->id) }}" method="POST">
+            <div class="detail-box">
+                <strong>حالة الرسم</strong>
+                <div>{{ optional($architectTask)->drawing_status ?? '-' }}</div>
+            </div>
+
+            <div class="detail-box">
+                <strong>حالة التخطيط</strong>
+                <div>{{ optional($architectTask)->planning_status ?? '-' }}</div>
+            </div>
+
+            <div class="detail-box">
+                <strong>ملف الرسم</strong>
+                <div>
+                    @if($architectTask && $architectTask->drawing_file)
+                        <a href="{{ asset('storage/' . $architectTask->drawing_file) }}" target="_blank" class="btn btn-primary btn-sm">
+                            فتح
+                        </a>
+                    @else
+                        -
+                    @endif
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <strong>ملف التخطيط</strong>
+                <div>
+                    @if($architectTask && $architectTask->planning_file)
+                        <a href="{{ asset('storage/' . $architectTask->planning_file) }}" target="_blank" class="btn btn-primary btn-sm">
+                            فتح
+                        </a>
+                    @else
+                        -
+                    @endif
+                </div>
+            </div>
+
+            <div class="detail-box detail-box-full">
+                <strong>ملاحظات المعماري</strong>
+                <div>{{ optional($architectTask)->notes ?? '-' }}</div>
+            </div>
+    </div>
+</x-ui.card>
+
+<x-ui.card title="مقاسات المشروع">
+    <x-ui.table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>النوع</th>
+                        <th>العنصر</th>
+                        <th>الطول</th>
+                        <th>العرض</th>
+                        <th>الارتفاع</th>
+                        <th>العدد</th>
+                        <th>الوحدة</th>
+                        <th>المساحة</th>
+                        <th>الحجم</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($measurements as $measurement)
+                        <tr>
+                            <td>{{ $measurement->id }}</td>
+                            <td>{{ $measurement->type ?? '-' }}</td>
+                            <td>{{ $measurement->name }}</td>
+                            <td>{{ $measurement->length }}</td>
+                            <td>{{ $measurement->width }}</td>
+                            <td>{{ $measurement->height }}</td>
+                            <td>{{ $measurement->quantity }}</td>
+                            <td>{{ $measurement->unit ?? 'm' }}</td>
+                            <td>{{ $measurement->area }}</td>
+                            <td>{{ $measurement->volume }}</td>
+                            <td>{{ $measurement->notes ?? '-' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="11" class="empty-row">لا توجد مقاسات لهذا المشروع</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+    </x-ui.table>
+</x-ui.card>
+
+<div class="form-grid" style="margin-bottom:24px;">
+
+    <x-ui.card title="تسجيل إنتاج" subtitle="إضافة كمية إنتاج جديدة لهذا الأمر">
+        <form action="{{ route('production-entries.store') }}" method="POST">
                 @csrf
+
+                <input type="hidden" name="production_order_id" value="{{ $order->id }}">
+                <input type="hidden" name="project_id" value="{{ $order->project_id }}">
 
                 <div class="form-grid">
                     <div class="form-group">
@@ -187,18 +274,14 @@
                 <div class="form-actions">
                     <button type="submit" class="btn btn-primary">حفظ الإنتاج</button>
                 </div>
-            </form>
-        </div>
+        </form>
+    </x-ui.card>
 
-        {{-- تسجيل توريد --}}
-        <div class="page-card">
-            <div class="page-header">
-                <h2 style="margin:0; font-size:22px;">تسجيل توريد</h2>
-                <p style="margin-top:8px; color:#6b7280;">إضافة كمية توريد جديدة لهذا الأمر</p>
-            </div>
-
-            <form action="{{ route('factory.supplies.store', $order->id) }}" method="POST">
+    <x-ui.card title="تسجيل توريد" subtitle="إضافة كمية توريد جديدة لهذا الأمر">
+        <form action="{{ route('production-supplies.store') }}" method="POST">
                 @csrf
+
+                <input type="hidden" name="production_order_id" value="{{ $order->id }}">
 
                 <div class="form-grid">
                     <div class="form-group">
@@ -225,19 +308,12 @@
                 <div class="form-actions">
                     <button type="submit" class="btn btn-success">حفظ التوريد</button>
                 </div>
-            </form>
-        </div>
+        </form>
+    </x-ui.card>
+</div>
 
-    </div>
-
-    {{-- سجلات الإنتاج --}}
-    <div class="page-card" style="margin-bottom:24px;">
-        <div class="page-header">
-            <h2 style="margin:0; font-size:24px;">سجلات الإنتاج</h2>
-        </div>
-
-        <div class="table-wrap">
-            <table>
+<x-ui.card title="سجلات الإنتاج">
+    <x-ui.table>
                 <thead>
                     <tr>
                         <th>التاريخ</th>
@@ -262,18 +338,11 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
-        </div>
-    </div>
+    </x-ui.table>
+</x-ui.card>
 
-    {{-- سجلات التوريد --}}
-    <div class="page-card">
-        <div class="page-header">
-            <h2 style="margin:0; font-size:24px;">سجلات التوريد</h2>
-        </div>
-
-        <div class="table-wrap">
-            <table>
+<x-ui.card title="سجلات التوريد">
+    <x-ui.table>
                 <thead>
                     <tr>
                         <th>التاريخ</th>
@@ -296,9 +365,6 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
-        </div>
-    </div>
-
-</div>
+    </x-ui.table>
+</x-ui.card>
 @endsection

@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
+@section('page_title', 'Employees')
+@section('page_subtitle', 'People and workforce records')
+
 @section('content')
-<div class="page-card">
+<x-ui.card title="Employees" subtitle="HR records and residency tracking">
 
     <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
         <div>
@@ -47,8 +50,7 @@
         </form>
     </div>
 
-    <div class="table-wrap">
-        <table>
+    <x-ui.table>
             <thead>
                 <tr>
                     <th>الاسم</th>
@@ -114,8 +116,7 @@
                     </tr>
                 @endforelse
             </tbody>
-        </table>
-    </div>
+    </x-ui.table>
 
     @if(method_exists($employees, 'links'))
         <div style="margin-top:20px;">
@@ -123,5 +124,5 @@
         </div>
     @endif
 
-</div>
+</x-ui.card>
 @endsection

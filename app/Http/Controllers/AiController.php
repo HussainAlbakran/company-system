@@ -30,7 +30,7 @@ class AiController extends Controller
             ->latest()
             ->paginate(self::AI_CHATS_PER_PAGE);
 
-        return view('ai.index', compact('chats'));
+        return view('Ai.index', compact('chats'));
     }
 
     public function ask(Request $request)

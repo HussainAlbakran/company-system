@@ -21,8 +21,27 @@ class Employee extends Model
         'factory_id',
         'manager_id',
         'user_id',
+
+        // 🔥 الإقامة
+        'residency_number',
         'residency_expiry_date',
+
+        // 🔥 الجواز
+        'passport_number',
+        'passport_expiry_date',
+
+        'leave_balance',
     ];
+
+    protected $casts = [
+        'hire_date' => 'date',
+        'residency_expiry_date' => 'date',
+        'passport_expiry_date' => 'date',
+        'salary' => 'decimal:2',
+        'leave_balance' => 'integer',
+    ];
+
+    // ================= العلاقات =================
 
     public function documents()
     {
@@ -42,5 +61,15 @@ class Employee extends Model
     public function manager()
     {
         return $this->belongsTo(Employee::class, 'manager_id');
+    }
+
+    public function leaves()
+    {
+        return $this->hasMany(Leave::class);
+    }
+
+    public function assets()
+    {
+        return $this->hasMany(EmployeeAsset::class);
     }
 }

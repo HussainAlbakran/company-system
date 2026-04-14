@@ -27,6 +27,7 @@
         </div>
     @endif
 
+    {{-- البيانات الأساسية --}}
     <div class="page-card" style="margin-bottom:24px;">
         <div class="page-header">
             <h2 style="margin:0; font-size:24px;">البيانات الأساسية</h2>
@@ -62,165 +63,93 @@
                 <strong>القسم</strong>
                 <div>{{ $employee->department->name ?? '-' }}</div>
             </div>
-
-            <div class="detail-box">
-                <strong>العنوان</strong>
-                <div>{{ $employee->address ?? '-' }}</div>
-            </div>
-
-            <div class="detail-box">
-                <strong>تاريخ التوظيف</strong>
-                <div>{{ $employee->hire_date ?? '-' }}</div>
-            </div>
-
-            <div class="detail-box">
-                <strong>تاريخ انتهاء الإقامة</strong>
-                <div>{{ $employee->residency_expiry_date ?? '-' }}</div>
-            </div>
-
-            <div class="detail-box">
-                <strong>الراتب</strong>
-                <div>{{ isset($employee->salary) ? number_format($employee->salary, 2) : '-' }}</div>
-            </div>
-
-            <div class="detail-box">
-                <strong>الحالة</strong>
-                <div>
-                    @if(($employee->status ?? '') === 'active')
-                        <span class="badge badge-green">نشط</span>
-                    @elseif(($employee->status ?? '') === 'inactive')
-                        <span class="badge badge-red">غير نشط</span>
-                    @else
-                        <span class="badge badge-gray">{{ $employee->status ?? '-' }}</span>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <div class="actions" style="margin-top:20px;">
-            @if($employee->phone)
-                <a href="tel:{{ $employee->phone }}" class="btn btn-success btn-sm">اتصال</a>
-
-                <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $employee->phone) }}"
-                   target="_blank"
-                   class="btn btn-success btn-sm">
-                    واتساب
-                </a>
-            @endif
-
-            @if($employee->email)
-                <a href="mailto:{{ $employee->email }}" class="btn btn-primary btn-sm">
-                    إرسال بريد
-                </a>
-            @endif
         </div>
     </div>
 
+    {{-- العهدة --}}
     <div class="page-card" style="margin-bottom:24px;">
         <div class="page-header">
-            <h2 style="margin:0; font-size:24px;">رفع ملف جديد</h2>
-            <p style="margin-top:8px; color:#6b7280;">إضافة ملف جديد إلى سجل الموظف</p>
+            <h2>العهدة</h2>
         </div>
 
-        <form action="{{ route('employees.documents.store', $employee) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('employees.assets.store', $employee->id) }}" method="POST">
             @csrf
 
             <div class="form-grid">
 
                 <div class="form-group">
-                    <label>نوع الملف</label>
-                    <select name="document_type" required>
-                        <option value="offer_letter">عرض وظيفي</option>
-                        <option value="contract">عقد</option>
-                        <option value="cv">سيرة ذاتية</option>
-                        <option value="id">هوية</option>
-                        <option value="certificate">شهادة</option>
-                        <option value="employee_data">بيانات موظف</option>
-                        <option value="other">ملف آخر</option>
-                    </select>
+                    <label>اسم الأصل</label>
+                    <input type="text" name="asset_name" required placeholder="مثال: سيارة / لابتوب">
                 </div>
 
                 <div class="form-group">
-                    <label>عنوان الملف</label>
-                    <input type="text" name="title" value="{{ old('title') }}">
+                    <label>تاريخ البداية</label>
+                    <input type="date" name="start_date" required>
                 </div>
 
-                <div class="form-group form-group-full">
-                    <label>اختر الملف</label>
-                    <input type="file" name="file" required>
+                <div class="form-group">
+                    <label>تاريخ النهاية</label>
+                    <input type="date" name="end_date">
+                </div>
+
+                <div class="form-group">
+                    <label>الحالة</label>
+                    <select name="status">
+                        <option value="active">نشط</option>
+                        <option value="ended">منتهي</option>
+                        <option value="lost">مفقود</option>
+                        <option value="damaged">تالف</option>
+                    </select>
                 </div>
 
                 <div class="form-group form-group-full">
                     <label>ملاحظات</label>
-                    <textarea name="notes">{{ old('notes') }}</textarea>
+                    <textarea name="notes"></textarea>
                 </div>
 
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">رفع الملف</button>
-            </div>
+            <button class="btn btn-primary">إضافة عهدة</button>
         </form>
     </div>
 
+    {{-- جدول العهد --}}
     <div class="page-card">
         <div class="page-header">
-            <h2 style="margin:0; font-size:24px;">ملفات الموظف</h2>
-            <p style="margin-top:8px; color:#6b7280;">جميع الملفات المرتبطة بهذا الموظف</p>
+            <h2>سجل العهدة</h2>
         </div>
 
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>النوع</th>
-                        <th>العنوان</th>
-                        <th>اسم الملف</th>
-                        <th>ملاحظات</th>
-                        <th>الإجراءات</th>
-                    </tr>
-                </thead>
+        <table>
+            <thead>
+                <tr>
+                    <th>الأصل</th>
+                    <th>الرقم التسلسلي</th>
+                    <th>تاريخ البداية</th>
+                    <th>الحالة</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
 
-                <tbody>
-                    @forelse($employee->documents as $document)
-                        <tr>
-                            <td>{{ $document->document_type ?? '-' }}</td>
-                            <td>{{ $document->title ?? '-' }}</td>
-                            <td>{{ $document->original_name ?? '-' }}</td>
-                            <td>{{ $document->notes ?? '-' }}</td>
-                            <td>
-                                <div class="actions-row">
-                                    <a href="{{ route('employees.documents.open', [$employee, $document]) }}"
-                                       target="_blank"
-                                       class="btn btn-blue btn-sm">
-                                        فتح الملف
-                                    </a>
-
-                                    <a href="{{ route('employees.documents.download', [$employee, $document]) }}"
-                                       class="btn btn-success btn-sm">
-                                        تحميل
-                                    </a>
-
-                                    <form action="{{ route('employees.documents.destroy', [$employee, $document]) }}"
-                                          method="POST"
-                                          onsubmit="return confirm('هل تريد حذف الملف؟')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">
-                                            حذف
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="empty-row">لا توجد ملفات لهذا الموظف</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+            <tbody>
+                @foreach($employee->assets as $asset)
+                <tr>
+                    <td>{{ $asset->asset_name }}</td>
+                    <td>
+                        <strong>{{ $asset->serial_number }}</strong>
+                    </td>
+                    <td>{{ $asset->start_date }}</td>
+                    <td>{{ $asset->status }}</td>
+                    <td>
+                        <form action="{{ route('employees.assets.destroy', $asset->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-danger btn-sm">حذف</button>
+                        </form>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 
 </div>

@@ -16,9 +16,7 @@ class EnsureUserIsApproved
             return redirect()->route('login');
         }
 
-        if (($user->approval_status ?? null) !== 'approved' || ! $user->is_active) {
-            auth()->logout();
-
+        if ($user->approval_status !== 'approved' || $user->is_active != 1) {
             return redirect()->route('login')->withErrors([
                 'email' => 'حسابك غير مفعل أو بانتظار الموافقة من الإدارة.',
             ]);

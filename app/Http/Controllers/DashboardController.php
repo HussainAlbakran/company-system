@@ -4,75 +4,67 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\Project;
+use App\Models\ProductionOrder;
+use App\Models\Purchase;
+use App\Models\Installation;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+
+        // =========================
+        // 🔥 متغيرات عامة
+        // =========================
         $monthlySalaryBudget = 0;
         $currentProjectsValue = 0;
         $currentProjectsExpenses = 0;
-        $remainingProjectsBudget = 0;
         $delayedProjectsCount = 0;
         $endingSoonProjectsCount = 0;
         $adminProjects = collect();
 
+        // =========================
+        // 🔥 Counts للأقسام
+        // =========================
+        $architectProjectsCount = 0;
+        $productionOrdersCount = 0;
+        $installationProjectsCount = 0;
+        $purchasesCount = 0;
+        $employeesCount = 0;
+
+        // =========================
+        // 🔔 الإقامات
+        // =========================
         $residencyExpiringEmployees = collect();
         $expiredResidencyEmployees = collect();
-        $employeeResidencyAlert = null;
 
-        $user = auth()->user();
-
+        // =====================================================
+        // 🔥 ADMIN (يشوف كل شي)
+        // =====================================================
         if ($user && $user->isAdmin()) {
+
             $monthlySalaryBudget = (float) Employee::sum('salary');
 
-            $currentProjectsQuery = Project::query()
-                ->where(function ($query) {
-                    $query->whereNull('status')
-                        ->orWhere('status', 'ongoing')
-                        ->orWhere('status', 'active')
-                        ->orWhere('status', 'in progress')
-                        ->orWhere('status', 'قائم')
-                        ->orWhere('status', 'مستمر')
-                        ->orWhere('status', 'قيد التنفيذ');
-                });
+            $currentProjects = Project::where('status', 'ongoing')->get();
 
-            $currentProjectsValue = (float) (clone $currentProjectsQuery)->sum('project_value');
-            $currentProjectsExpenses = (float) (clone $currentProjectsQuery)->sum('expenses');
-            $remainingProjectsBudget = $currentProjectsValue - $currentProjectsExpenses;
+            $currentProjectsValue = (float) $currentProjects->sum('project_value');
+            $currentProjectsExpenses = (float) $currentProjects->sum('expenses');
 
-            $adminProjects = (clone $currentProjectsQuery)
-                ->with(['department', 'responsibleEmployee'])
+            $adminProjects = Project::with(['department', 'responsibleEmployee'])
                 ->latest()
                 ->get()
                 ->map(function ($project) {
+
                     $today = Carbon::today();
-                    $daysRemaining = null;
-                    $isDelayed = false;
-                    $isEndingSoon = false;
 
-                    if (!empty($project->end_date)) {
-                        try {
-                            $endDate = Carbon::parse($project->end_date);
-                            $daysRemaining = $today->diffInDays($endDate, false);
-
-                            if ($daysRemaining < 0) {
-                                $isDelayed = true;
-                            }
-
-                            if ($daysRemaining >= 0 && $daysRemaining <= 7) {
-                                $isEndingSoon = true;
-                            }
-                        } catch (\Exception $e) {
-                            $daysRemaining = null;
-                        }
+                    if ($project->end_date) {
+                        $days = Carbon::parse($project->end_date)->diffInDays($today, false);
+                        $project->days_remaining = $days;
+                        $project->is_delayed = $days < 0;
+                        $project->is_ending_soon = $days >= 0 && $days <= 7;
                     }
-
-                    $project->days_remaining = $daysRemaining;
-                    $project->is_delayed = $isDelayed;
-                    $project->is_ending_soon = $isEndingSoon;
-                    $project->remaining_budget = (float) ($project->project_value ?? 0) - (float) ($project->expenses ?? 0);
 
                     return $project;
                 });
@@ -81,66 +73,69 @@ class DashboardController extends Controller
             $endingSoonProjectsCount = $adminProjects->where('is_ending_soon', true)->count();
         }
 
-        if ($user && ($user->isAdmin() || $user->isHR())) {
-            $today = Carbon::today();
-            $after30Days = Carbon::today()->addDays(30);
-
-            $residencyExpiringEmployees = Employee::with('department')
-                ->whereNotNull('residency_expiry_date')
-                ->whereDate('residency_expiry_date', '>=', $today)
-                ->whereDate('residency_expiry_date', '<=', $after30Days)
-                ->orderBy('residency_expiry_date', 'asc')
-                ->get()
-                ->map(function ($employee) use ($today) {
-                    $employee->residency_days_remaining = $today->diffInDays(
-                        Carbon::parse($employee->residency_expiry_date),
-                        false
-                    );
-
-                    return $employee;
-                });
-
-            $expiredResidencyEmployees = Employee::with('department')
-                ->whereNotNull('residency_expiry_date')
-                ->whereDate('residency_expiry_date', '<', $today)
-                ->orderBy('residency_expiry_date', 'asc')
-                ->get()
-                ->map(function ($employee) use ($today) {
-                    $employee->residency_days_remaining = $today->diffInDays(
-                        Carbon::parse($employee->residency_expiry_date),
-                        false
-                    );
-
-                    return $employee;
-                });
+        // =====================================================
+        // 🔥 التصاميم
+        // =====================================================
+        if ($user && ($user->role == 'admin' || $user->role == 'engineer')) {
+            $architectProjectsCount = Project::where('current_stage', 'architect')->count();
         }
 
-        if ($user && ! $user->isAdmin() && ! $user->isHR()) {
-            $employee = Employee::where('user_id', $user->id)->first();
+        // =====================================================
+        // 🔥 المصنع
+        // =====================================================
+        if ($user && $user->canManageProduction()) {
+            $productionOrdersCount = ProductionOrder::count();
+        }
 
-            if ($employee && !empty($employee->residency_expiry_date)) {
-                $today = Carbon::today();
-                $expiryDate = Carbon::parse($employee->residency_expiry_date);
-                $daysRemaining = $today->diffInDays($expiryDate, false);
+        // =====================================================
+        // 🔥 التركيبات
+        // =====================================================
+        if ($user && ($user->role == 'admin' || $user->role == 'manager')) {
+            $installationProjectsCount = Project::where('current_stage', 'production_installation')->count();
+        }
 
-                if ($daysRemaining <= 30) {
-                    $employee->residency_days_remaining = $daysRemaining;
-                    $employeeResidencyAlert = $employee;
-                }
-            }
+        // =====================================================
+        // 🔥 المشتريات
+        // =====================================================
+        if ($user && ($user->role == 'admin' || $user->role == 'manager')) {
+            $purchasesCount = Purchase::count();
+        }
+
+        // =====================================================
+        // 🔥 الموظفين
+        // =====================================================
+        if ($user && $user->canManageEmployees()) {
+            $employeesCount = Employee::count();
+        }
+
+        // =====================================================
+        // 🔔 الإقامات (HR فقط)
+        // =====================================================
+        if ($user && $user->role == 'hr') {
+
+            $today = Carbon::today();
+            $after30 = Carbon::today()->addDays(30);
+
+            $residencyExpiringEmployees = Employee::whereBetween('residency_expiry_date', [$today, $after30])->get();
+            $expiredResidencyEmployees = Employee::where('residency_expiry_date', '<', $today)->get();
         }
 
         return view('dashboard', compact(
             'monthlySalaryBudget',
             'currentProjectsValue',
             'currentProjectsExpenses',
-            'remainingProjectsBudget',
             'delayedProjectsCount',
             'endingSoonProjectsCount',
             'adminProjects',
+
+            'architectProjectsCount',
+            'productionOrdersCount',
+            'installationProjectsCount',
+            'purchasesCount',
+            'employeesCount',
+
             'residencyExpiringEmployees',
-            'expiredResidencyEmployees',
-            'employeeResidencyAlert'
+            'expiredResidencyEmployees'
         ));
     }
 }

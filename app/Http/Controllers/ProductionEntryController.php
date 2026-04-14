@@ -12,18 +12,14 @@ class ProductionEntryController extends Controller
 {
     public function index()
     {
-        $perPage = (int) request()->integer('per_page', 20);
-        $perPage = max(1, min($perPage, 100));
-
-        $entries = ProductionEntry::with('order')->latest()->paginate($perPage);
-
-        return response()->json($entries);
+        return redirect()->route('factory.index');
     }
 
     public function store(Request $request, ProductionOrderCalculatorService $calculator)
     {
         $validated = $request->validate([
             'production_order_id' => 'required|exists:production_orders,id',
+            'project_id' => 'nullable|exists:projects,id',
             'entry_date' => 'required|date',
             'quantity' => 'required|numeric|min:0.01',
             'start_time' => 'nullable|date_format:H:i',
@@ -40,8 +36,11 @@ class ProductionEntryController extends Controller
             $workingHours = round($start->diffInMinutes($end) / 60, 2);
         }
 
-        $entry = ProductionEntry::create([
+        $order = ProductionOrder::findOrFail($validated['production_order_id']);
+
+        ProductionEntry::create([
             'production_order_id' => $validated['production_order_id'],
+            'project_id' => $validated['project_id'] ?? null,
             'entry_date' => $validated['entry_date'],
             'quantity' => $validated['quantity'],
             'start_time' => $validated['start_time'] ?? null,
@@ -51,20 +50,19 @@ class ProductionEntryController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $order = ProductionOrder::findOrFail($validated['production_order_id']);
         $calculator->recalculate($order);
 
-        return response()->json([
-            'message' => 'تم تسجيل الإنتاج بنجاح',
-            'data' => $entry->load('order'),
-        ], 201);
+        return redirect()
+            ->route('production-orders.show', $order->id)
+            ->with('success', 'تم تسجيل الإنتاج بنجاح');
     }
 
     public function show($id)
     {
-        $entry = ProductionEntry::with('order')->findOrFail($id);
+        $entry = ProductionEntry::with(['order', 'project'])->findOrFail($id);
 
-        return response()->json($entry);
+        return redirect()
+            ->route('production-orders.show', $entry->production_order_id);
     }
 
     public function update(Request $request, $id, ProductionOrderCalculatorService $calculator)
@@ -72,6 +70,7 @@ class ProductionEntryController extends Controller
         $entry = ProductionEntry::findOrFail($id);
 
         $validated = $request->validate([
+            'project_id' => 'nullable|exists:projects,id',
             'entry_date' => 'sometimes|date',
             'quantity' => 'sometimes|numeric|min:0.01',
             'start_time' => 'nullable|date_format:H:i',
@@ -97,10 +96,9 @@ class ProductionEntryController extends Controller
 
         $calculator->recalculate($entry->order);
 
-        return response()->json([
-            'message' => 'تم تحديث سجل الإنتاج بنجاح',
-            'data' => $entry->fresh()->load('order'),
-        ]);
+        return redirect()
+            ->route('production-orders.show', $entry->production_order_id)
+            ->with('success', 'تم تحديث سجل الإنتاج بنجاح');
     }
 
     public function destroy($id, ProductionOrderCalculatorService $calculator)
@@ -112,8 +110,8 @@ class ProductionEntryController extends Controller
 
         $calculator->recalculate($order);
 
-        return response()->json([
-            'message' => 'تم حذف سجل الإنتاج بنجاح',
-        ]);
+        return redirect()
+            ->route('production-orders.show', $order->id)
+            ->with('success', 'تم حذف سجل الإنتاج بنجاح');
     }
 }

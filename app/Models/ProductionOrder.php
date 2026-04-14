@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class ProductionOrder extends Model
 {
     protected $fillable = [
+        'project_id',
         'order_number',
         'product_name',
         'planned_quantity',
@@ -37,7 +38,18 @@ class ProductionOrder extends Model
         'remaining_quantity',
         'expected_production_days',
         'remaining_days_to_end',
+        'project_display_name',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relations
+    |--------------------------------------------------------------------------
+    */
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
+    }
 
     public function entries()
     {
@@ -49,6 +61,11 @@ class ProductionOrder extends Model
         return $this->hasMany(ProductionSupply::class);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
     public function getProductionPercentageAttribute(): float
     {
         $planned = (float) $this->planned_quantity;
@@ -75,7 +92,7 @@ class ProductionOrder extends Model
 
     public function getRemainingQuantityAttribute(): float
     {
-        return round(max((float)$this->planned_quantity - (float)$this->produced_quantity, 0), 2);
+        return round(max((float) $this->planned_quantity - (float) $this->produced_quantity, 0), 2);
     }
 
     public function getExpectedProductionDaysAttribute(): ?int
@@ -88,7 +105,7 @@ class ProductionOrder extends Model
             return null;
         }
 
-        $remaining = max((float)$this->planned_quantity - (float)$this->produced_quantity, 0);
+        $remaining = max((float) $this->planned_quantity - (float) $this->produced_quantity, 0);
 
         return (int) ceil($remaining / $averageDailyProduction);
     }
@@ -103,5 +120,17 @@ class ProductionOrder extends Model
         $endDate = Carbon::parse($this->expected_end_date);
 
         return (int) $today->diffInDays($endDate, false);
+    }
+
+    public function getProjectDisplayNameAttribute(): string
+    {
+        if (!$this->project) {
+            return 'غير مربوط بمشروع';
+        }
+
+        $code = $this->project->project_code ?? '-';
+        $name = $this->project->name ?? '-';
+
+        return $code . ' - ' . $name;
     }
 }

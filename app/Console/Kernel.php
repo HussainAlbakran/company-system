@@ -29,8 +29,6 @@ class Kernel extends ConsoleKernel
                 }
             }
         })->daily();
-        $schedule->command('alerts:send-residency-now')->dailyAt('08:00')->withoutOverlapping();
-        $schedule->command('alerts:send-passport-now')->dailyAt('08:05')->withoutOverlapping();
     }
 
     protected function commands(): void

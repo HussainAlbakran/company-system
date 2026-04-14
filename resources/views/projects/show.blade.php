@@ -106,7 +106,7 @@
             </div>
         @endif
 
-        <form action="{{ route('engineering.projects.updates.store', $project->id) }}" method="POST" enctype="multipart/form-data" class="form-card">
+        <form action="{{ route('engineering-projects.updates.store', $project->id) }}" method="POST" enctype="multipart/form-data" class="form-card">
             @csrf
 
             <div class="form-grid">
@@ -156,7 +156,7 @@
                                         {{ $update->title }}
                                     </h3>
                                     <div style="color:#6b7280; font-size:14px;">
-                                        {{ $update->created_at->format('Y-m-d H:i') }}
+                                        {{ $update->created_at?->format('Y-m-d H:i') ?? '-' }}
                                     </div>
                                 </div>
 
@@ -176,7 +176,7 @@
                                     </a>
                                 @endif
 
-                                <form action="{{ route('engineering.projects.updates.destroy', [$project->id, $update->id]) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا التحديث؟')">
+                                <form action="{{ route('engineering-projects.updates.destroy', [$project->id, $update->id]) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من حذف هذا التحديث؟')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-danger btn-sm">

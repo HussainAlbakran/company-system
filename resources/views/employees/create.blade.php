@@ -91,7 +91,13 @@
                     </select>
                 </div>
 
-                <!-- 🔥 الحقل الجديد -->
+                {{-- 🔥 جديد: رصيد الإجازات --}}
+                <div class="form-group">
+                    <label>رصيد الإجازات (يوم)</label>
+                    <input type="number" name="leave_balance" value="{{ old('leave_balance', 26) }}">
+                </div>
+
+                {{-- 🔥 الإقامة --}}
                 <div class="form-group">
                     <label>تاريخ انتهاء الإقامة</label>
                     <input type="date" name="residency_expiry_date" value="{{ old('residency_expiry_date') }}">

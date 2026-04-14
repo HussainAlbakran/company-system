@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,9 +21,37 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $request->authenticate();
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+        ]);
+
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
+
+        if (! $user) {
+            return back()->withErrors([
+                'email' => 'بيانات الدخول غير صحيحة.',
+            ])->onlyInput('email');
+        }
+
+        if (! Auth::attempt([
+            'email' => $credentials['email'],
+            'password' => $credentials['password'],
+        ])) {
+            return back()->withErrors([
+                'email' => 'بيانات الدخول غير صحيحة.',
+            ])->onlyInput('email');
+        }
+
+        if ($user->approval_status !== 'approved' || (int) $user->is_active !== 1) {
+            Auth::logout();
+
+            return back()->withErrors([
+                'email' => 'حسابك غير مفعل أو بانتظار الموافقة من الإدارة.',
+            ])->onlyInput('email');
+        }
 
         $request->session()->regenerate();
 
@@ -39,7 +66,6 @@ class AuthenticatedSessionController extends Controller
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
         return redirect('/');

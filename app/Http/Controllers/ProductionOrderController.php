@@ -3,22 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductionOrder;
+use App\Models\Project;
 use Illuminate\Http\Request;
 
 class ProductionOrderController extends Controller
 {
     public function index()
     {
-        $perPage = (int) request()->integer('per_page', 20);
-        $perPage = max(1, min($perPage, 100));
-        $orders = ProductionOrder::latest()->paginate($perPage);
+        return redirect()->route('factory.index');
+    }
 
-        return response()->json($orders);
+    public function create()
+    {
+        $projects = Project::with(['architectMeasurements'])
+            ->where('current_stage', 'production_installation')
+            ->latest()
+            ->get();
+
+        return view('factory.create', compact('projects'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'project_id' => 'required|exists:projects,id',
             'order_number' => 'required|string|max:255|unique:production_orders,order_number',
             'product_name' => 'required|string|max:255',
             'planned_quantity' => 'required|numeric|min:0',
@@ -28,7 +36,8 @@ class ProductionOrderController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        $order = ProductionOrder::create([
+        ProductionOrder::create([
+            'project_id' => $validated['project_id'],
             'order_number' => $validated['order_number'],
             'product_name' => $validated['product_name'],
             'planned_quantity' => $validated['planned_quantity'],
@@ -41,17 +50,39 @@ class ProductionOrderController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        return response()->json([
-            'message' => 'تم إنشاء أمر الإنتاج بنجاح',
-            'data' => $order,
-        ], 201);
+        return redirect()
+            ->route('factory.index')
+            ->with('success', 'تم إنشاء أمر الإنتاج بنجاح');
     }
 
     public function show($id)
     {
-        $order = ProductionOrder::with(['entries', 'supplies'])->findOrFail($id);
+        $order = ProductionOrder::with([
+            'entries',
+            'supplies',
+            'project',
+            'project.architectTask',
+            'project.architectMeasurements',
+        ])->findOrFail($id);
 
-        return response()->json($order);
+        $project = $order->project;
+        $architectTask = $project?->architectTask;
+        $measurements = $project
+            ? $project->architectMeasurements()->latest()->get()
+            : collect();
+
+        return view('factory.show', compact('order', 'project', 'architectTask', 'measurements'));
+    }
+
+    public function edit($id)
+    {
+        $order = ProductionOrder::findOrFail($id);
+
+        $projects = Project::where('current_stage', 'production_installation')
+            ->latest()
+            ->get();
+
+        return view('factory.edit', compact('order', 'projects'));
     }
 
     public function update(Request $request, $id)
@@ -59,21 +90,32 @@ class ProductionOrderController extends Controller
         $order = ProductionOrder::findOrFail($id);
 
         $validated = $request->validate([
-            'product_name' => 'sometimes|string|max:255',
-            'planned_quantity' => 'sometimes|numeric|min:0',
+            'project_id' => 'required|exists:projects,id',
+            'order_number' => 'required|string|max:255|unique:production_orders,order_number,' . $order->id,
+            'product_name' => 'required|string|max:255',
+            'planned_quantity' => 'required|numeric|min:0',
             'production_start_date' => 'nullable|date',
             'expected_end_date' => 'nullable|date',
             'daily_target' => 'nullable|numeric|min:0',
-            'status' => 'sometimes|in:pending,in_progress,paused,completed,cancelled',
+            'status' => 'nullable|in:pending,in_progress,paused,completed,cancelled',
             'notes' => 'nullable|string',
         ]);
 
-        $order->update($validated);
-
-        return response()->json([
-            'message' => 'تم تحديث أمر الإنتاج بنجاح',
-            'data' => $order->fresh(),
+        $order->update([
+            'project_id' => $validated['project_id'],
+            'order_number' => $validated['order_number'],
+            'product_name' => $validated['product_name'],
+            'planned_quantity' => $validated['planned_quantity'],
+            'production_start_date' => $validated['production_start_date'] ?? null,
+            'expected_end_date' => $validated['expected_end_date'] ?? null,
+            'daily_target' => $validated['daily_target'] ?? null,
+            'status' => $validated['status'] ?? $order->status,
+            'notes' => $validated['notes'] ?? null,
         ]);
+
+        return redirect()
+            ->route('factory.show', $order->id)
+            ->with('success', 'تم تحديث أمر الإنتاج بنجاح');
     }
 
     public function destroy($id)
@@ -81,8 +123,8 @@ class ProductionOrderController extends Controller
         $order = ProductionOrder::findOrFail($id);
         $order->delete();
 
-        return response()->json([
-            'message' => 'تم حذف أمر الإنتاج بنجاح',
-        ]);
+        return redirect()
+            ->route('factory.index')
+            ->with('success', 'تم حذف أمر الإنتاج بنجاح');
     }
 }
