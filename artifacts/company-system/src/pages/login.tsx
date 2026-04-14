@@ -1,21 +1,50 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Building2, ArrowLeft, Mail, Lock, User, CheckCircle2, Shield } from "lucide-react";
 
 export function Login() {
   const [, setLocation] = useLocation();
   const [role, setRole] = useState<"client" | "employee" | "admin">("client");
+  const [email, setEmail] = useState("client@example.com");
+  const [password, setPassword] = useState("123456");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    setEmail(role === "admin" ? "admin@arkan-build.com" : role === "employee" ? "employee@arkan-build.com" : "client@example.com");
+  }, [role]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("userRole", role);
-    
-    if (role === "admin") {
-      setLocation("/admin");
-    } else if (role === "employee") {
-      setLocation("/employee");
-    } else {
-      setLocation("/client");
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.BASE_URL}api/company/auth/login`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role }),
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error ?? "تعذر تسجيل الدخول");
+      }
+
+      localStorage.setItem("userRole", payload.user.role);
+      localStorage.setItem("userName", payload.user.name);
+
+      if (payload.user.role === "admin") {
+        setLocation("/admin");
+      } else if (payload.user.role === "employee") {
+        setLocation("/employee");
+      } else {
+        setLocation("/client");
+      }
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : "تعذر تسجيل الدخول");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -133,6 +162,8 @@ export function Login() {
                 <input 
                   type="text" 
                   dir="ltr"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 text-left rounded-lg pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all" 
                   placeholder={role === "client" ? "client@example.com" : role === "admin" ? "admin@arkan-build.com" : "employee@arkan-build.com"} 
                   data-testid="input-email"
@@ -152,6 +183,8 @@ export function Login() {
                 <input 
                   type="password" 
                   dir="ltr"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 text-left rounded-lg pl-4 pr-10 py-3 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all" 
                   placeholder="••••••••" 
                   data-testid="input-password"
@@ -170,12 +203,22 @@ export function Login() {
               </label>
             </div>
 
+            {error && (
+              <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {error}
+              </div>
+            )}
+
+            <div className="rounded-lg border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-slate-700">
+              بيانات الدخول التجريبية مفعلة من قاعدة البيانات. كلمة المرور الافتراضية: <span className="font-bold" dir="ltr">123456</span>
+            </div>
+
             <button type="submit" data-testid="button-submit-login" className={`w-full py-3.5 rounded-lg font-bold text-lg transition-all shadow-md mt-6 flex items-center justify-center gap-2 ${
               role === "client"
                 ? "bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
                 : "bg-slate-900 hover:bg-slate-800 text-white shadow-[0_0_20px_rgba(15,23,42,0.2)]"
-            }`}>
-              تسجيل الدخول
+            }`} disabled={isSubmitting}>
+              {isSubmitting ? "جاري التحقق..." : "تسجيل الدخول"}
               <ArrowLeft className="w-5 h-5" />
             </button>
           </form>

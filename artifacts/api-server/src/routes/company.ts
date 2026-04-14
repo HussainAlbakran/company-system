@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import crypto from "node:crypto";
 import { desc, eq } from "drizzle-orm";
 import {
   activityItemsTable,
@@ -10,6 +11,8 @@ import {
   operationalRecordsTable,
   operationalTasksTable,
   projectsTable,
+  supportTicketsTable,
+  systemUsersTable,
 } from "@workspace/db";
 import {
   CreateEmployeeBody,
@@ -38,6 +41,52 @@ import {
 
 const router: IRouter = Router();
 let seedPromise: Promise<void> | null = null;
+
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const stringField = (body: Record<string, unknown>, key: string) => typeof body[key] === "string" ? body[key].trim() : "";
+const arrayField = (body: Record<string, unknown>, key: string) => Array.isArray(body[key]) ? body[key].filter((item): item is string => typeof item === "string") : [];
+const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+const publicUser = (user: typeof systemUsersTable.$inferSelect) => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  department: user.department,
+  status: user.status,
+  permissions: JSON.parse(user.permissions) as string[],
+  lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+  createdAt: user.createdAt.toISOString(),
+});
+
+const hashPassword = (password: string, salt = crypto.randomBytes(16).toString("hex")) => ({
+  salt,
+  hash: crypto.pbkdf2Sync(password, salt, 120000, 64, "sha512").toString("hex"),
+});
+
+const verifyPassword = (password: string, salt: string, hash: string) => {
+  const candidate = hashPassword(password, salt).hash;
+  return crypto.timingSafeEqual(Buffer.from(candidate, "hex"), Buffer.from(hash, "hex"));
+};
+
+const sessionSecret = () => process.env.SESSION_SECRET ?? "development-session-secret";
+
+const signSession = (userId: number) => {
+  const payload = Buffer.from(JSON.stringify({ userId, exp: Date.now() + 1000 * 60 * 60 * 12 })).toString("base64url");
+  const signature = crypto.createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+};
+
+const readSessionUserId = (token?: string) => {
+  if (!token) return null;
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) return null;
+  const expected = crypto.createHmac("sha256", sessionSecret()).update(payload).digest("base64url");
+  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  const parsed = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as { userId: number; exp: number };
+  if (!parsed.userId || parsed.exp < Date.now()) return null;
+  return parsed.userId;
+};
 
 const addDays = (days: number) => {
   const date = new Date();
@@ -98,6 +147,27 @@ async function ensureSeedData(): Promise<void> {
       { title: "تحديث نسبة الإنجاز", description: "تم رفع تقدم مشروع ترميم قصر السلام إلى 86%", actor: "أحمد عبدالله", module: "المشاريع", createdAt: addDays(-1) },
       { title: "دفعة جديدة", description: "تسجيل دفعة بقيمة 450,000 ر.س على عقد الياسمين", actor: "نورة القحطاني", module: "العقود", createdAt: addDays(-2) },
       { title: "إدخال مستودعي", description: "تم إدخال توريد دفعة الحديد الأولى للمستودع", actor: "عبدالعزيز الحربي", module: "المستودع", createdAt: addDays(-3) },
+    ]).onConflictDoNothing();
+
+    const defaultUsers = [
+      { name: "المدير العام", email: "admin@arkan-build.com", role: "admin", department: "الإدارة التنفيذية", permissions: ["all"] },
+      { name: "أحمد عبدالله", email: "employee@arkan-build.com", role: "employee", department: "الهندسة", permissions: ["projects", "tasks", "approvals"] },
+      { name: "بوابة العميل", email: "client@example.com", role: "client", department: "العملاء", permissions: ["client_portal"] },
+    ];
+
+    await db.insert(systemUsersTable).values(defaultUsers.map((user) => {
+      const credentials = hashPassword("123456");
+      return {
+        ...user,
+        permissions: JSON.stringify(user.permissions),
+        passwordSalt: credentials.salt,
+        passwordHash: credentials.hash,
+      };
+    })).onConflictDoNothing();
+
+    await db.insert(supportTicketsTable).values([
+      { title: "طلب صلاحية اعتماد مشتريات", requester: "عبدالعزيز الحربي", category: "الصلاحيات", priority: "high", status: "open", message: "أحتاج صلاحية اعتماد أوامر الشراء العاجلة.", assignee: "فريق الدعم" },
+      { title: "مشكلة تحميل وثائق مشروع", requester: "أحمد عبدالله", category: "الوثائق", priority: "medium", status: "in_progress", message: "بعض ملفات المخططات لا تظهر في بوابة المشروع.", assignee: "الدعم الفني" },
     ]).onConflictDoNothing();
   })();
 
@@ -258,11 +328,41 @@ async function ensureOperationalRecordsSeed(): Promise<void> {
   ]);
 }
 
+async function ensureSystemSeed(): Promise<void> {
+  const existingUsers = await db.select().from(systemUsersTable).limit(1);
+  if (existingUsers.length === 0) {
+    const defaultUsers = [
+      { name: "المدير العام", email: "admin@arkan-build.com", role: "admin", department: "الإدارة التنفيذية", permissions: ["all"] },
+      { name: "أحمد عبدالله", email: "employee@arkan-build.com", role: "employee", department: "الهندسة", permissions: ["projects", "tasks", "approvals"] },
+      { name: "بوابة العميل", email: "client@example.com", role: "client", department: "العملاء", permissions: ["client_portal"] },
+    ];
+
+    await db.insert(systemUsersTable).values(defaultUsers.map((user) => {
+      const credentials = hashPassword("123456");
+      return {
+        ...user,
+        permissions: JSON.stringify(user.permissions),
+        passwordSalt: credentials.salt,
+        passwordHash: credentials.hash,
+      };
+    })).onConflictDoNothing();
+  }
+
+  const existingTickets = await db.select().from(supportTicketsTable).limit(1);
+  if (existingTickets.length === 0) {
+    await db.insert(supportTicketsTable).values([
+      { title: "طلب صلاحية اعتماد مشتريات", requester: "عبدالعزيز الحربي", category: "الصلاحيات", priority: "high", status: "open", message: "أحتاج صلاحية اعتماد أوامر الشراء العاجلة.", assignee: "فريق الدعم" },
+      { title: "مشكلة تحميل وثائق مشروع", requester: "أحمد عبدالله", category: "الوثائق", priority: "medium", status: "in_progress", message: "بعض ملفات المخططات لا تظهر في بوابة المشروع.", assignee: "الدعم الفني" },
+    ]).onConflictDoNothing();
+  }
+}
+
 const moneyToNumber = (value: string | number) => Number(value);
 
 router.use(async (_req, _res, next): Promise<void> => {
   await ensureSeedData();
   await ensureOperationalRecordsSeed();
+  await ensureSystemSeed();
   next();
 });
 
@@ -446,6 +546,156 @@ router.patch("/company/approvals/:id/status", async (req, res): Promise<void> =>
 router.get("/company/activity", async (_req, res): Promise<void> => {
   const activity = await db.select().from(activityItemsTable).orderBy(desc(activityItemsTable.createdAt));
   res.json(ListActivityResponse.parse(activity));
+});
+
+router.post("/company/auth/login", async (req, res): Promise<void> => {
+  if (!isRecord(req.body)) {
+    res.status(400).json({ error: "بيانات الدخول غير صحيحة" });
+    return;
+  }
+  const email = stringField(req.body, "email").toLowerCase();
+  const password = stringField(req.body, "password");
+  const role = stringField(req.body, "role");
+  if (!isEmail(email) || !password) {
+    res.status(400).json({ error: "بيانات الدخول غير صحيحة" });
+    return;
+  }
+
+  const [user] = await db.select().from(systemUsersTable).where(eq(systemUsersTable.email, email)).limit(1);
+  if (!user || user.status !== "active" || !verifyPassword(password, user.passwordSalt, user.passwordHash) || (role && user.role !== role)) {
+    res.status(401).json({ error: "البريد أو كلمة المرور غير صحيحة" });
+    return;
+  }
+
+  const [updatedUser] = await db.update(systemUsersTable).set({ lastLoginAt: new Date() }).where(eq(systemUsersTable.id, user.id)).returning();
+  res.cookie("arkana_session", signSession(user.id), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 1000 * 60 * 60 * 12,
+  });
+  res.json({ user: publicUser(updatedUser ?? user) });
+});
+
+router.post("/company/auth/logout", async (_req, res): Promise<void> => {
+  res.clearCookie("arkana_session");
+  res.json({ ok: true });
+});
+
+router.get("/company/auth/me", async (req, res): Promise<void> => {
+  const userId = readSessionUserId(req.cookies?.arkana_session);
+  if (!userId) {
+    res.status(401).json({ error: "غير مسجل الدخول" });
+    return;
+  }
+  const [user] = await db.select().from(systemUsersTable).where(eq(systemUsersTable.id, userId)).limit(1);
+  if (!user || user.status !== "active") {
+    res.status(401).json({ error: "غير مسجل الدخول" });
+    return;
+  }
+  res.json({ user: publicUser(user) });
+});
+
+router.get("/company/users", async (_req, res): Promise<void> => {
+  const users = await db.select().from(systemUsersTable).orderBy(desc(systemUsersTable.createdAt));
+  res.json(users.map(publicUser));
+});
+
+router.post("/company/users", async (req, res): Promise<void> => {
+  if (!isRecord(req.body)) {
+    res.status(400).json({ error: "بيانات المستخدم غير صحيحة" });
+    return;
+  }
+  const name = stringField(req.body, "name");
+  const email = stringField(req.body, "email").toLowerCase();
+  const role = stringField(req.body, "role");
+  const department = stringField(req.body, "department");
+  const password = stringField(req.body, "password") || "123456";
+  const permissions = arrayField(req.body, "permissions");
+  if (name.length < 2 || !isEmail(email) || !["admin", "employee", "client"].includes(role) || department.length < 2 || password.length < 6) {
+    res.status(400).json({ error: "بيانات المستخدم غير صحيحة" });
+    return;
+  }
+
+  const credentials = hashPassword(password);
+  const [user] = await db.insert(systemUsersTable).values({
+    name,
+    email,
+    role,
+    department,
+    permissions: JSON.stringify(permissions),
+    passwordSalt: credentials.salt,
+    passwordHash: credentials.hash,
+  }).returning();
+
+  await db.insert(activityItemsTable).values({
+    title: "إضافة مستخدم",
+    description: `تم إضافة المستخدم ${user.name} بصلاحية ${user.role}`,
+    actor: "المدير العام",
+    module: "المستخدمين",
+    createdAt: new Date(),
+  });
+
+  res.status(201).json(publicUser(user));
+});
+
+router.get("/company/support", async (_req, res): Promise<void> => {
+  const tickets = await db.select().from(supportTicketsTable).orderBy(desc(supportTicketsTable.createdAt));
+  res.json(tickets);
+});
+
+router.post("/company/support", async (req, res): Promise<void> => {
+  if (!isRecord(req.body)) {
+    res.status(400).json({ error: "بيانات التذكرة غير صحيحة" });
+    return;
+  }
+  const title = stringField(req.body, "title");
+  const requester = stringField(req.body, "requester");
+  const category = stringField(req.body, "category");
+  const priority = stringField(req.body, "priority") || "medium";
+  const message = stringField(req.body, "message");
+  if (title.length < 3 || requester.length < 2 || category.length < 2 || message.length < 3) {
+    res.status(400).json({ error: "بيانات التذكرة غير صحيحة" });
+    return;
+  }
+
+  const [ticket] = await db.insert(supportTicketsTable).values({ title, requester, category, priority, message }).returning();
+  await db.insert(activityItemsTable).values({
+    title: "تذكرة دعم جديدة",
+    description: `تم فتح تذكرة ${ticket.title}`,
+    actor: ticket.requester,
+    module: "الدعم الفني",
+    createdAt: new Date(),
+  });
+  res.status(201).json(ticket);
+});
+
+router.post("/company/assistant/ask", async (req, res): Promise<void> => {
+  if (!isRecord(req.body)) {
+    res.status(400).json({ error: "أدخل سؤالاً واضحاً" });
+    return;
+  }
+  const question = stringField(req.body, "question");
+  if (question.length < 2) {
+    res.status(400).json({ error: "أدخل سؤالاً واضحاً" });
+    return;
+  }
+
+  const [projects, approvals, tasks, operations] = await Promise.all([
+    db.select().from(projectsTable),
+    db.select().from(approvalsTable),
+    db.select().from(operationalTasksTable),
+    db.select().from(operationalRecordsTable),
+  ]);
+  const delayedTasks = tasks.filter((task) => task.status !== "completed" && task.dueAt < new Date()).length;
+  const pendingApprovals = approvals.filter((approval) => approval.status === "pending").length;
+  const urgentOperations = operations.filter((record) => ["urgent", "high"].includes(record.priority) && ["open", "pending_approval", "under_review"].includes(record.status)).length;
+  const averageProgress = projects.length ? Math.round(projects.reduce((sum, project) => sum + project.progress, 0) / projects.length) : 0;
+
+  res.json({
+    answer: `ملخص سريع: متوسط إنجاز المشاريع ${averageProgress}%، يوجد ${pendingApprovals} موافقات معلقة، ${delayedTasks} مهام متأخرة، و${urgentOperations} سجلات تشغيلية عالية الأولوية. التوصية: ابدأ بالموافقات المالية والمشتريات العاجلة ثم راجع المهام المتأخرة حسب المشروع.`,
+    question,
+  });
 });
 
 router.get("/company/operations", async (_req, res): Promise<void> => {

@@ -34,12 +34,16 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 - The app is an Arabic RTL contracting company system MVP based on the user's approved canvas mockups and existing GitHub Laravel project reference.
 - Current frontend routes:
   - `/` public contracting company homepage
-  - `/login` role-based MVP login screen
+  - `/login` database-backed login screen
   - `/employee` employee operations dashboard
   - `/client` client project portal
   - `/admin` administrative control center
 - The GitHub reference project is a Laravel system with modules for dashboard, reports, users/approvals, audit logs, employees, departments, leave requests, sales contracts/payments, architect tasks, engineering projects/updates, purchases, warehouse, factory production, installations, assets, AI assistant, and technical support.
-- PostgreSQL-backed modules currently include employees, departments, projects, contracts, operational tasks, approvals, activity items, and unified operational records for purchases, warehouse, factory, installations, assets, leaves, and audit.
-- The admin dashboard can create projects, approve pending approvals, and create operational records from each operational module view.
+- PostgreSQL-backed modules currently include employees, departments, projects, contracts, operational tasks, approvals, activity items, unified operational records, system users, support tickets, and assistant analysis.
+- The admin dashboard can create projects, approve pending approvals, create operational records, manage users and permissions, open support tickets, view reports, and use a simple operational assistant.
 - The employee dashboard can approve pending approvals and mark operational tasks as completed.
-- Current login is a frontend MVP using localStorage role/session state. Real authentication and persistent database-backed user permissions still need to be implemented before production use.
+- Login is now database-backed using seeded accounts with hashed passwords and an HTTP-only session cookie. The frontend also stores the selected role for route protection.
+- Default development accounts:
+  - admin@arkan-build.com / 123456
+  - employee@arkan-build.com / 123456
+  - client@example.com / 123456

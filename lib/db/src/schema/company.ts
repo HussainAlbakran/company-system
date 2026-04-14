@@ -85,6 +85,34 @@ export const activityItemsTable = pgTable("activity_items", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const systemUsersTable = pgTable("system_users", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  role: text("role").notNull(),
+  department: text("department").notNull(),
+  status: text("status").notNull().default("active"),
+  permissions: text("permissions").notNull().default("[]"),
+  passwordSalt: text("password_salt").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export const supportTicketsTable = pgTable("support_tickets", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  requester: text("requester").notNull(),
+  category: text("category").notNull(),
+  priority: text("priority").notNull().default("medium"),
+  status: text("status").notNull().default("open"),
+  message: text("message").notNull(),
+  assignee: text("assignee").notNull().default("فريق الدعم"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
 export const insertDepartmentSchema = createInsertSchema(departmentsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEmployeeSchema = createInsertSchema(employeesTable).omit({ id: true, createdAt: true, updatedAt: true, joinedAt: true, status: true });
 export const insertProjectSchema = createInsertSchema(projectsTable).omit({ id: true, createdAt: true, updatedAt: true, startsAt: true, endsAt: true, status: true, progress: true });
@@ -92,6 +120,8 @@ export const insertContractSchema = createInsertSchema(contractsTable).omit({ id
 export const insertOperationalTaskSchema = createInsertSchema(operationalTasksTable).omit({ id: true, createdAt: true, updatedAt: true, status: true, dueAt: true });
 export const insertApprovalSchema = createInsertSchema(approvalsTable).omit({ id: true, createdAt: true, updatedAt: true, status: true });
 export const insertActivityItemSchema = createInsertSchema(activityItemsTable).omit({ id: true });
+export const insertSystemUserSchema = createInsertSchema(systemUsersTable).omit({ id: true, createdAt: true, updatedAt: true, lastLoginAt: true, passwordSalt: true, passwordHash: true });
+export const insertSupportTicketSchema = createInsertSchema(supportTicketsTable).omit({ id: true, createdAt: true, updatedAt: true, status: true, assignee: true });
 
 export type Department = typeof departmentsTable.$inferSelect;
 export type Employee = typeof employeesTable.$inferSelect;
@@ -100,6 +130,8 @@ export type Contract = typeof contractsTable.$inferSelect;
 export type OperationalTask = typeof operationalTasksTable.$inferSelect;
 export type Approval = typeof approvalsTable.$inferSelect;
 export type ActivityItem = typeof activityItemsTable.$inferSelect;
+export type SystemUser = typeof systemUsersTable.$inferSelect;
+export type SupportTicket = typeof supportTicketsTable.$inferSelect;
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
@@ -107,3 +139,5 @@ export type InsertContract = z.infer<typeof insertContractSchema>;
 export type InsertOperationalTask = z.infer<typeof insertOperationalTaskSchema>;
 export type InsertApproval = z.infer<typeof insertApprovalSchema>;
 export type InsertActivityItem = z.infer<typeof insertActivityItemSchema>;
+export type InsertSystemUser = z.infer<typeof insertSystemUserSchema>;
+export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;

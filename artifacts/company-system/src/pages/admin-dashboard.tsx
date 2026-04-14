@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { 
   Building2, Search, Bell, Menu, LayoutDashboard, FileText, Users, 
   Settings, FolderOpen, PieChart, ShieldCheck, Box, Factory, Wrench, 
-  Car, MessageSquare, Briefcase, LogOut, ChevronLeft, Plus, Plane, History
+  Car, MessageSquare, Briefcase, LogOut, ChevronLeft, Plus, Plane, History, Bot
 } from "lucide-react";
 import { useGetCompanyOverview, useListActivity, useListApprovals, useListEmployees, useListProjects, useListContracts, useCreateProject, useListOperationalRecords, useUpdateApprovalStatus, useCreateOperationalRecord } from "@workspace/api-client-react";
 import { format } from "date-fns";
@@ -13,8 +13,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getListProjectsQueryKey, getListApprovalsQueryKey, getListOperationalRecordsQueryKey } from "@workspace/api-client-react";
+
+type SystemUser = {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  status: string;
+  permissions: string[];
+  lastLoginAt: string | null;
+  createdAt: string;
+};
+
+type SupportTicket = {
+  id: number;
+  title: string;
+  requester: string;
+  category: string;
+  priority: string;
+  status: string;
+  message: string;
+  assignee: string;
+  createdAt: string;
+};
+
+const companyApiUrl = (path: string) => `${import.meta.env.BASE_URL}api/company${path}`;
+
+async function companyFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(companyApiUrl(path), {
+    credentials: "include",
+    ...options,
+    headers: { "Content-Type": "application/json", ...options?.headers },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload.error ?? "تعذر تنفيذ العملية");
+  }
+  return payload as T;
+}
 
 export function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -29,6 +68,14 @@ export function AdminDashboard() {
   const { data: projects, isLoading: isLoadingProjects } = useListProjects();
   const { data: contracts, isLoading: isLoadingContracts } = useListContracts();
   const { data: operationalRecords, isLoading: isLoadingOperationalRecords } = useListOperationalRecords();
+  const { data: systemUsers, isLoading: isLoadingSystemUsers } = useQuery({
+    queryKey: ["company-users"],
+    queryFn: () => companyFetch<SystemUser[]>("/users"),
+  });
+  const { data: supportTickets, isLoading: isLoadingSupportTickets } = useQuery({
+    queryKey: ["company-support"],
+    queryFn: () => companyFetch<SupportTicket[]>("/support"),
+  });
   
   const createProjectMutation = useCreateProject({
     mutation: {
@@ -80,6 +127,8 @@ export function AdminDashboard() {
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [newProject, setNewProject] = useState({ name: "", clientName: "", location: "", stage: "planning", budget: 0 });
   const [isCreateOperationalRecordOpen, setIsCreateOperationalRecordOpen] = useState(false);
+  const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
+  const [isCreateTicketOpen, setIsCreateTicketOpen] = useState(false);
   const [newOperationalRecord, setNewOperationalRecord] = useState({
     title: "",
     reference: "",
@@ -90,6 +139,64 @@ export function AdminDashboard() {
     quantity: 1,
     amount: 0,
     dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  });
+  const [newUser, setNewUser] = useState({
+    name: "",
+    email: "",
+    role: "employee",
+    department: "الهندسة",
+    password: "123456",
+    permissions: "projects,tasks",
+  });
+  const [newTicket, setNewTicket] = useState({
+    title: "",
+    requester: "",
+    category: "عام",
+    priority: "medium",
+    message: "",
+  });
+  const [assistantQuestion, setAssistantQuestion] = useState("ما أهم الأولويات التشغيلية اليوم؟");
+  const [assistantAnswer, setAssistantAnswer] = useState("");
+
+  const createUserMutation = useMutation({
+    mutationFn: () => companyFetch<SystemUser>("/users", {
+      method: "POST",
+      body: JSON.stringify({
+        ...newUser,
+        role: newUser.role as "admin" | "employee" | "client",
+        permissions: newUser.permissions.split(",").map((permission) => permission.trim()).filter(Boolean),
+      }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-users"] });
+      toast({ title: "تم إضافة المستخدم" });
+      setIsCreateUserOpen(false);
+      setNewUser({ name: "", email: "", role: "employee", department: "الهندسة", password: "123456", permissions: "projects,tasks" });
+    },
+    onError: () => toast({ title: "تعذر إضافة المستخدم", variant: "destructive" }),
+  });
+
+  const createTicketMutation = useMutation({
+    mutationFn: () => companyFetch<SupportTicket>("/support", {
+      method: "POST",
+      body: JSON.stringify(newTicket),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-support"] });
+      toast({ title: "تم فتح تذكرة الدعم" });
+      setIsCreateTicketOpen(false);
+      setNewTicket({ title: "", requester: "", category: "عام", priority: "medium", message: "" });
+    },
+    onError: () => toast({ title: "تعذر فتح تذكرة الدعم", variant: "destructive" }),
+  });
+
+  const askAssistantMutation = useMutation({
+    mutationFn: () => companyFetch<{ answer: string; question: string }>("/assistant/ask", {
+      method: "POST",
+      body: JSON.stringify({ question: assistantQuestion }),
+    }),
+    onSuccess: (payload) => setAssistantAnswer(payload.answer),
+    onError: () => toast({ title: "تعذر تشغيل المساعد", variant: "destructive" }),
   });
 
   const handleLogout = () => {
@@ -104,6 +211,7 @@ export function AdminDashboard() {
     { id: "contracts", icon: <FileText />, label: "العقود والمقاولين" },
     { id: "reports", icon: <PieChart />, label: "التقارير" },
     { id: "users", icon: <ShieldCheck />, label: "المستخدمين والصلاحيات" },
+    { id: "assistant", icon: <Bot />, label: "المساعد الذكي" },
     { id: "purchases", icon: <FolderOpen />, label: "المشتريات والطلبات" },
     { id: "warehouse", icon: <Box />, label: "المستودعات والمخزون" },
     { id: "factory", icon: <Factory />, label: "المصنع والإنتاج" },
@@ -521,6 +629,259 @@ export function AdminDashboard() {
               </div>
             )}
 
+            {activeModule === "reports" && (
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                  <div className="text-sm text-slate-500 mb-2">متوسط إنجاز المشاريع</div>
+                  <div className="text-4xl font-bold text-slate-900">{overview?.monthlyCompletion ?? 0}%</div>
+                  <div className="mt-4 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500" style={{ width: `${overview?.monthlyCompletion ?? 0}%` }}></div>
+                  </div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                  <div className="text-sm text-slate-500 mb-2">إجمالي العقود</div>
+                  <div className="text-4xl font-bold text-slate-900" dir="ltr">{(overview?.totalContractValue ?? 0).toLocaleString()} ر.س</div>
+                  <div className="text-sm text-slate-500 mt-4">مرتبطة بالعقود النشطة والمغلقة</div>
+                </div>
+                <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                  <div className="text-sm text-slate-500 mb-2">الموافقات المعلقة</div>
+                  <div className="text-4xl font-bold text-amber-600">{overview?.pendingApprovals ?? 0}</div>
+                  <div className="text-sm text-slate-500 mt-4">تحتاج إجراء من الإدارة</div>
+                </div>
+                <div className="lg:col-span-3 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="p-6 border-b border-slate-100">
+                    <h3 className="text-lg font-bold text-slate-900">تقرير حالة المشاريع</h3>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {(projects ?? []).map((project) => (
+                      <div key={project.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                          <div className="font-bold text-slate-900">{project.name}</div>
+                          <div className="text-sm text-slate-500">{project.clientName} • {project.stage}</div>
+                        </div>
+                        <div className="md:w-80">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span>الإنجاز</span>
+                            <span className="font-bold">{project.progress}%</span>
+                          </div>
+                          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500" style={{ width: `${project.progress}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeModule === "users" && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">المستخدمون والصلاحيات</h3>
+                    <p className="text-sm text-slate-500 mt-1">حسابات دخول فعلية محفوظة في قاعدة البيانات.</p>
+                  </div>
+                  <Dialog open={isCreateUserOpen} onOpenChange={setIsCreateUserOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold gap-2">
+                        <Plus className="w-4 h-4" /> إضافة مستخدم
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent dir="rtl" className="font-sans">
+                      <DialogHeader>
+                        <DialogTitle>إضافة مستخدم جديد</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 pt-4">
+                        <div className="space-y-2">
+                          <Label>الاسم</Label>
+                          <Input value={newUser.name} onChange={(event) => setNewUser({ ...newUser, name: event.target.value })} placeholder="اسم المستخدم" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>البريد الإلكتروني</Label>
+                          <Input dir="ltr" value={newUser.email} onChange={(event) => setNewUser({ ...newUser, email: event.target.value })} placeholder="user@arkan-build.com" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>الدور</Label>
+                            <select className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" value={newUser.role} onChange={(event) => setNewUser({ ...newUser, role: event.target.value })}>
+                              <option value="admin">مدير</option>
+                              <option value="employee">موظف</option>
+                              <option value="client">عميل</option>
+                            </select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>القسم</Label>
+                            <Input value={newUser.department} onChange={(event) => setNewUser({ ...newUser, department: event.target.value })} />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>الصلاحيات مفصولة بفواصل</Label>
+                          <Input dir="ltr" value={newUser.permissions} onChange={(event) => setNewUser({ ...newUser, permissions: event.target.value })} placeholder="projects,tasks,approvals" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>كلمة المرور</Label>
+                          <Input dir="ltr" type="password" value={newUser.password} onChange={(event) => setNewUser({ ...newUser, password: event.target.value })} />
+                        </div>
+                        <Button className="w-full bg-slate-900 text-white hover:bg-slate-800" disabled={createUserMutation.isPending} onClick={() => createUserMutation.mutate()}>
+                          {createUserMutation.isPending ? "جاري الحفظ..." : "حفظ المستخدم"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right">
+                    <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
+                      <tr>
+                        <th className="px-6 py-4 font-semibold">المستخدم</th>
+                        <th className="px-6 py-4 font-semibold">الدور</th>
+                        <th className="px-6 py-4 font-semibold">القسم</th>
+                        <th className="px-6 py-4 font-semibold">الصلاحيات</th>
+                        <th className="px-6 py-4 font-semibold">آخر دخول</th>
+                        <th className="px-6 py-4 font-semibold">الحالة</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {isLoadingSystemUsers ? (
+                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">جاري التحميل...</td></tr>
+                      ) : (systemUsers ?? []).map((user) => (
+                        <tr key={user.id} className="hover:bg-slate-50/60">
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-slate-900">{user.name}</div>
+                            <div className="text-xs text-slate-500" dir="ltr">{user.email}</div>
+                          </td>
+                          <td className="px-6 py-4 font-semibold text-slate-700">{user.role === "admin" ? "مدير" : user.role === "employee" ? "موظف" : "عميل"}</td>
+                          <td className="px-6 py-4 text-slate-700">{user.department}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-wrap gap-1">
+                              {user.permissions.map((permission) => (
+                                <span key={permission} className="rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">{permission}</span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-slate-500">{user.lastLoginAt ? format(new Date(user.lastLoginAt), "dd MMM yyyy HH:mm", { locale: ar }) : "لم يسجل بعد"}</td>
+                          <td className="px-6 py-4"><span className="rounded-full bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-700">نشط</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeModule === "assistant" && (
+              <div className="grid lg:grid-cols-[1fr_360px] gap-6">
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                  <h3 className="text-lg font-bold text-slate-900 mb-2">المساعد الذكي التشغيلي</h3>
+                  <p className="text-sm text-slate-500 mb-6">يقرأ بيانات المشاريع والموافقات والمهام والسجلات التشغيلية ويعطي توصية إدارية سريعة.</p>
+                  <div className="space-y-4">
+                    <textarea
+                      className="w-full min-h-32 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+                      value={assistantQuestion}
+                      onChange={(event) => setAssistantQuestion(event.target.value)}
+                    />
+                    <Button className="bg-slate-900 text-white hover:bg-slate-800" disabled={askAssistantMutation.isPending} onClick={() => askAssistantMutation.mutate()}>
+                      {askAssistantMutation.isPending ? "جاري التحليل..." : "تحليل الوضع الحالي"}
+                    </Button>
+                    {assistantAnswer && (
+                      <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5 text-slate-800 leading-8">
+                        {assistantAnswer}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="bg-slate-900 rounded-2xl p-6 text-white">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-900 flex items-center justify-center mb-4">
+                    <Bot className="w-6 h-6" />
+                  </div>
+                  <h4 className="font-bold text-lg mb-3">أسئلة مقترحة</h4>
+                  <div className="space-y-2">
+                    {["ما أهم المخاطر اليوم؟", "ما المشاريع التي تحتاج متابعة؟", "ما أولويات المشتريات؟"].map((question) => (
+                      <button key={question} className="w-full rounded-lg bg-white/10 px-3 py-2 text-right text-sm hover:bg-white/15" onClick={() => setAssistantQuestion(question)}>
+                        {question}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeModule === "support" && (
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">تذاكر الدعم الفني</h3>
+                    <p className="text-sm text-slate-500 mt-1">متابعة طلبات الدعم والصلاحيات والمشاكل الفنية.</p>
+                  </div>
+                  <Dialog open={isCreateTicketOpen} onOpenChange={setIsCreateTicketOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold gap-2">
+                        <Plus className="w-4 h-4" /> فتح تذكرة
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent dir="rtl" className="font-sans">
+                      <DialogHeader>
+                        <DialogTitle>فتح تذكرة دعم</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 pt-4">
+                        <div className="space-y-2">
+                          <Label>العنوان</Label>
+                          <Input value={newTicket.title} onChange={(event) => setNewTicket({ ...newTicket, title: event.target.value })} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-2">
+                            <Label>مقدم الطلب</Label>
+                            <Input value={newTicket.requester} onChange={(event) => setNewTicket({ ...newTicket, requester: event.target.value })} />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>التصنيف</Label>
+                            <Input value={newTicket.category} onChange={(event) => setNewTicket({ ...newTicket, category: event.target.value })} />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>الأولوية</Label>
+                          <select className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm" value={newTicket.priority} onChange={(event) => setNewTicket({ ...newTicket, priority: event.target.value })}>
+                            <option value="urgent">عاجل</option>
+                            <option value="high">مرتفع</option>
+                            <option value="medium">متوسط</option>
+                            <option value="low">منخفض</option>
+                          </select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>الوصف</Label>
+                          <textarea className="w-full min-h-24 rounded-md border border-slate-200 px-3 py-2 text-sm" value={newTicket.message} onChange={(event) => setNewTicket({ ...newTicket, message: event.target.value })} />
+                        </div>
+                        <Button className="w-full bg-slate-900 text-white hover:bg-slate-800" disabled={createTicketMutation.isPending} onClick={() => createTicketMutation.mutate()}>
+                          {createTicketMutation.isPending ? "جاري الفتح..." : "حفظ التذكرة"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4 p-6">
+                  {isLoadingSupportTickets ? (
+                    <div className="md:col-span-2 p-8 text-center text-slate-500">جاري التحميل...</div>
+                  ) : (supportTickets ?? []).map((ticket) => (
+                    <div key={ticket.id} className="rounded-xl border border-slate-200 p-5 hover:border-amber-200 transition-colors">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                          <div className="font-bold text-slate-900">{ticket.title}</div>
+                          <div className="text-xs text-slate-500 mt-1">{ticket.requester} • {ticket.category}</div>
+                        </div>
+                        <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{statusLabels[ticket.status] ?? ticket.status}</span>
+                      </div>
+                      <p className="text-sm text-slate-600 leading-7 mb-4">{ticket.message}</p>
+                      <div className="flex items-center justify-between text-xs text-slate-500">
+                        <span>المسؤول: {ticket.assignee}</span>
+                        <span>{format(new Date(ticket.createdAt), "dd MMM yyyy", { locale: ar })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Operational modules */}
             {operationalModuleIds.includes(activeModule) && (
               <div className="space-y-6">
@@ -682,7 +1043,7 @@ export function AdminDashboard() {
             )}
 
             {/* Other modules fallback */}
-            {!["dashboard", "employees", "projects", "contracts", ...operationalModuleIds].includes(activeModule) && (
+            {!["dashboard", "employees", "projects", "contracts", "reports", "users", "assistant", "support", ...operationalModuleIds].includes(activeModule) && (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
                 <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   {modules.find(m => m.id === activeModule)?.icon}
