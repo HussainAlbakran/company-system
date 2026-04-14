@@ -31,7 +31,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
 ## Company System
 
 - A React/Vite deployable web artifact exists at `artifacts/company-system` with preview path `/`.
-- The app is an Arabic RTL contracting company system MVP based on the user's approved canvas mockups and existing GitHub Laravel project reference.
+- The app is an Arabic RTL system for **شركة التقدم للخرسانة الجاهزة (Advance Precast Company)**, based on the user's approved canvas mockups and existing GitHub Laravel project reference.
 - Current frontend routes:
   - `/` public contracting company homepage
   - `/login` database-backed login screen

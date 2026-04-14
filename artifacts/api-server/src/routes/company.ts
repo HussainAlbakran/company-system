@@ -48,7 +48,7 @@ const stringField = (body: Record<string, unknown>, key: string) => typeof body[
 const arrayField = (body: Record<string, unknown>, key: string) => Array.isArray(body[key]) ? body[key].filter((item): item is string => typeof item === "string") : [];
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const daysUntil = (date: Date | null) => date ? Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
-const systemEmail = () => process.env.COMPANY_SYSTEM_EMAIL ?? "info@arkan-build.com";
+const systemEmail = () => process.env.COMPANY_SYSTEM_EMAIL ?? "info@advance-precast.com";
 
 const publicUser = (user: typeof systemUsersTable.$inferSelect) => ({
   id: user.id,
@@ -487,7 +487,7 @@ router.post("/company/contracts/:id/email-update", async (req, res): Promise<voi
     fromEmail: systemEmail(),
     toEmail,
     subject: `تحديث عقد ${contract.code} - ${contract.projectName}`,
-    body: `مرحباً،\n\n${movement}\n${details}\n\nشركة أركانا البناء`,
+    body: `مرحباً،\n\n${movement}\n${details}\n\nشركة التقدم للخرسانة الجاهزة`,
     relatedModule: "contracts",
     relatedId: contract.id,
     createdBy: "المدير العام",

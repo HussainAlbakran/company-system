@@ -27,10 +27,10 @@ export function ClientPortal() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center">
-                <Building2 className="text-slate-900 w-5 h-5" />
+              <div className="bg-white rounded-lg p-1.5">
+                <img src="/company-logo.png" alt="شركة التقدم للخرسانة الجاهزة" className="h-8 w-auto" />
               </div>
-              <span className="font-bold text-xl hidden sm:block">أركان<span className="text-amber-500">البناء</span></span>
+              <span className="font-bold text-sm hidden sm:block text-white leading-tight">شركة التقدم<br/><span className="text-amber-400 text-xs">للخرسانة الجاهزة</span></span>
             </div>
             
             <div className="flex items-center gap-6">

@@ -61,11 +61,14 @@ export function Login() {
         </div>
         
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-12">
-            <div className="w-12 h-12 bg-amber-500 rounded flex items-center justify-center shadow-lg">
-              <Building2 className="text-slate-900 w-7 h-7" />
+          <div className="flex items-center gap-3 mb-12">
+            <div className="bg-white rounded-xl p-2 shadow-lg">
+              <img src="/company-logo.png" alt="شركة التقدم للخرسانة الجاهزة" className="h-12 w-auto" />
             </div>
-            <span className="font-bold text-3xl tracking-tight text-white">أركان<span className="text-amber-500">البناء</span></span>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg leading-tight text-white">شركة التقدم</span>
+              <span className="font-bold text-lg leading-tight text-amber-400">للخرسانة الجاهزة</span>
+            </div>
           </div>
         </div>
 
@@ -98,11 +101,8 @@ export function Login() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12 relative bg-white">
         <div className="w-full max-w-md">
           
-          <div className="md:hidden flex items-center gap-2 mb-12 justify-center">
-            <div className="w-10 h-10 bg-amber-500 rounded flex items-center justify-center">
-              <Building2 className="text-slate-900 w-6 h-6" />
-            </div>
-            <span className="font-bold text-2xl tracking-tight text-slate-900">أركان<span className="text-amber-600">البناء</span></span>
+          <div className="md:hidden flex items-center gap-3 mb-12 justify-center">
+            <img src="/company-logo.png" alt="شركة التقدم للخرسانة الجاهزة" className="h-14 w-auto" />
           </div>
 
           <div className="mb-10 text-center md:text-right">

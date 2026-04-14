@@ -27,10 +27,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20 items-center">
             <Link href="/" className="flex items-center gap-2 cursor-pointer" data-testid="link-home">
-              <div className="w-10 h-10 bg-amber-500 rounded flex items-center justify-center">
-                <Building2 className="text-slate-900 w-6 h-6" />
-              </div>
-              <span className="font-bold text-2xl tracking-tight text-slate-900">أركان<span className="text-amber-600">البناء</span></span>
+              <img src="/company-logo.png" alt="شركة التقدم للخرسانة الجاهزة" className="h-12 w-auto" />
             </Link>
             
             <div className="hidden md:flex items-center gap-8 font-medium">
@@ -92,13 +89,13 @@ export function Home() {
             >
               <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 text-sm font-semibold mb-6">
                 <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                رواد المقاولات في المملكة
+                رواد الخرسانة الجاهزة في المملكة
               </motion.div>
               <motion.h1 variants={fadeIn} className="text-5xl lg:text-7xl font-bold leading-tight mb-6 text-white">
                 نبني المستقبل بأسس <span className="text-amber-500">راسخة</span>
               </motion.h1>
               <motion.p variants={fadeIn} className="text-lg text-slate-300 mb-8 leading-relaxed max-w-lg">
-                شركة مقاولات رائدة في تقديم حلول البناء المتكاملة، من الفيلات السكنية الفاخرة إلى المشاريع التجارية، بجودة لا تضاهى والتزام تام بالمواعيد.
+                شركة رائدة في تصنيع وتوريد الخرسانة الجاهزة والمنتجات الخرسانية عالية الجودة لمختلف المشاريع الإنشائية والقطاعات بجودة لا تضاهى والتزام تام.
               </motion.p>
               <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4">
                 <button className="bg-amber-500 hover:bg-amber-400 text-slate-900 px-8 py-3.5 rounded font-bold text-lg transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] hover:shadow-[0_0_30px_rgba(245,158,11,0.5)] flex items-center justify-center gap-2" data-testid="button-start-project">
@@ -245,7 +242,7 @@ export function Home() {
                     </div>
                     <div>
                       <div className="text-slate-400 text-sm mb-1">البريد الإلكتروني</div>
-                      <div className="text-lg font-medium font-sans" dir="ltr">info@arkan-build.com</div>
+                      <div className="text-lg font-medium font-sans" dir="ltr">info@advance-precast.com</div>
                     </div>
                   </div>
                   
