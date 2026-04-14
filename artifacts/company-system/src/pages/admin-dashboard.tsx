@@ -3,9 +3,9 @@ import { useLocation } from "wouter";
 import { 
   Building2, Search, Bell, Menu, LayoutDashboard, FileText, Users, 
   Settings, FolderOpen, PieChart, ShieldCheck, Box, Factory, Wrench, 
-  Car, MessageSquare, Briefcase, LogOut, ChevronLeft, Plus
+  Car, MessageSquare, Briefcase, LogOut, ChevronLeft, Plus, Plane, History
 } from "lucide-react";
-import { useGetCompanyOverview, useListActivity, useListApprovals, useListEmployees, useListProjects, useListContracts, useCreateProject } from "@workspace/api-client-react";
+import { useGetCompanyOverview, useListActivity, useListApprovals, useListEmployees, useListProjects, useListContracts, useCreateProject, useListOperationalRecords, useUpdateApprovalStatus, useCreateOperationalRecord } from "@workspace/api-client-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListProjectsQueryKey } from "@workspace/api-client-react";
+import { getListProjectsQueryKey, getListApprovalsQueryKey, getListOperationalRecordsQueryKey } from "@workspace/api-client-react";
 
 export function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -28,6 +28,7 @@ export function AdminDashboard() {
   const { data: employees, isLoading: isLoadingEmployees } = useListEmployees();
   const { data: projects, isLoading: isLoadingProjects } = useListProjects();
   const { data: contracts, isLoading: isLoadingContracts } = useListContracts();
+  const { data: operationalRecords, isLoading: isLoadingOperationalRecords } = useListOperationalRecords();
   
   const createProjectMutation = useCreateProject({
     mutation: {
@@ -41,9 +42,55 @@ export function AdminDashboard() {
       }
     }
   });
+  const updateApprovalStatusMutation = useUpdateApprovalStatus({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListApprovalsQueryKey() });
+        toast({ title: "تم تحديث حالة الموافقة" });
+      },
+      onError: () => {
+        toast({ title: "تعذر تحديث حالة الموافقة", variant: "destructive" });
+      },
+    },
+  });
+  const createOperationalRecordMutation = useCreateOperationalRecord({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListOperationalRecordsQueryKey() });
+        toast({ title: "تم إضافة السجل التشغيلي" });
+        setIsCreateOperationalRecordOpen(false);
+        setNewOperationalRecord({
+          title: "",
+          reference: "",
+          projectName: "",
+          owner: "",
+          status: "open",
+          priority: "medium",
+          quantity: 1,
+          amount: 0,
+          dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        });
+      },
+      onError: () => {
+        toast({ title: "تعذر إضافة السجل التشغيلي", variant: "destructive" });
+      },
+    },
+  });
 
   const [isCreateProjectOpen, setIsCreateProjectOpen] = useState(false);
   const [newProject, setNewProject] = useState({ name: "", clientName: "", location: "", stage: "planning", budget: 0 });
+  const [isCreateOperationalRecordOpen, setIsCreateOperationalRecordOpen] = useState(false);
+  const [newOperationalRecord, setNewOperationalRecord] = useState({
+    title: "",
+    reference: "",
+    projectName: "",
+    owner: "",
+    status: "open",
+    priority: "medium",
+    quantity: 1,
+    amount: 0,
+    dueAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
@@ -62,8 +109,32 @@ export function AdminDashboard() {
     { id: "factory", icon: <Factory />, label: "المصنع والإنتاج" },
     { id: "installations", icon: <Wrench />, label: "التركيبات والصيانة" },
     { id: "assets", icon: <Car />, label: "الأصول والسيارات" },
+    { id: "leaves", icon: <Plane />, label: "الإجازات والدوام" },
+    { id: "audit", icon: <History />, label: "سجل التدقيق" },
     { id: "support", icon: <MessageSquare />, label: "الدعم الفني" },
   ];
+
+  const operationalModuleIds = ["purchases", "warehouse", "factory", "installations", "assets", "leaves", "audit"];
+  const activeModuleRecords = operationalRecords?.filter((record) => record.module === activeModule) ?? [];
+  const statusLabels: Record<string, string> = {
+    active: "نشط",
+    open: "مفتوح",
+    pending_approval: "بانتظار الاعتماد",
+    under_review: "قيد المراجعة",
+    received: "تم الاستلام",
+    scheduled: "مجدول",
+    in_progress: "قيد التنفيذ",
+    queued: "في الانتظار",
+    maintenance: "صيانة",
+    logged: "مسجل",
+    closing: "إغلاق",
+  };
+  const priorityLabels: Record<string, string> = {
+    urgent: "عاجل",
+    high: "مرتفع",
+    medium: "متوسط",
+    low: "منخفض",
+  };
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 font-sans text-slate-900 flex selection:bg-amber-500 selection:text-slate-900">
@@ -270,6 +341,16 @@ export function AdminDashboard() {
                               <span className={`text-xs px-2 py-1 rounded font-semibold ${app.type === 'financial' || app.type === 'مالي' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
                                 {app.type}
                               </span>
+                              {app.status === "pending" && (
+                                <button
+                                  className="rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                  onClick={() => updateApprovalStatusMutation.mutate({ id: app.id, data: { status: "approved" } })}
+                                  disabled={updateApprovalStatusMutation.isPending}
+                                  data-testid={`admin-approve-${app.id}`}
+                                >
+                                  اعتماد
+                                </button>
+                              )}
                               <button className="text-amber-600 hover:bg-amber-50 p-1.5 rounded">
                                 <ChevronLeft className="w-5 h-5" />
                               </button>
@@ -440,17 +521,174 @@ export function AdminDashboard() {
               </div>
             )}
 
+            {/* Operational modules */}
+            {operationalModuleIds.includes(activeModule) && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="text-sm text-slate-500 mb-1">إجمالي السجلات</div>
+                    <div className="text-3xl font-bold text-slate-900">{isLoadingOperationalRecords ? "..." : activeModuleRecords.length}</div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="text-sm text-slate-500 mb-1">بانتظار إجراء</div>
+                    <div className="text-3xl font-bold text-amber-600">
+                      {isLoadingOperationalRecords ? "..." : activeModuleRecords.filter((record) => ["pending_approval", "open", "under_review"].includes(record.status)).length}
+                    </div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="text-sm text-slate-500 mb-1">القيمة المرتبطة</div>
+                    <div className="text-3xl font-bold text-slate-900" dir="ltr">
+                      {isLoadingOperationalRecords ? "..." : `${activeModuleRecords.reduce((sum, record) => sum + record.amount, 0).toLocaleString()} ر.س`}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">سجلات {modules.find(m => m.id === activeModule)?.label}</h3>
+                      <p className="text-sm text-slate-500 mt-1">بيانات تشغيلية حقيقية مرتبطة بالمشاريع والموظفين والاعتمادات.</p>
+                    </div>
+                    <Dialog open={isCreateOperationalRecordOpen} onOpenChange={setIsCreateOperationalRecordOpen}>
+                      <DialogTrigger asChild>
+                        <button className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-lg font-medium transition-all shadow-md" data-testid={`button-add-${activeModule}`}>
+                          إضافة سجل جديد
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent dir="rtl" className="font-sans">
+                        <DialogHeader>
+                          <DialogTitle>إضافة سجل في {modules.find(m => m.id === activeModule)?.label}</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 pt-4">
+                          <div className="space-y-2">
+                            <Label>عنوان السجل</Label>
+                            <Input value={newOperationalRecord.title} onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, title: event.target.value })} placeholder="مثال: أمر شراء خرسانة جاهزة" />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>المرجع</Label>
+                              <Input value={newOperationalRecord.reference} onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, reference: event.target.value })} placeholder="PO-2026-120" dir="ltr" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>المشروع</Label>
+                              <Input value={newOperationalRecord.projectName} onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, projectName: event.target.value })} placeholder="اسم المشروع" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>المسؤول</Label>
+                              <Input value={newOperationalRecord.owner} onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, owner: event.target.value })} placeholder="اسم المسؤول" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>الأولوية</Label>
+                              <select
+                                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                value={newOperationalRecord.priority}
+                                onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, priority: event.target.value })}
+                              >
+                                <option value="urgent">عاجل</option>
+                                <option value="high">مرتفع</option>
+                                <option value="medium">متوسط</option>
+                                <option value="low">منخفض</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>الكمية</Label>
+                              <Input type="number" value={newOperationalRecord.quantity} onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, quantity: Number(event.target.value) })} dir="ltr" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>القيمة</Label>
+                              <Input type="number" value={newOperationalRecord.amount} onChange={(event) => setNewOperationalRecord({ ...newOperationalRecord, amount: Number(event.target.value) })} dir="ltr" />
+                            </div>
+                          </div>
+                          <Button
+                            className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold"
+                            disabled={createOperationalRecordMutation.isPending}
+                            onClick={() => createOperationalRecordMutation.mutate({
+                              data: {
+                                ...newOperationalRecord,
+                                module: activeModule,
+                              },
+                            })}
+                            data-testid="button-save-operational-record"
+                          >
+                            {createOperationalRecordMutation.isPending ? "جاري الحفظ..." : "حفظ السجل"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-right">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm">
+                        <tr>
+                          <th className="px-6 py-4 font-semibold">المرجع</th>
+                          <th className="px-6 py-4 font-semibold">السجل</th>
+                          <th className="px-6 py-4 font-semibold">المشروع</th>
+                          <th className="px-6 py-4 font-semibold">المسؤول</th>
+                          <th className="px-6 py-4 font-semibold">الأولوية</th>
+                          <th className="px-6 py-4 font-semibold">القيمة/الكمية</th>
+                          <th className="px-6 py-4 font-semibold">الحالة</th>
+                          <th className="px-6 py-4 font-semibold">الموعد</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {isLoadingOperationalRecords ? (
+                          <tr><td colSpan={8} className="p-8 text-center text-slate-500">جاري تحميل السجلات...</td></tr>
+                        ) : activeModuleRecords.length > 0 ? (
+                          activeModuleRecords.map((record) => (
+                            <tr key={record.id} className="hover:bg-slate-50/70 transition-colors" data-testid={`operation-record-${record.id}`}>
+                              <td className="px-6 py-4 font-medium text-slate-900" dir="ltr">{record.reference}</td>
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-slate-900">{record.title}</div>
+                                <div className="text-xs text-slate-500 mt-1">تم الإنشاء: {format(new Date(record.createdAt), "dd MMM yyyy", { locale: ar })}</div>
+                              </td>
+                              <td className="px-6 py-4 text-slate-700">{record.projectName}</td>
+                              <td className="px-6 py-4 text-slate-700">{record.owner}</td>
+                              <td className="px-6 py-4">
+                                <span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
+                                  record.priority === "urgent" ? "bg-red-100 text-red-700" :
+                                  record.priority === "high" ? "bg-amber-100 text-amber-700" :
+                                  record.priority === "low" ? "bg-slate-100 text-slate-600" :
+                                  "bg-blue-100 text-blue-700"
+                                }`}>
+                                  {priorityLabels[record.priority] ?? record.priority}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="font-semibold text-slate-900" dir="ltr">{record.amount.toLocaleString()} ر.س</div>
+                                <div className="text-xs text-slate-500">الكمية: {record.quantity}</div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className="inline-flex px-2 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                  {statusLabels[record.status] ?? record.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-slate-500 text-sm">
+                                {format(new Date(record.dueAt), "dd MMM yyyy", { locale: ar })}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr><td colSpan={8} className="p-8 text-center text-slate-500">لا توجد سجلات في هذه الوحدة بعد</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Other modules fallback */}
-            {!["dashboard", "employees", "projects", "contracts"].includes(activeModule) && (
+            {!["dashboard", "employees", "projects", "contracts", ...operationalModuleIds].includes(activeModule) && (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
                 <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   {modules.find(m => m.id === activeModule)?.icon}
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">وحدة {modules.find(m => m.id === activeModule)?.label}</h3>
-                <p className="text-slate-500 max-w-md mx-auto">هذه الوحدة مخصصة لإدارة العمليات المرتبطة بها في النظام الموحد. سيتم تفعيل الواجهات التفصيلية بناءً على الصلاحيات.</p>
-                <button className="mt-6 bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-lg font-medium transition-all shadow-md">
-                  إضافة سجل جديد
-                </button>
+                <p className="text-slate-500 max-w-md mx-auto">هذه الوحدة جاهزة ضمن هيكل النظام، وسيتم ربط تفاصيلها بصلاحيات المستخدمين وسير العمل عند تفعيل المرحلة التالية.</p>
               </div>
             )}
 

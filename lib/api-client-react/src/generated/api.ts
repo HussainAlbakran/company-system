@@ -22,12 +22,15 @@ import type {
   CompanyOverview,
   Contract,
   CreateEmployeeInput,
+  CreateOperationalRecordInput,
   CreateOperationalTaskInput,
   CreateProjectInput,
   Employee,
   HealthStatus,
+  OperationalRecord,
   OperationalTask,
   Project,
+  UpdateStatusInput,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -750,6 +753,94 @@ export const useCreateOperationalTask = <
 };
 
 /**
+ * @summary Update operational task status
+ */
+export const getUpdateOperationalTaskStatusUrl = (id: number) => {
+  return `/api/company/tasks/${id}/status`;
+};
+
+export const updateOperationalTaskStatus = async (
+  id: number,
+  updateStatusInput: UpdateStatusInput,
+  options?: RequestInit,
+): Promise<OperationalTask> => {
+  return customFetch<OperationalTask>(getUpdateOperationalTaskStatusUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateStatusInput),
+  });
+};
+
+export const getUpdateOperationalTaskStatusMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateOperationalTaskStatus>>,
+    TError,
+    { id: number; data: BodyType<UpdateStatusInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateOperationalTaskStatus>>,
+  TError,
+  { id: number; data: BodyType<UpdateStatusInput> },
+  TContext
+> => {
+  const mutationKey = ["updateOperationalTaskStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateOperationalTaskStatus>>,
+    { id: number; data: BodyType<UpdateStatusInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateOperationalTaskStatus(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateOperationalTaskStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateOperationalTaskStatus>>
+>;
+export type UpdateOperationalTaskStatusMutationBody =
+  BodyType<UpdateStatusInput>;
+export type UpdateOperationalTaskStatusMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update operational task status
+ */
+export const useUpdateOperationalTaskStatus = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateOperationalTaskStatus>>,
+    TError,
+    { id: number; data: BodyType<UpdateStatusInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateOperationalTaskStatus>>,
+  TError,
+  { id: number; data: BodyType<UpdateStatusInput> },
+  TContext
+> => {
+  return useMutation(getUpdateOperationalTaskStatusMutationOptions(options));
+};
+
+/**
  * @summary List approvals
  */
 export const getListApprovalsUrl = () => {
@@ -825,6 +916,93 @@ export function useListApprovals<
 }
 
 /**
+ * @summary Update approval status
+ */
+export const getUpdateApprovalStatusUrl = (id: number) => {
+  return `/api/company/approvals/${id}/status`;
+};
+
+export const updateApprovalStatus = async (
+  id: number,
+  updateStatusInput: UpdateStatusInput,
+  options?: RequestInit,
+): Promise<Approval> => {
+  return customFetch<Approval>(getUpdateApprovalStatusUrl(id), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateStatusInput),
+  });
+};
+
+export const getUpdateApprovalStatusMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateApprovalStatus>>,
+    TError,
+    { id: number; data: BodyType<UpdateStatusInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateApprovalStatus>>,
+  TError,
+  { id: number; data: BodyType<UpdateStatusInput> },
+  TContext
+> => {
+  const mutationKey = ["updateApprovalStatus"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateApprovalStatus>>,
+    { id: number; data: BodyType<UpdateStatusInput> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateApprovalStatus(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateApprovalStatusMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateApprovalStatus>>
+>;
+export type UpdateApprovalStatusMutationBody = BodyType<UpdateStatusInput>;
+export type UpdateApprovalStatusMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update approval status
+ */
+export const useUpdateApprovalStatus = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateApprovalStatus>>,
+    TError,
+    { id: number; data: BodyType<UpdateStatusInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateApprovalStatus>>,
+  TError,
+  { id: number; data: BodyType<UpdateStatusInput> },
+  TContext
+> => {
+  return useMutation(getUpdateApprovalStatusMutationOptions(options));
+};
+
+/**
  * @summary List recent activity
  */
 export const getListActivityUrl = () => {
@@ -898,3 +1076,166 @@ export function useListActivity<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary List operational records across company modules
+ */
+export const getListOperationalRecordsUrl = () => {
+  return `/api/company/operations`;
+};
+
+export const listOperationalRecords = async (
+  options?: RequestInit,
+): Promise<OperationalRecord[]> => {
+  return customFetch<OperationalRecord[]>(getListOperationalRecordsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListOperationalRecordsQueryKey = () => {
+  return [`/api/company/operations`] as const;
+};
+
+export const getListOperationalRecordsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listOperationalRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listOperationalRecords>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListOperationalRecordsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listOperationalRecords>>
+  > = ({ signal }) => listOperationalRecords({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listOperationalRecords>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListOperationalRecordsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listOperationalRecords>>
+>;
+export type ListOperationalRecordsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List operational records across company modules
+ */
+
+export function useListOperationalRecords<
+  TData = Awaited<ReturnType<typeof listOperationalRecords>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof listOperationalRecords>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListOperationalRecordsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Create operational record
+ */
+export const getCreateOperationalRecordUrl = () => {
+  return `/api/company/operations`;
+};
+
+export const createOperationalRecord = async (
+  createOperationalRecordInput: CreateOperationalRecordInput,
+  options?: RequestInit,
+): Promise<OperationalRecord> => {
+  return customFetch<OperationalRecord>(getCreateOperationalRecordUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createOperationalRecordInput),
+  });
+};
+
+export const getCreateOperationalRecordMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createOperationalRecord>>,
+    TError,
+    { data: BodyType<CreateOperationalRecordInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createOperationalRecord>>,
+  TError,
+  { data: BodyType<CreateOperationalRecordInput> },
+  TContext
+> => {
+  const mutationKey = ["createOperationalRecord"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createOperationalRecord>>,
+    { data: BodyType<CreateOperationalRecordInput> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createOperationalRecord(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateOperationalRecordMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createOperationalRecord>>
+>;
+export type CreateOperationalRecordMutationBody =
+  BodyType<CreateOperationalRecordInput>;
+export type CreateOperationalRecordMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create operational record
+ */
+export const useCreateOperationalRecord = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createOperationalRecord>>,
+    TError,
+    { data: BodyType<CreateOperationalRecordInput> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createOperationalRecord>>,
+  TError,
+  { data: BodyType<CreateOperationalRecordInput> },
+  TContext
+> => {
+  return useMutation(getCreateOperationalRecordMutationOptions(options));
+};

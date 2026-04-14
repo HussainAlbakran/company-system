@@ -144,6 +144,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OperationalTask"
+  /company/tasks/{id}/status:
+    patch:
+      operationId: updateOperationalTaskStatus
+      tags: [company]
+      summary: Update operational task status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationalTask"
   /company/approvals:
     get:
       operationId: listApprovals
@@ -158,6 +182,30 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Approval"
+  /company/approvals/{id}/status:
+    patch:
+      operationId: updateApprovalStatus
+      tags: [company]
+      summary: Update approval status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusInput"
+      responses:
+        "200":
+          description: Updated approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Approval"
   /company/activity:
     get:
       operationId: listActivity
@@ -172,6 +220,37 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ActivityItem"
+  /company/operations:
+    get:
+      operationId: listOperationalRecords
+      tags: [company]
+      summary: List operational records across company modules
+      responses:
+        "200":
+          description: Operational records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OperationalRecord"
+    post:
+      operationId: createOperationalRecord
+      tags: [company]
+      summary: Create operational record
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOperationalRecordInput"
+      responses:
+        "201":
+          description: Created operational record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationalRecord"
 components:
   schemas:
     HealthStatus:
@@ -342,6 +421,12 @@ components:
         priority:
           type: string
       required: [title, category, projectName, assignee, priority]
+    UpdateStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
     Approval:
       type: object
       properties:
@@ -378,3 +463,58 @@ components:
           type: string
           format: date-time
       required: [id, title, description, actor, module, createdAt]
+    OperationalRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        module:
+          type: string
+        title:
+          type: string
+        reference:
+          type: string
+        projectName:
+          type: string
+        owner:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        quantity:
+          type: integer
+        amount:
+          type: number
+        dueAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, module, title, reference, projectName, owner, status, priority, quantity, amount, dueAt, createdAt]
+    CreateOperationalRecordInput:
+      type: object
+      properties:
+        module:
+          type: string
+        title:
+          type: string
+        reference:
+          type: string
+        projectName:
+          type: string
+        owner:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        quantity:
+          type: integer
+        amount:
+          type: number
+        dueAt:
+          type: string
+          format: date-time
+      required: [module, title, reference, projectName, owner, status, priority, quantity, amount, dueAt]

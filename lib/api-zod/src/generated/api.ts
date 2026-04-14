@@ -137,6 +137,28 @@ export const CreateOperationalTaskBody = zod.object({
 });
 
 /**
+ * @summary Update operational task status
+ */
+export const UpdateOperationalTaskStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateOperationalTaskStatusBody = zod.object({
+  status: zod.string(),
+});
+
+export const UpdateOperationalTaskStatusResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  category: zod.string(),
+  projectName: zod.string(),
+  assignee: zod.string(),
+  priority: zod.string(),
+  status: zod.string(),
+  dueAt: zod.coerce.date(),
+});
+
+/**
  * @summary List approvals
  */
 export const ListApprovalsResponseItem = zod.object({
@@ -151,6 +173,27 @@ export const ListApprovalsResponseItem = zod.object({
 export const ListApprovalsResponse = zod.array(ListApprovalsResponseItem);
 
 /**
+ * @summary Update approval status
+ */
+export const UpdateApprovalStatusParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateApprovalStatusBody = zod.object({
+  status: zod.string(),
+});
+
+export const UpdateApprovalStatusResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  type: zod.string(),
+  requester: zod.string(),
+  projectName: zod.string(),
+  status: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
  * @summary List recent activity
  */
 export const ListActivityResponseItem = zod.object({
@@ -162,3 +205,40 @@ export const ListActivityResponseItem = zod.object({
   createdAt: zod.coerce.date(),
 });
 export const ListActivityResponse = zod.array(ListActivityResponseItem);
+
+/**
+ * @summary List operational records across company modules
+ */
+export const ListOperationalRecordsResponseItem = zod.object({
+  id: zod.number(),
+  module: zod.string(),
+  title: zod.string(),
+  reference: zod.string(),
+  projectName: zod.string(),
+  owner: zod.string(),
+  status: zod.string(),
+  priority: zod.string(),
+  quantity: zod.number(),
+  amount: zod.number(),
+  dueAt: zod.coerce.date(),
+  createdAt: zod.coerce.date(),
+});
+export const ListOperationalRecordsResponse = zod.array(
+  ListOperationalRecordsResponseItem,
+);
+
+/**
+ * @summary Create operational record
+ */
+export const CreateOperationalRecordBody = zod.object({
+  module: zod.string(),
+  title: zod.string(),
+  reference: zod.string(),
+  projectName: zod.string(),
+  owner: zod.string(),
+  status: zod.string(),
+  priority: zod.string(),
+  quantity: zod.number(),
+  amount: zod.number(),
+  dueAt: zod.coerce.date(),
+});

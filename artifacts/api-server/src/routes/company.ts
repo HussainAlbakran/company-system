@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import {
   activityItemsTable,
   approvalsTable,
@@ -7,12 +7,14 @@ import {
   db,
   departmentsTable,
   employeesTable,
+  operationalRecordsTable,
   operationalTasksTable,
   projectsTable,
 } from "@workspace/db";
 import {
   CreateEmployeeBody,
   CreateOperationalTaskBody,
+  CreateOperationalRecordBody,
   CreateProjectBody,
   GetCompanyOverviewResponse,
   ListActivityResponse,
@@ -22,8 +24,16 @@ import {
   ListEmployeesResponse,
   ListOperationalTasksResponseItem,
   ListOperationalTasksResponse,
+  ListOperationalRecordsResponse,
+  ListOperationalRecordsResponseItem,
   ListProjectsResponseItem,
   ListProjectsResponse,
+  UpdateApprovalStatusBody,
+  UpdateApprovalStatusParams,
+  UpdateApprovalStatusResponse,
+  UpdateOperationalTaskStatusBody,
+  UpdateOperationalTaskStatusParams,
+  UpdateOperationalTaskStatusResponse,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -94,10 +104,165 @@ async function ensureSeedData(): Promise<void> {
   return seedPromise;
 }
 
+async function ensureOperationalRecordsSeed(): Promise<void> {
+  const existing = await db.select().from(operationalRecordsTable).limit(1);
+  if (existing.length > 0) {
+    return;
+  }
+
+  await db.insert(operationalRecordsTable).values([
+    {
+      module: "purchases",
+      title: "أمر شراء خرسانة جاهزة",
+      reference: "PO-2026-118",
+      projectName: "برج الأعمال الإداري",
+      owner: "عبدالعزيز الحربي",
+      status: "pending_approval",
+      priority: "urgent",
+      quantity: 340,
+      amount: "268000.00",
+      dueAt: addDays(2),
+    },
+    {
+      module: "purchases",
+      title: "مراجعة عرض مورد الألمنيوم",
+      reference: "RFQ-2026-044",
+      projectName: "مجمع فلل الياسمين",
+      owner: "سارة العتيبي",
+      status: "under_review",
+      priority: "high",
+      quantity: 1,
+      amount: "415000.00",
+      dueAt: addDays(5),
+    },
+    {
+      module: "warehouse",
+      title: "دفعة حديد تسليح 16 مم",
+      reference: "WH-IN-882",
+      projectName: "برج الأعمال الإداري",
+      owner: "خالد العمار",
+      status: "received",
+      priority: "medium",
+      quantity: 28,
+      amount: "196000.00",
+      dueAt: addDays(-1),
+    },
+    {
+      module: "warehouse",
+      title: "تحويل مواد التشطيب للموقع",
+      reference: "WH-OUT-311",
+      projectName: "ترميم قصر السلام",
+      owner: "خالد العمار",
+      status: "scheduled",
+      priority: "medium",
+      quantity: 12,
+      amount: "68500.00",
+      dueAt: addDays(1),
+    },
+    {
+      module: "factory",
+      title: "إنتاج أبواب خشب داخلية",
+      reference: "PRD-2026-057",
+      projectName: "ترميم قصر السلام",
+      owner: "خالد السالم",
+      status: "in_progress",
+      priority: "high",
+      quantity: 36,
+      amount: "144000.00",
+      dueAt: addDays(8),
+    },
+    {
+      module: "factory",
+      title: "تصنيع درابزين السلالم",
+      reference: "PRD-2026-061",
+      projectName: "مجمع فلل الياسمين",
+      owner: "فريق المصنع",
+      status: "queued",
+      priority: "medium",
+      quantity: 18,
+      amount: "92000.00",
+      dueAt: addDays(12),
+    },
+    {
+      module: "installations",
+      title: "تركيب أبواب الدور الأرضي",
+      reference: "INS-2026-204",
+      projectName: "ترميم قصر السلام",
+      owner: "خالد السالم",
+      status: "scheduled",
+      priority: "high",
+      quantity: 14,
+      amount: "38000.00",
+      dueAt: addDays(3),
+    },
+    {
+      module: "installations",
+      title: "فحص تمديدات الكهرباء",
+      reference: "INS-2026-211",
+      projectName: "مجمع فلل الياسمين",
+      owner: "أحمد عبدالله",
+      status: "open",
+      priority: "urgent",
+      quantity: 6,
+      amount: "22000.00",
+      dueAt: addDays(1),
+    },
+    {
+      module: "assets",
+      title: "صيانة رافعة الموقع",
+      reference: "AST-2026-019",
+      projectName: "برج الأعمال الإداري",
+      owner: "إدارة الأصول",
+      status: "maintenance",
+      priority: "high",
+      quantity: 1,
+      amount: "17500.00",
+      dueAt: addDays(4),
+    },
+    {
+      module: "assets",
+      title: "تجديد تأمين سيارات الإشراف",
+      reference: "AST-2026-025",
+      projectName: "الإدارة",
+      owner: "الإدارة التنفيذية",
+      status: "pending_approval",
+      priority: "medium",
+      quantity: 4,
+      amount: "24800.00",
+      dueAt: addDays(10),
+    },
+    {
+      module: "leaves",
+      title: "طلب إجازة سنوية",
+      reference: "LEV-2026-073",
+      projectName: "الإدارة",
+      owner: "خالد السالم",
+      status: "pending_approval",
+      priority: "low",
+      quantity: 5,
+      amount: "0.00",
+      dueAt: addDays(6),
+    },
+    {
+      module: "audit",
+      title: "تعديل صلاحيات مستخدم",
+      reference: "AUD-2026-301",
+      projectName: "النظام",
+      owner: "المدير العام",
+      status: "logged",
+      priority: "medium",
+      quantity: 1,
+      amount: "0.00",
+      dueAt: addDays(0),
+    },
+  ]);
+}
+
 const moneyToNumber = (value: string | number) => Number(value);
 
 router.use(async (_req, _res, next): Promise<void> => {
   await ensureSeedData();
+  await ensureOperationalRecordsSeed();
   next();
 });
 
@@ -201,14 +366,124 @@ router.post("/company/tasks", async (req, res): Promise<void> => {
   res.status(201).json(ListOperationalTasksResponseItem.parse(task));
 });
 
+router.patch("/company/tasks/:id/status", async (req, res): Promise<void> => {
+  const params = UpdateOperationalTaskStatusParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = UpdateOperationalTaskStatusBody.safeParse(req.body);
+  if (!parsed.success) {
+    req.log.warn({ errors: parsed.error.message }, "Invalid task status payload");
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [task] = await db
+    .update(operationalTasksTable)
+    .set({ status: parsed.data.status })
+    .where(eq(operationalTasksTable.id, params.data.id))
+    .returning();
+
+  if (!task) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  await db.insert(activityItemsTable).values({
+    title: "تحديث حالة مهمة",
+    description: `تم تغيير حالة مهمة ${task.title} إلى ${parsed.data.status}`,
+    actor: task.assignee,
+    module: "المهام",
+    createdAt: new Date(),
+  });
+
+  res.json(UpdateOperationalTaskStatusResponse.parse(task));
+});
+
 router.get("/company/approvals", async (_req, res): Promise<void> => {
   const approvals = await db.select().from(approvalsTable).orderBy(desc(approvalsTable.createdAt));
   res.json(ListApprovalsResponse.parse(approvals));
 });
 
+router.patch("/company/approvals/:id/status", async (req, res): Promise<void> => {
+  const params = UpdateApprovalStatusParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const parsed = UpdateApprovalStatusBody.safeParse(req.body);
+  if (!parsed.success) {
+    req.log.warn({ errors: parsed.error.message }, "Invalid approval status payload");
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [approval] = await db
+    .update(approvalsTable)
+    .set({ status: parsed.data.status })
+    .where(eq(approvalsTable.id, params.data.id))
+    .returning();
+
+  if (!approval) {
+    res.status(404).json({ error: "Approval not found" });
+    return;
+  }
+
+  await db.insert(activityItemsTable).values({
+    title: "تحديث موافقة",
+    description: `تم تغيير حالة ${approval.title} إلى ${parsed.data.status}`,
+    actor: approval.requester,
+    module: "الموافقات",
+    createdAt: new Date(),
+  });
+
+  res.json(UpdateApprovalStatusResponse.parse(approval));
+});
+
 router.get("/company/activity", async (_req, res): Promise<void> => {
   const activity = await db.select().from(activityItemsTable).orderBy(desc(activityItemsTable.createdAt));
   res.json(ListActivityResponse.parse(activity));
+});
+
+router.get("/company/operations", async (_req, res): Promise<void> => {
+  const records = await db
+    .select()
+    .from(operationalRecordsTable)
+    .orderBy(desc(operationalRecordsTable.createdAt));
+  res.json(ListOperationalRecordsResponse.parse(records.map((record) => ({
+    ...record,
+    amount: moneyToNumber(record.amount),
+  }))));
+});
+
+router.post("/company/operations", async (req, res): Promise<void> => {
+  const parsed = CreateOperationalRecordBody.safeParse(req.body);
+  if (!parsed.success) {
+    req.log.warn({ errors: parsed.error.message }, "Invalid operational record payload");
+    res.status(400).json({ error: parsed.error.message });
+    return;
+  }
+
+  const [record] = await db.insert(operationalRecordsTable).values({
+    ...parsed.data,
+    amount: String(parsed.data.amount),
+  }).returning();
+
+  await db.insert(activityItemsTable).values({
+    title: "إضافة سجل تشغيلي",
+    description: `تم إضافة ${record.title} في وحدة ${record.module}`,
+    actor: record.owner,
+    module: record.module,
+    createdAt: new Date(),
+  });
+
+  res.status(201).json(ListOperationalRecordsResponseItem.parse({
+    ...record,
+    amount: moneyToNumber(record.amount),
+  }));
 });
 
 export default router;

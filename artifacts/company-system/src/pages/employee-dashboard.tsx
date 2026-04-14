@@ -1,17 +1,47 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { Building2, Search, Bell, Menu, Home, FolderOpen, Calendar, Users, ClipboardCheck, Settings, TrendingUp, Clock, AlertTriangle, CheckCircle2, ChevronDown, FileText, LogOut } from "lucide-react";
-import { useListProjects, useListApprovals, useListOperationalTasks } from "@workspace/api-client-react";
+import {
+  getListApprovalsQueryKey,
+  getListOperationalTasksQueryKey,
+  useListProjects,
+  useListApprovals,
+  useListOperationalTasks,
+  useUpdateApprovalStatus,
+  useUpdateOperationalTaskStatus,
+} from "@workspace/api-client-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 
 export function EmployeeDashboard() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const { data: projects, isLoading: isLoadingProjects } = useListProjects();
   const { data: approvals, isLoading: isLoadingApprovals } = useListApprovals();
   const { data: tasks, isLoading: isLoadingTasks } = useListOperationalTasks();
+  const updateApprovalStatus = useUpdateApprovalStatus({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListApprovalsQueryKey() });
+        toast({ title: "تم تحديث الموافقة" });
+      },
+      onError: () => toast({ title: "تعذر تحديث الموافقة", variant: "destructive" }),
+    },
+  });
+  const updateTaskStatus = useUpdateOperationalTaskStatus({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListOperationalTasksQueryKey() });
+        toast({ title: "تم تحديث المهمة" });
+      },
+      onError: () => toast({ title: "تعذر تحديث المهمة", variant: "destructive" }),
+    },
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
@@ -284,7 +314,7 @@ export function EmployeeDashboard() {
                             <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-600">
                               <CheckCircle2 className="w-4 h-4" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <div className="font-semibold text-sm text-slate-900 group-hover:text-amber-600 transition-colors">{item.title}</div>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-slate-500">{item.projectName}</span>
@@ -292,6 +322,19 @@ export function EmployeeDashboard() {
                                 <span className="text-xs text-slate-400">{format(new Date(item.createdAt), "dd MMM yyyy", { locale: ar })}</span>
                               </div>
                             </div>
+                            {item.status === "pending" && (
+                              <button
+                                className="self-center shrink-0 rounded-md bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 transition-colors"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  updateApprovalStatus.mutate({ id: item.id, data: { status: "approved" } });
+                                }}
+                                disabled={updateApprovalStatus.isPending}
+                                data-testid={`approve-${item.id}`}
+                              >
+                                اعتماد
+                              </button>
+                            )}
                           </div>
                         ))
                       ) : (
@@ -309,7 +352,7 @@ export function EmployeeDashboard() {
                             }`}>
                               <FileText className="w-4 h-4" />
                             </div>
-                            <div>
+                            <div className="flex-1">
                               <div className="font-semibold text-sm text-slate-900 group-hover:text-amber-600 transition-colors">{task.title}</div>
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-xs text-slate-500">{task.projectName}</span>
@@ -317,6 +360,19 @@ export function EmployeeDashboard() {
                                 <span className="text-xs text-slate-400">استحقاق: {format(new Date(task.dueAt), "dd MMM", { locale: ar })}</span>
                               </div>
                             </div>
+                            {task.status !== "completed" && (
+                              <button
+                                className="self-center shrink-0 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  updateTaskStatus.mutate({ id: task.id, data: { status: "completed" } });
+                                }}
+                                disabled={updateTaskStatus.isPending}
+                                data-testid={`complete-task-${task.id}`}
+                              >
+                                إنهاء
+                              </button>
+                            )}
                           </div>
                         ))
                       ) : (

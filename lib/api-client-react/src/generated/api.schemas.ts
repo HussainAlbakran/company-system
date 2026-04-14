@@ -94,6 +94,10 @@ export interface CreateOperationalTaskInput {
   priority: string;
 }
 
+export interface UpdateStatusInput {
+  status: string;
+}
+
 export interface Approval {
   id: number;
   title: string;
@@ -111,4 +115,32 @@ export interface ActivityItem {
   actor: string;
   module: string;
   createdAt: string;
+}
+
+export interface OperationalRecord {
+  id: number;
+  module: string;
+  title: string;
+  reference: string;
+  projectName: string;
+  owner: string;
+  status: string;
+  priority: string;
+  quantity: number;
+  amount: number;
+  dueAt: string;
+  createdAt: string;
+}
+
+export interface CreateOperationalRecordInput {
+  module: string;
+  title: string;
+  reference: string;
+  projectName: string;
+  owner: string;
+  status: string;
+  priority: string;
+  quantity: number;
+  amount: number;
+  dueAt: string;
 }

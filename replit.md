@@ -39,4 +39,7 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
   - `/client` client project portal
   - `/admin` administrative control center
 - The GitHub reference project is a Laravel system with modules for dashboard, reports, users/approvals, audit logs, employees, departments, leave requests, sales contracts/payments, architect tasks, engineering projects/updates, purchases, warehouse, factory production, installations, assets, AI assistant, and technical support.
-- Current login is a frontend MVP using localStorage role/session state. Real authentication and persistent database-backed workflows still need to be implemented before production use.
+- PostgreSQL-backed modules currently include employees, departments, projects, contracts, operational tasks, approvals, activity items, and unified operational records for purchases, warehouse, factory, installations, assets, leaves, and audit.
+- The admin dashboard can create projects, approve pending approvals, and create operational records from each operational module view.
+- The employee dashboard can approve pending approvals and mark operational tasks as completed.
+- Current login is a frontend MVP using localStorage role/session state. Real authentication and persistent database-backed user permissions still need to be implemented before production use.
