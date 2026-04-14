@@ -117,6 +117,7 @@ export const supportTicketsTable = pgTable("support_tickets", {
 
 export const emailOutboxTable = pgTable("email_outbox", {
   id: serial("id").primaryKey(),
+  fromEmail: text("from_email").notNull().default("info@arkan-build.com"),
   toEmail: text("to_email").notNull(),
   subject: text("subject").notNull(),
   body: text("body").notNull(),

@@ -42,6 +42,7 @@ type SupportTicket = {
 
 type EmailOutboxItem = {
   id: number;
+  fromEmail: string;
   toEmail: string;
   subject: string;
   body: string;
@@ -71,6 +72,12 @@ type AlertsResponse = {
     documentAlerts: number;
     queuedEmails: number;
   };
+};
+
+type EmailSettings = {
+  systemEmail: string;
+  deliveryConfigured: boolean;
+  deliveryProvider: string | null;
 };
 
 const companyApiUrl = (path: string) => `${import.meta.env.BASE_URL}api/company${path}`;
@@ -116,6 +123,10 @@ export function AdminDashboard() {
   const { data: emailOutbox, isLoading: isLoadingEmailOutbox } = useQuery({
     queryKey: ["company-email-outbox"],
     queryFn: () => companyFetch<EmailOutboxItem[]>("/email-outbox"),
+  });
+  const { data: emailSettings } = useQuery({
+    queryKey: ["company-email-settings"],
+    queryFn: () => companyFetch<EmailSettings>("/email-settings"),
   });
   
   const createProjectMutation = useCreateProject({
@@ -720,8 +731,8 @@ export function AdminDashboard() {
                   </div>
                   <div className="bg-slate-900 rounded-2xl p-5 shadow-sm text-white">
                     <div className="text-sm text-slate-300 mb-2">حالة الإرسال الخارجي</div>
-                    <div className="text-lg font-bold text-amber-400">يتطلب ربط بريد الشركة</div>
-                    <div className="text-xs text-slate-400 mt-2">النظام يجهز الرسائل ويحفظها، والإرسال الفعلي يحتاج SMTP أو مزود بريد.</div>
+                    <div className="text-lg font-bold text-amber-400">{emailSettings?.deliveryConfigured ? "مربوط للإرسال" : "يتطلب بيانات مزود البريد"}</div>
+                    <div className="text-xs text-slate-400 mt-2">بريد النظام: <span dir="ltr">{emailSettings?.systemEmail ?? "info@arkan-build.com"}</span></div>
                   </div>
                 </div>
 
@@ -769,6 +780,7 @@ export function AdminDashboard() {
                               <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{email.status === "queued" ? "جاهز" : email.status}</span>
                             </div>
                             <div className="text-xs text-slate-500 mb-2" dir="ltr">{email.toEmail}</div>
+                            <div className="text-xs text-slate-400 mb-2" dir="ltr">من: {email.fromEmail}</div>
                             <p className="text-sm text-slate-600 line-clamp-2 whitespace-pre-line">{email.body}</p>
                           </div>
                         ))

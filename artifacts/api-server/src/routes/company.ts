@@ -48,6 +48,7 @@ const stringField = (body: Record<string, unknown>, key: string) => typeof body[
 const arrayField = (body: Record<string, unknown>, key: string) => Array.isArray(body[key]) ? body[key].filter((item): item is string => typeof item === "string") : [];
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 const daysUntil = (date: Date | null) => date ? Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
+const systemEmail = () => process.env.COMPANY_SYSTEM_EMAIL ?? "info@arkan-build.com";
 
 const publicUser = (user: typeof systemUsersTable.$inferSelect) => ({
   id: user.id,
@@ -483,6 +484,7 @@ router.post("/company/contracts/:id/email-update", async (req, res): Promise<voi
   }
 
   const [email] = await db.insert(emailOutboxTable).values({
+    fromEmail: systemEmail(),
     toEmail,
     subject: `تحديث عقد ${contract.code} - ${contract.projectName}`,
     body: `مرحباً،\n\n${movement}\n${details}\n\nشركة أركانا البناء`,
@@ -607,6 +609,14 @@ router.get("/company/activity", async (_req, res): Promise<void> => {
 router.get("/company/email-outbox", async (_req, res): Promise<void> => {
   const emails = await db.select().from(emailOutboxTable).orderBy(desc(emailOutboxTable.createdAt));
   res.json(emails);
+});
+
+router.get("/company/email-settings", async (_req, res): Promise<void> => {
+  res.json({
+    systemEmail: systemEmail(),
+    deliveryConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
+    deliveryProvider: process.env.SMTP_HOST ? "SMTP" : null,
+  });
 });
 
 router.get("/company/alerts", async (_req, res): Promise<void> => {
