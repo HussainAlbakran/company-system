@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schedule;
 use App\Models\Employee;
 use App\Models\User;
 use App\Models\ResidencyAlertLog;
@@ -72,3 +73,11 @@ Artisan::command('check:residency-expiry', function () {
         }
     }
 })->purpose('Check residency expiry dates and send email alerts')->daily();
+
+Schedule::command('alerts:send-residency-now')
+    ->dailyAt('08:00')
+    ->withoutOverlapping();
+
+Schedule::command('alerts:send-passport-now')
+    ->dailyAt('08:05')
+    ->withoutOverlapping();
