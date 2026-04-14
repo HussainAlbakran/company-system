@@ -1,0 +1,44 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "txmXN2y-YvxqkIS1r6-oD"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-hero.png"
+type = "image"
+title = "Modern Saudi villa exterior"
+
+[[generated]]
+id = "-70MUHZLMnHVCyTSn7JEw"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-service-1.png"
+type = "image"
+title = "Luxury modern house construction"
+
+[[generated]]
+id = "QdXgDN6dvNuzvCGatjejk"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-service-2.png"
+type = "image"
+title = "Modern commercial building exterior"
+
+[[generated]]
+id = "DkDNZ9Zd03yp2RqOZ5hKb"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-service-3.png"
+type = "image"
+title = "High-end interior renovation"
+
+[[generated]]
+id = "A1_0n0wd-wA1kAmyYPnCb"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-about.png"
+type = "image"
+title = "Engineer reviewing blueprints"
+
+[[generated]]
+id = "8OAAFxHxF1QxzwRKKGBdV"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-project-1.png"
+type = "image"
+title = "Completed luxury modern villa"
+
+[[generated]]
+id = "TiGYyb4H9JUKZh-PwaeQ3"
+uri = "file://artifacts/mockup-sandbox/public/images/contracting-project-2.png"
+type = "image"
+title = "Modern office building exterior"
