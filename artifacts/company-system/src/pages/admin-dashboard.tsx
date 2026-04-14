@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { 
   Building2, Search, Bell, Menu, LayoutDashboard, FileText, Users, 
   Settings, FolderOpen, PieChart, ShieldCheck, Box, Factory, Wrench, 
-  Car, MessageSquare, Briefcase, LogOut, ChevronLeft, Plus, Plane, History, Bot
+  Car, MessageSquare, Briefcase, LogOut, ChevronLeft, Plus, Plane, History, Bot, Mail, AlertTriangle
 } from "lucide-react";
 import { useGetCompanyOverview, useListActivity, useListApprovals, useListEmployees, useListProjects, useListContracts, useCreateProject, useListOperationalRecords, useUpdateApprovalStatus, useCreateOperationalRecord } from "@workspace/api-client-react";
 import { format } from "date-fns";
@@ -38,6 +38,39 @@ type SupportTicket = {
   message: string;
   assignee: string;
   createdAt: string;
+};
+
+type EmailOutboxItem = {
+  id: number;
+  toEmail: string;
+  subject: string;
+  body: string;
+  relatedModule: string;
+  relatedId: number | null;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+  sentAt: string | null;
+};
+
+type DocumentAlert = {
+  id: string;
+  type: string;
+  title: string;
+  employeeName: string;
+  employeeEmail: string;
+  expiresAt: string;
+  daysRemaining: number;
+  severity: string;
+};
+
+type AlertsResponse = {
+  documentAlerts: DocumentAlert[];
+  queuedEmails: EmailOutboxItem[];
+  counts: {
+    documentAlerts: number;
+    queuedEmails: number;
+  };
 };
 
 const companyApiUrl = (path: string) => `${import.meta.env.BASE_URL}api/company${path}`;
@@ -75,6 +108,14 @@ export function AdminDashboard() {
   const { data: supportTickets, isLoading: isLoadingSupportTickets } = useQuery({
     queryKey: ["company-support"],
     queryFn: () => companyFetch<SupportTicket[]>("/support"),
+  });
+  const { data: alerts, isLoading: isLoadingAlerts } = useQuery({
+    queryKey: ["company-alerts"],
+    queryFn: () => companyFetch<AlertsResponse>("/alerts"),
+  });
+  const { data: emailOutbox, isLoading: isLoadingEmailOutbox } = useQuery({
+    queryKey: ["company-email-outbox"],
+    queryFn: () => companyFetch<EmailOutboxItem[]>("/email-outbox"),
   });
   
   const createProjectMutation = useCreateProject({
@@ -198,6 +239,22 @@ export function AdminDashboard() {
     onSuccess: (payload) => setAssistantAnswer(payload.answer),
     onError: () => toast({ title: "تعذر تشغيل المساعد", variant: "destructive" }),
   });
+  const sendContractUpdateMutation = useMutation({
+    mutationFn: (contract: { id: number; code: string; projectName: string; clientName: string }) => companyFetch<EmailOutboxItem>(`/contracts/${contract.id}/email-update`, {
+      method: "POST",
+      body: JSON.stringify({
+        toEmail: "client@example.com",
+        movement: "إشعار تحديث على العقد",
+        details: `تم تسجيل تحديث على العقد ${contract.code} الخاص بمشروع ${contract.projectName} للعميل ${contract.clientName}.`,
+      }),
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["company-alerts"] });
+      queryClient.invalidateQueries({ queryKey: ["company-email-outbox"] });
+      toast({ title: "تم تجهيز بريد تحديث العقد" });
+    },
+    onError: () => toast({ title: "تعذر تجهيز بريد العقد", variant: "destructive" }),
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
@@ -209,6 +266,7 @@ export function AdminDashboard() {
     { id: "projects", icon: <Briefcase />, label: "المشاريع الهندسية" },
     { id: "employees", icon: <Users />, label: "الموظفين والرواتب" },
     { id: "contracts", icon: <FileText />, label: "العقود والمقاولين" },
+    { id: "alerts", icon: <Mail />, label: "التنبيهات والبريد" },
     { id: "reports", icon: <PieChart />, label: "التقارير" },
     { id: "users", icon: <ShieldCheck />, label: "المستخدمين والصلاحيات" },
     { id: "assistant", icon: <Bot />, label: "المساعد الذكي" },
@@ -327,7 +385,11 @@ export function AdminDashboard() {
             
             <button className="relative p-2 text-slate-400 hover:text-slate-900 transition-colors rounded-full hover:bg-slate-50">
               <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-amber-500 rounded-full border-2 border-white"></span>
+              {(alerts?.counts.documentAlerts ?? 0) + (alerts?.counts.queuedEmails ?? 0) > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-amber-500 rounded-full border-2 border-white text-[10px] text-slate-900 font-bold flex items-center justify-center">
+                  {(alerts?.counts.documentAlerts ?? 0) + (alerts?.counts.queuedEmails ?? 0)}
+                </span>
+              )}
             </button>
 
             <button className="lg:hidden relative p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full hover:bg-slate-50" onClick={handleLogout}>
@@ -598,6 +660,7 @@ export function AdminDashboard() {
                         <th className="px-6 py-4 font-semibold">القيمة</th>
                         <th className="px-6 py-4 font-semibold">المدفوع</th>
                         <th className="px-6 py-4 font-semibold">الحالة</th>
+                        <th className="px-6 py-4 font-semibold">البريد</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -618,6 +681,15 @@ export function AdminDashboard() {
                                 {contract.status === 'active' ? 'ساري' : contract.status}
                               </span>
                             </td>
+                            <td className="px-6 py-4">
+                              <button
+                                className="rounded-md bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors"
+                                disabled={sendContractUpdateMutation.isPending}
+                                onClick={() => sendContractUpdateMutation.mutate(contract)}
+                              >
+                                تجهيز إشعار
+                              </button>
+                            </td>
                           </tr>
                         ))
                       ) : (
@@ -625,6 +697,86 @@ export function AdminDashboard() {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {activeModule === "alerts" && (
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-2">
+                      <AlertTriangle className="w-4 h-4 text-amber-500" />
+                      تنبيهات وثائق الموظفين
+                    </div>
+                    <div className="text-3xl font-bold text-slate-900">{isLoadingAlerts ? "..." : alerts?.counts.documentAlerts ?? 0}</div>
+                  </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-slate-500 text-sm mb-2">
+                      <Mail className="w-4 h-4 text-blue-500" />
+                      رسائل جاهزة للإرسال
+                    </div>
+                    <div className="text-3xl font-bold text-slate-900">{isLoadingAlerts ? "..." : alerts?.counts.queuedEmails ?? 0}</div>
+                  </div>
+                  <div className="bg-slate-900 rounded-2xl p-5 shadow-sm text-white">
+                    <div className="text-sm text-slate-300 mb-2">حالة الإرسال الخارجي</div>
+                    <div className="text-lg font-bold text-amber-400">يتطلب ربط بريد الشركة</div>
+                    <div className="text-xs text-slate-400 mt-2">النظام يجهز الرسائل ويحفظها، والإرسال الفعلي يحتاج SMTP أو مزود بريد.</div>
+                  </div>
+                </div>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-slate-100">
+                      <h3 className="text-lg font-bold text-slate-900">انتهاء الإقامة والجواز</h3>
+                      <p className="text-sm text-slate-500 mt-1">يعرض الموظفين الذين تنتهي وثائقهم خلال 60 يومًا.</p>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {isLoadingAlerts ? (
+                        <div className="p-8 text-center text-slate-500">جاري التحميل...</div>
+                      ) : alerts?.documentAlerts.length ? (
+                        alerts.documentAlerts.map((alert) => (
+                          <div key={alert.id} className="p-5 flex items-start justify-between gap-4">
+                            <div>
+                              <div className="font-bold text-slate-900">{alert.title}</div>
+                              <div className="text-xs text-slate-500 mt-1" dir="ltr">{alert.employeeEmail}</div>
+                              <div className="text-sm text-slate-600 mt-2">تاريخ الانتهاء: {format(new Date(alert.expiresAt), "dd MMM yyyy", { locale: ar })}</div>
+                            </div>
+                            <span className={`rounded-full px-3 py-1 text-xs font-bold ${alert.severity === "urgent" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"}`}>
+                              باقي {alert.daysRemaining} يوم
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-slate-500">لا توجد وثائق قريبة الانتهاء</div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-slate-100">
+                      <h3 className="text-lg font-bold text-slate-900">صندوق البريد الداخلي</h3>
+                      <p className="text-sm text-slate-500 mt-1">رسائل النظام التي تم تجهيزها لعملاء العقود والتنبيهات.</p>
+                    </div>
+                    <div className="divide-y divide-slate-100">
+                      {isLoadingEmailOutbox ? (
+                        <div className="p-8 text-center text-slate-500">جاري التحميل...</div>
+                      ) : emailOutbox?.length ? (
+                        emailOutbox.slice(0, 8).map((email) => (
+                          <div key={email.id} className="p-5">
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="font-bold text-slate-900">{email.subject}</div>
+                              <span className="rounded-full bg-blue-50 px-2 py-1 text-xs font-bold text-blue-700">{email.status === "queued" ? "جاهز" : email.status}</span>
+                            </div>
+                            <div className="text-xs text-slate-500 mb-2" dir="ltr">{email.toEmail}</div>
+                            <p className="text-sm text-slate-600 line-clamp-2 whitespace-pre-line">{email.body}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-slate-500">لا توجد رسائل بعد</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1043,7 +1195,7 @@ export function AdminDashboard() {
             )}
 
             {/* Other modules fallback */}
-            {!["dashboard", "employees", "projects", "contracts", "reports", "users", "assistant", "support", ...operationalModuleIds].includes(activeModule) && (
+            {!["dashboard", "employees", "projects", "contracts", "alerts", "reports", "users", "assistant", "support", ...operationalModuleIds].includes(activeModule) && (
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
                 <div className="w-20 h-20 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-4">
                   {modules.find(m => m.id === activeModule)?.icon}

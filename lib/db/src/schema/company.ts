@@ -19,6 +19,8 @@ export const employeesTable = pgTable("employees", {
   role: text("role").notNull(),
   department: text("department").notNull(),
   status: text("status").notNull().default("active"),
+  iqamaExpiresAt: timestamp("iqama_expires_at", { withTimezone: true }),
+  passportExpiresAt: timestamp("passport_expires_at", { withTimezone: true }),
   joinedAt: timestamp("joined_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
@@ -113,6 +115,19 @@ export const supportTicketsTable = pgTable("support_tickets", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
+export const emailOutboxTable = pgTable("email_outbox", {
+  id: serial("id").primaryKey(),
+  toEmail: text("to_email").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  relatedModule: text("related_module").notNull(),
+  relatedId: integer("related_id"),
+  status: text("status").notNull().default("queued"),
+  createdBy: text("created_by").notNull().default("النظام"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+});
+
 export const insertDepartmentSchema = createInsertSchema(departmentsTable).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertEmployeeSchema = createInsertSchema(employeesTable).omit({ id: true, createdAt: true, updatedAt: true, joinedAt: true, status: true });
 export const insertProjectSchema = createInsertSchema(projectsTable).omit({ id: true, createdAt: true, updatedAt: true, startsAt: true, endsAt: true, status: true, progress: true });
@@ -122,6 +137,7 @@ export const insertApprovalSchema = createInsertSchema(approvalsTable).omit({ id
 export const insertActivityItemSchema = createInsertSchema(activityItemsTable).omit({ id: true });
 export const insertSystemUserSchema = createInsertSchema(systemUsersTable).omit({ id: true, createdAt: true, updatedAt: true, lastLoginAt: true, passwordSalt: true, passwordHash: true });
 export const insertSupportTicketSchema = createInsertSchema(supportTicketsTable).omit({ id: true, createdAt: true, updatedAt: true, status: true, assignee: true });
+export const insertEmailOutboxSchema = createInsertSchema(emailOutboxTable).omit({ id: true, createdAt: true, sentAt: true, status: true });
 
 export type Department = typeof departmentsTable.$inferSelect;
 export type Employee = typeof employeesTable.$inferSelect;
@@ -132,6 +148,7 @@ export type Approval = typeof approvalsTable.$inferSelect;
 export type ActivityItem = typeof activityItemsTable.$inferSelect;
 export type SystemUser = typeof systemUsersTable.$inferSelect;
 export type SupportTicket = typeof supportTicketsTable.$inferSelect;
+export type EmailOutboxItem = typeof emailOutboxTable.$inferSelect;
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
@@ -141,3 +158,4 @@ export type InsertApproval = z.infer<typeof insertApprovalSchema>;
 export type InsertActivityItem = z.infer<typeof insertActivityItemSchema>;
 export type InsertSystemUser = z.infer<typeof insertSystemUserSchema>;
 export type InsertSupportTicket = z.infer<typeof insertSupportTicketSchema>;
+export type InsertEmailOutboxItem = z.infer<typeof insertEmailOutboxSchema>;

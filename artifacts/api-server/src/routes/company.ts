@@ -7,6 +7,7 @@ import {
   contractsTable,
   db,
   departmentsTable,
+  emailOutboxTable,
   employeesTable,
   operationalRecordsTable,
   operationalTasksTable,
@@ -46,6 +47,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(v
 const stringField = (body: Record<string, unknown>, key: string) => typeof body[key] === "string" ? body[key].trim() : "";
 const arrayField = (body: Record<string, unknown>, key: string) => Array.isArray(body[key]) ? body[key].filter((item): item is string => typeof item === "string") : [];
 const isEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const daysUntil = (date: Date | null) => date ? Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
 
 const publicUser = (user: typeof systemUsersTable.$inferSelect) => ({
   id: user.id,
@@ -355,6 +357,19 @@ async function ensureSystemSeed(): Promise<void> {
       { title: "مشكلة تحميل وثائق مشروع", requester: "أحمد عبدالله", category: "الوثائق", priority: "medium", status: "in_progress", message: "بعض ملفات المخططات لا تظهر في بوابة المشروع.", assignee: "الدعم الفني" },
     ]).onConflictDoNothing();
   }
+
+  const employees = await db.select().from(employeesTable);
+  const expiryDates: Record<string, { iqamaExpiresAt: Date; passportExpiresAt: Date }> = {
+    "ahmad@arkana.build": { iqamaExpiresAt: addDays(22), passportExpiresAt: addDays(145) },
+    "noura@arkana.build": { iqamaExpiresAt: addDays(75), passportExpiresAt: addDays(38) },
+    "khaled@arkana.build": { iqamaExpiresAt: addDays(12), passportExpiresAt: addDays(260) },
+    "aziz@arkana.build": { iqamaExpiresAt: addDays(105), passportExpiresAt: addDays(18) },
+  };
+  await Promise.all(employees.map((employee) => {
+    const dates = expiryDates[employee.email];
+    if (!dates) return Promise.resolve();
+    return db.update(employeesTable).set(dates).where(eq(employeesTable.id, employee.id));
+  }));
 }
 
 const moneyToNumber = (value: string | number) => Number(value);
@@ -444,6 +459,47 @@ router.get("/company/contracts", async (_req, res): Promise<void> => {
     value: moneyToNumber(contract.value),
     paidAmount: moneyToNumber(contract.paidAmount),
   }))));
+});
+
+router.post("/company/contracts/:id/email-update", async (req, res): Promise<void> => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0 || !isRecord(req.body)) {
+    res.status(400).json({ error: "بيانات تحديث العقد غير صحيحة" });
+    return;
+  }
+
+  const [contract] = await db.select().from(contractsTable).where(eq(contractsTable.id, id)).limit(1);
+  if (!contract) {
+    res.status(404).json({ error: "العقد غير موجود" });
+    return;
+  }
+
+  const toEmail = stringField(req.body, "toEmail") || "client@example.com";
+  const movement = stringField(req.body, "movement") || "تحديث حالة العقد";
+  const details = stringField(req.body, "details") || `تم تحديث عقد ${contract.code} لمشروع ${contract.projectName}.`;
+  if (!isEmail(toEmail)) {
+    res.status(400).json({ error: "البريد الإلكتروني غير صحيح" });
+    return;
+  }
+
+  const [email] = await db.insert(emailOutboxTable).values({
+    toEmail,
+    subject: `تحديث عقد ${contract.code} - ${contract.projectName}`,
+    body: `مرحباً،\n\n${movement}\n${details}\n\nشركة أركانا البناء`,
+    relatedModule: "contracts",
+    relatedId: contract.id,
+    createdBy: "المدير العام",
+  }).returning();
+
+  await db.insert(activityItemsTable).values({
+    title: "تجهيز بريد تحديث عقد",
+    description: `تم تجهيز رسالة بريد لتحديث العقد ${contract.code}`,
+    actor: "المدير العام",
+    module: "العقود",
+    createdAt: new Date(),
+  });
+
+  res.status(201).json(email);
 });
 
 router.get("/company/tasks", async (_req, res): Promise<void> => {
@@ -546,6 +602,58 @@ router.patch("/company/approvals/:id/status", async (req, res): Promise<void> =>
 router.get("/company/activity", async (_req, res): Promise<void> => {
   const activity = await db.select().from(activityItemsTable).orderBy(desc(activityItemsTable.createdAt));
   res.json(ListActivityResponse.parse(activity));
+});
+
+router.get("/company/email-outbox", async (_req, res): Promise<void> => {
+  const emails = await db.select().from(emailOutboxTable).orderBy(desc(emailOutboxTable.createdAt));
+  res.json(emails);
+});
+
+router.get("/company/alerts", async (_req, res): Promise<void> => {
+  const [employees, emails] = await Promise.all([
+    db.select().from(employeesTable).orderBy(desc(employeesTable.joinedAt)),
+    db.select().from(emailOutboxTable).orderBy(desc(emailOutboxTable.createdAt)),
+  ]);
+
+  const documentAlerts = employees.flatMap((employee) => {
+    const alerts = [];
+    const iqamaDays = daysUntil(employee.iqamaExpiresAt);
+    const passportDays = daysUntil(employee.passportExpiresAt);
+    if (iqamaDays !== null && iqamaDays <= 60) {
+      alerts.push({
+        id: `iqama-${employee.id}`,
+        type: "iqama",
+        title: `انتهاء إقامة ${employee.name}`,
+        employeeName: employee.name,
+        employeeEmail: employee.email,
+        expiresAt: employee.iqamaExpiresAt?.toISOString(),
+        daysRemaining: iqamaDays,
+        severity: iqamaDays <= 15 ? "urgent" : "warning",
+      });
+    }
+    if (passportDays !== null && passportDays <= 60) {
+      alerts.push({
+        id: `passport-${employee.id}`,
+        type: "passport",
+        title: `انتهاء جواز ${employee.name}`,
+        employeeName: employee.name,
+        employeeEmail: employee.email,
+        expiresAt: employee.passportExpiresAt?.toISOString(),
+        daysRemaining: passportDays,
+        severity: passportDays <= 15 ? "urgent" : "warning",
+      });
+    }
+    return alerts;
+  });
+
+  res.json({
+    documentAlerts,
+    queuedEmails: emails.filter((email) => email.status === "queued"),
+    counts: {
+      documentAlerts: documentAlerts.length,
+      queuedEmails: emails.filter((email) => email.status === "queued").length,
+    },
+  });
 });
 
 router.post("/company/auth/login", async (req, res): Promise<void> => {

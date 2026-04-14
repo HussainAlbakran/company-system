@@ -39,10 +39,11 @@ See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and pa
   - `/client` client project portal
   - `/admin` administrative control center
 - The GitHub reference project is a Laravel system with modules for dashboard, reports, users/approvals, audit logs, employees, departments, leave requests, sales contracts/payments, architect tasks, engineering projects/updates, purchases, warehouse, factory production, installations, assets, AI assistant, and technical support.
-- PostgreSQL-backed modules currently include employees, departments, projects, contracts, operational tasks, approvals, activity items, unified operational records, system users, support tickets, and assistant analysis.
-- The admin dashboard can create projects, approve pending approvals, create operational records, manage users and permissions, open support tickets, view reports, and use a simple operational assistant.
+- PostgreSQL-backed modules currently include employees, departments, projects, contracts, operational tasks, approvals, activity items, unified operational records, system users, support tickets, assistant analysis, employee document expiry alerts, and email outbox.
+- The admin dashboard can create projects, approve pending approvals, create operational records, manage users and permissions, open support tickets, view reports, use a simple operational assistant, view iqama/passport expiry alerts, and queue contract-update email messages.
 - The employee dashboard can approve pending approvals and mark operational tasks as completed.
 - Login is now database-backed using seeded accounts with hashed passwords and an HTTP-only session cookie. The frontend also stores the selected role for route protection.
+- Contract update emails are currently queued in the system email outbox. External email delivery still requires connecting a company SMTP/email provider.
 - Default development accounts:
   - admin@arkan-build.com / 123456
   - employee@arkan-build.com / 123456
