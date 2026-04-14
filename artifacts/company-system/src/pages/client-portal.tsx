@@ -1,14 +1,23 @@
 import React from "react";
 import { useLocation } from "wouter";
 import { Building2, LogOut, Bell, FileText, CheckCircle2, Circle, Clock, Receipt, Image as ImageIcon, MapPin, ChevronLeft, ArrowLeft, Download, MessageSquare } from "lucide-react";
+import { useListProjects, useListContracts } from "@workspace/api-client-react";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 export function ClientPortal() {
   const [, setLocation] = useLocation();
+
+  const { data: projects, isLoading: isLoadingProjects } = useListProjects();
+  const { data: contracts, isLoading: isLoadingContracts } = useListContracts();
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     setLocation("/login");
   };
+
+  const project = projects && projects.length > 0 ? projects[0] : null;
+  const contract = contracts?.find(c => c.projectName === project?.name);
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 selection:bg-amber-500 selection:text-slate-900">
@@ -26,7 +35,7 @@ export function ClientPortal() {
             
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-sm text-slate-300 border-l border-slate-700 pl-6 hidden md:flex">
-                <span>شركة الراجحي العقارية</span>
+                <span>{project ? project.clientName : "تحميل..."}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               </div>
               <button className="relative text-slate-300 hover:text-white transition-colors">
@@ -55,15 +64,15 @@ export function ClientPortal() {
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 قيد التنفيذ - متوافق مع الجدول الزمني
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">مجمع فيلات الياسمين السكني</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">{project ? project.name : "تحميل..."}</h1>
               <div className="flex items-center gap-4 text-slate-500 text-sm">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  حي الياسمين، الرياض
+                  {project ? project.location : "تحميل..."}
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  المتوقع للتسليم: ديسمبر 2024
+                  المتوقع للتسليم: {project ? format(new Date(project.endsAt), "MMMM yyyy", { locale: ar }) : "تحميل..."}
                 </div>
               </div>
             </div>
@@ -92,11 +101,11 @@ export function ClientPortal() {
                   <h2 className="text-lg font-bold text-slate-900">نسبة الإنجاز الكلية</h2>
                   <p className="text-sm text-slate-500 mt-1">يتم تحديث النسبة أسبوعياً بناءً على تقارير الموقع</p>
                 </div>
-                <div className="text-4xl font-bold text-slate-900">65%</div>
+                <div className="text-4xl font-bold text-slate-900">{project?.progress || 0}%</div>
               </div>
               
               <div className="w-full bg-slate-100 rounded-full h-3 mb-8">
-                <div className="bg-amber-500 h-3 rounded-full relative" style={{ width: "65%" }}>
+                <div className="bg-amber-500 h-3 rounded-full relative" style={{ width: `${project?.progress || 0}%` }}>
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 bg-white border-4 border-amber-500 rounded-full shadow"></div>
                 </div>
               </div>
@@ -198,11 +207,11 @@ export function ClientPortal() {
                 <div className="bg-slate-900 text-white rounded-xl p-5 mb-6 shadow-inner relative overflow-hidden">
                   <div className="absolute -left-6 -bottom-6 w-24 h-24 bg-white/5 rounded-full blur-xl"></div>
                   <div className="text-sm text-slate-400 mb-1">إجمالي المدفوعات حتى الآن</div>
-                  <div className="text-3xl font-bold mb-4 font-sans tracking-tight" dir="ltr">2,450,000 <span className="text-base text-slate-400 mr-1">SAR</span></div>
+                  <div className="text-3xl font-bold mb-4 font-sans tracking-tight" dir="ltr">{contract ? contract.paidAmount.toLocaleString() : "0"} <span className="text-base text-slate-400 mr-1">SAR</span></div>
                   
                   <div className="border-t border-slate-700/50 pt-4 flex justify-between text-sm">
                     <span className="text-slate-400">الدفعة القادمة المستحقة:</span>
-                    <span className="font-semibold text-amber-400" dir="ltr">350,000 SAR</span>
+                    <span className="font-semibold text-amber-400" dir="ltr">{contract ? (contract.value - contract.paidAmount).toLocaleString() : "0"} SAR</span>
                   </div>
                 </div>
                 

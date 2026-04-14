@@ -6,4 +6,15 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./activityItem";
+export * from "./approval";
+export * from "./companyOverview";
+export * from "./contract";
+export * from "./createEmployeeInput";
+export * from "./createOperationalTaskInput";
+export * from "./createProjectInput";
+export * from "./employee";
 export * from "./healthStatus";
+export * from "./metric";
+export * from "./operationalTask";
+export * from "./project";

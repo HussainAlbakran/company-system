@@ -1,15 +1,26 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
 import { Building2, Search, Bell, Menu, Home, FolderOpen, Calendar, Users, ClipboardCheck, Settings, TrendingUp, Clock, AlertTriangle, CheckCircle2, ChevronDown, FileText, LogOut } from "lucide-react";
+import { useListProjects, useListApprovals, useListOperationalTasks } from "@workspace/api-client-react";
+import { format } from "date-fns";
+import { ar } from "date-fns/locale";
 
 export function EmployeeDashboard() {
   const [, setLocation] = useLocation();
   const [activeTab, setActiveTab] = useState("overview");
 
+  const { data: projects, isLoading: isLoadingProjects } = useListProjects();
+  const { data: approvals, isLoading: isLoadingApprovals } = useListApprovals();
+  const { data: tasks, isLoading: isLoadingTasks } = useListOperationalTasks();
+
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     setLocation("/login");
   };
+
+  const activeProjectsCount = projects?.filter(p => p.status === "in_progress" || p.status === "قيد التنفيذ" || p.status === "active").length || 12;
+  const pendingApprovalsCount = approvals?.filter(a => a.status === "pending" || a.status === "معلق").length || 5;
+  const pendingTasksCount = tasks?.filter(t => t.status === "pending" || t.status === "in_progress" || t.status === "قيد التنفيذ" || t.status === "معلق").length || 34;
 
   return (
     <div dir="rtl" className="min-h-screen bg-slate-50 font-sans text-slate-900 flex selection:bg-amber-500 selection:text-slate-900">
@@ -35,12 +46,12 @@ export function EmployeeDashboard() {
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
             <Building2 className="w-5 h-5" />
             المشاريع
-            <span className="mr-auto bg-slate-800 text-xs py-0.5 px-2 rounded-full">12</span>
+            <span className="mr-auto bg-slate-800 text-xs py-0.5 px-2 rounded-full">{projects?.length || 12}</span>
           </button>
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
             <ClipboardCheck className="w-5 h-5" />
             المهام والموافقات
-            <span className="mr-auto bg-amber-500 text-slate-900 text-xs py-0.5 px-2 rounded-full font-bold">5</span>
+            <span className="mr-auto bg-amber-500 text-slate-900 text-xs py-0.5 px-2 rounded-full font-bold">{pendingApprovalsCount + pendingTasksCount}</span>
           </button>
           <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors">
             <FolderOpen className="w-5 h-5" />
@@ -125,7 +136,7 @@ export function EmployeeDashboard() {
                 <div className="relative flex justify-between items-start mb-4">
                   <div>
                     <div className="text-slate-500 text-sm font-medium mb-1">المشاريع النشطة</div>
-                    <div className="text-3xl font-bold text-slate-900">12</div>
+                    <div className="text-3xl font-bold text-slate-900">{isLoadingProjects ? "..." : activeProjectsCount}</div>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
                     <Building2 className="w-5 h-5" />
@@ -143,7 +154,7 @@ export function EmployeeDashboard() {
                 <div className="relative flex justify-between items-start mb-4">
                   <div>
                     <div className="text-slate-500 text-sm font-medium mb-1">مهام قيد التنفيذ</div>
-                    <div className="text-3xl font-bold text-slate-900">34</div>
+                    <div className="text-3xl font-bold text-slate-900">{isLoadingTasks ? "..." : pendingTasksCount}</div>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
                     <Clock className="w-5 h-5" />
@@ -160,7 +171,7 @@ export function EmployeeDashboard() {
                 <div className="relative flex justify-between items-start mb-4">
                   <div>
                     <div className="text-slate-500 text-sm font-medium mb-1">موافقات معلقة</div>
-                    <div className="text-3xl font-bold text-slate-900">5</div>
+                    <div className="text-3xl font-bold text-slate-900">{isLoadingApprovals ? "..." : pendingApprovalsCount}</div>
                   </div>
                   <div className="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
                     <AlertTriangle className="w-5 h-5" />
@@ -198,44 +209,46 @@ export function EmployeeDashboard() {
                 </div>
                 
                 <div className="space-y-4">
-                  {[
-                    { name: "مجمع فيلات الياسمين", client: "شركة الراجحي العقارية", progress: 65, status: "قيد التنفيذ", dueDate: "ديسمبر 2024" },
-                    { name: "برج الأعمال الإداري", client: "مجموعة العليان", progress: 32, status: "مرحلة الأساسات", dueDate: "مارس 2025" },
-                    { name: "ترميم قصر السلام", client: "عميل خاص", progress: 89, status: "التشطيبات النهائية", dueDate: "أكتوبر 2023" }
-                  ].map((project, i) => (
-                    <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-amber-300 transition-all shadow-sm group cursor-pointer" data-testid={`employee-project-${i}`}>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
-                            <Building2 className="w-6 h-6 text-slate-400 group-hover:text-amber-500 transition-colors" />
+                  {isLoadingProjects ? (
+                    <div className="p-8 text-center text-slate-500">جاري تحميل المشاريع...</div>
+                  ) : projects && projects.length > 0 ? (
+                    projects.slice(0, 3).map((project, i) => (
+                      <div key={i} className="bg-white p-5 rounded-xl border border-slate-200 hover:border-amber-300 transition-all shadow-sm group cursor-pointer" data-testid={`employee-project-${i}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 bg-slate-100 rounded-lg flex items-center justify-center shrink-0">
+                              <Building2 className="w-6 h-6 text-slate-400 group-hover:text-amber-500 transition-colors" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900 text-lg">{project.name}</h3>
+                              <div className="text-sm text-slate-500">{project.clientName}</div>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-bold text-slate-900 text-lg">{project.name}</h3>
-                            <div className="text-sm text-slate-500">{project.client}</div>
+                          <div className="flex flex-col sm:items-end">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 mb-1">
+                              {project.status}
+                            </span>
+                            <span className="text-xs text-slate-400">التسليم: {format(new Date(project.endsAt), "MMMM yyyy", { locale: ar })}</span>
                           </div>
                         </div>
-                        <div className="flex flex-col sm:items-end">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 mb-1">
-                            {project.status}
-                          </span>
-                          <span className="text-xs text-slate-400">التسليم: {project.dueDate}</span>
+                        
+                        <div>
+                          <div className="flex justify-between text-xs mb-1.5">
+                            <span className="font-medium text-slate-700">نسبة الإنجاز</span>
+                            <span className="font-bold text-slate-900">{project.progress}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full ${project.progress > 80 ? 'bg-emerald-500' : project.progress > 40 ? 'bg-amber-500' : 'bg-blue-500'}`} 
+                              style={{ width: `${project.progress}%` }}
+                            ></div>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div>
-                        <div className="flex justify-between text-xs mb-1.5">
-                          <span className="font-medium text-slate-700">نسبة الإنجاز</span>
-                          <span className="font-bold text-slate-900">{project.progress}%</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full ${project.progress > 80 ? 'bg-emerald-500' : project.progress > 40 ? 'bg-amber-500' : 'bg-blue-500'}`} 
-                            style={{ width: `${project.progress}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-slate-500 bg-white rounded-xl border border-slate-200">لا توجد مشاريع حالياً</div>
+                  )}
                 </div>
               </div>
 
@@ -250,44 +263,66 @@ export function EmployeeDashboard() {
                       onClick={() => setActiveTab('overview')}
                       data-testid="tab-approvals"
                     >
-                      موافقات (5)
+                      موافقات ({pendingApprovalsCount})
                     </button>
                     <button 
                       className={`flex-1 py-3 text-sm font-semibold border-b-2 transition-colors ${activeTab === 'tasks' ? 'border-amber-500 text-amber-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                       onClick={() => setActiveTab('tasks')}
                       data-testid="tab-tasks"
                     >
-                      مهام اليوم (8)
+                      مهام اليوم ({pendingTasksCount})
                     </button>
                   </div>
                   
                   <div className="p-4 flex-1 overflow-y-auto space-y-3">
-                    {[
-                      { title: "اعتماد طلب توريد حديد", project: "برج الأعمال", time: "منذ ساعتين", type: "approval" },
-                      { title: "مراجعة المخطط الإنشائي المعدل", project: "مجمع الياسمين", time: "منذ 4 ساعات", type: "review" },
-                      { title: "فاتورة مقاول الباطن #1023", project: "ترميم قصر السلام", time: "أمس", type: "financial" },
-                      { title: "طلب إجازة - المهندس خالد", project: "إدارة", time: "أمس", type: "hr" },
-                    ].map((item, i) => (
-                      <div key={i} className="flex gap-3 p-3 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors cursor-pointer group" data-testid={`action-item-${i}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                          item.type === 'approval' ? 'bg-amber-100 text-amber-600' :
-                          item.type === 'review' ? 'bg-blue-100 text-blue-600' :
-                          item.type === 'financial' ? 'bg-emerald-100 text-emerald-600' : 'bg-purple-100 text-purple-600'
-                        }`}>
-                          {item.type === 'approval' ? <CheckCircle2 className="w-4 h-4" /> :
-                           item.type === 'review' ? <FileText className="w-4 h-4" /> :
-                           item.type === 'financial' ? <ClipboardCheck className="w-4 h-4" /> : <Users className="w-4 h-4" />}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-sm text-slate-900 group-hover:text-amber-600 transition-colors">{item.title}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-slate-500">{item.project}</span>
-                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                            <span className="text-xs text-slate-400">{item.time}</span>
+                    {activeTab === 'overview' ? (
+                      isLoadingApprovals ? (
+                        <div className="text-center text-sm text-slate-500 py-8">جاري التحميل...</div>
+                      ) : approvals && approvals.length > 0 ? (
+                        approvals.slice(0, 4).map((item, i) => (
+                          <div key={i} className="flex gap-3 p-3 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors cursor-pointer group" data-testid={`action-item-${i}`}>
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 bg-amber-100 text-amber-600">
+                              <CheckCircle2 className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-sm text-slate-900 group-hover:text-amber-600 transition-colors">{item.title}</div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-slate-500">{item.projectName}</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span className="text-xs text-slate-400">{format(new Date(item.createdAt), "dd MMM yyyy", { locale: ar })}</span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                      ) : (
+                        <div className="text-center text-sm text-slate-500 py-8">لا توجد موافقات معلقة</div>
+                      )
+                    ) : (
+                      isLoadingTasks ? (
+                        <div className="text-center text-sm text-slate-500 py-8">جاري التحميل...</div>
+                      ) : tasks && tasks.length > 0 ? (
+                        tasks.slice(0, 4).map((task, i) => (
+                          <div key={i} className="flex gap-3 p-3 rounded-lg hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-colors cursor-pointer group" data-testid={`task-item-${i}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                              task.priority === 'high' ? 'bg-red-100 text-red-600' :
+                              task.priority === 'medium' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'
+                            }`}>
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-sm text-slate-900 group-hover:text-amber-600 transition-colors">{task.title}</div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-xs text-slate-500">{task.projectName}</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span className="text-xs text-slate-400">استحقاق: {format(new Date(task.dueAt), "dd MMM", { locale: ar })}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-sm text-slate-500 py-8">لا توجد مهام</div>
+                      )
+                    )}
                   </div>
                   
                   <div className="p-3 border-t border-slate-100 bg-slate-50">

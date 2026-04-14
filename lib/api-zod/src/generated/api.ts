@@ -14,3 +14,151 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary Company overview
+ */
+export const GetCompanyOverviewResponse = zod.object({
+  activeProjects: zod.number(),
+  pendingApprovals: zod.number(),
+  monthlyCompletion: zod.number(),
+  totalContractValue: zod.number(),
+  metrics: zod.array(
+    zod.object({
+      label: zod.string(),
+      value: zod.string(),
+      change: zod.string(),
+    }),
+  ),
+  departmentBreakdown: zod.array(
+    zod.object({
+      label: zod.string(),
+      value: zod.string(),
+      change: zod.string(),
+    }),
+  ),
+});
+
+/**
+ * @summary List employees
+ */
+export const ListEmployeesResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string(),
+  role: zod.string(),
+  department: zod.string(),
+  status: zod.string(),
+  joinedAt: zod.coerce.date(),
+});
+export const ListEmployeesResponse = zod.array(ListEmployeesResponseItem);
+
+/**
+ * @summary Create employee
+ */
+export const CreateEmployeeBody = zod.object({
+  name: zod.string(),
+  email: zod.string(),
+  phone: zod.string(),
+  role: zod.string(),
+  department: zod.string(),
+});
+
+/**
+ * @summary List projects
+ */
+export const ListProjectsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  clientName: zod.string(),
+  location: zod.string(),
+  stage: zod.string(),
+  status: zod.string(),
+  progress: zod.number(),
+  budget: zod.number(),
+  startsAt: zod.coerce.date(),
+  endsAt: zod.coerce.date(),
+});
+export const ListProjectsResponse = zod.array(ListProjectsResponseItem);
+
+/**
+ * @summary Create project
+ */
+export const CreateProjectBody = zod.object({
+  name: zod.string(),
+  clientName: zod.string(),
+  location: zod.string(),
+  stage: zod.string(),
+  budget: zod.number(),
+});
+
+/**
+ * @summary List contracts
+ */
+export const ListContractsResponseItem = zod.object({
+  id: zod.number(),
+  code: zod.string(),
+  projectName: zod.string(),
+  clientName: zod.string(),
+  value: zod.number(),
+  paidAmount: zod.number(),
+  status: zod.string(),
+  signedAt: zod.coerce.date(),
+});
+export const ListContractsResponse = zod.array(ListContractsResponseItem);
+
+/**
+ * @summary List operational tasks
+ */
+export const ListOperationalTasksResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  category: zod.string(),
+  projectName: zod.string(),
+  assignee: zod.string(),
+  priority: zod.string(),
+  status: zod.string(),
+  dueAt: zod.coerce.date(),
+});
+export const ListOperationalTasksResponse = zod.array(
+  ListOperationalTasksResponseItem,
+);
+
+/**
+ * @summary Create operational task
+ */
+export const CreateOperationalTaskBody = zod.object({
+  title: zod.string(),
+  category: zod.string(),
+  projectName: zod.string(),
+  assignee: zod.string(),
+  priority: zod.string(),
+});
+
+/**
+ * @summary List approvals
+ */
+export const ListApprovalsResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  type: zod.string(),
+  requester: zod.string(),
+  projectName: zod.string(),
+  status: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListApprovalsResponse = zod.array(ListApprovalsResponseItem);
+
+/**
+ * @summary List recent activity
+ */
+export const ListActivityResponseItem = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  description: zod.string(),
+  actor: zod.string(),
+  module: zod.string(),
+  createdAt: zod.coerce.date(),
+});
+export const ListActivityResponse = zod.array(ListActivityResponseItem);

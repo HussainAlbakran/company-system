@@ -8,3 +8,107 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Metric {
+  label: string;
+  value: string;
+  change: string;
+}
+
+export interface CompanyOverview {
+  activeProjects: number;
+  pendingApprovals: number;
+  monthlyCompletion: number;
+  totalContractValue: number;
+  metrics: Metric[];
+  departmentBreakdown: Metric[];
+}
+
+export interface Employee {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  department: string;
+  status: string;
+  joinedAt: string;
+}
+
+export interface CreateEmployeeInput {
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+  department: string;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  clientName: string;
+  location: string;
+  stage: string;
+  status: string;
+  progress: number;
+  budget: number;
+  startsAt: string;
+  endsAt: string;
+}
+
+export interface CreateProjectInput {
+  name: string;
+  clientName: string;
+  location: string;
+  stage: string;
+  budget: number;
+}
+
+export interface Contract {
+  id: number;
+  code: string;
+  projectName: string;
+  clientName: string;
+  value: number;
+  paidAmount: number;
+  status: string;
+  signedAt: string;
+}
+
+export interface OperationalTask {
+  id: number;
+  title: string;
+  category: string;
+  projectName: string;
+  assignee: string;
+  priority: string;
+  status: string;
+  dueAt: string;
+}
+
+export interface CreateOperationalTaskInput {
+  title: string;
+  category: string;
+  projectName: string;
+  assignee: string;
+  priority: string;
+}
+
+export interface Approval {
+  id: number;
+  title: string;
+  type: string;
+  requester: string;
+  projectName: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface ActivityItem {
+  id: number;
+  title: string;
+  description: string;
+  actor: string;
+  module: string;
+  createdAt: string;
+}

@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: company
+    description: Contracting company system operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,153 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /company/overview:
+    get:
+      operationId: getCompanyOverview
+      tags: [company]
+      summary: Company overview
+      responses:
+        "200":
+          description: Company operational overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompanyOverview"
+  /company/employees:
+    get:
+      operationId: listEmployees
+      tags: [company]
+      summary: List employees
+      responses:
+        "200":
+          description: Employees
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Employee"
+    post:
+      operationId: createEmployee
+      tags: [company]
+      summary: Create employee
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEmployeeInput"
+      responses:
+        "201":
+          description: Created employee
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Employee"
+  /company/projects:
+    get:
+      operationId: listProjects
+      tags: [company]
+      summary: List projects
+      responses:
+        "200":
+          description: Projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+    post:
+      operationId: createProject
+      tags: [company]
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectInput"
+      responses:
+        "201":
+          description: Created project
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project"
+  /company/contracts:
+    get:
+      operationId: listContracts
+      tags: [company]
+      summary: List contracts
+      responses:
+        "200":
+          description: Contracts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Contract"
+  /company/tasks:
+    get:
+      operationId: listOperationalTasks
+      tags: [company]
+      summary: List operational tasks
+      responses:
+        "200":
+          description: Operational tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OperationalTask"
+    post:
+      operationId: createOperationalTask
+      tags: [company]
+      summary: Create operational task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOperationalTaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationalTask"
+  /company/approvals:
+    get:
+      operationId: listApprovals
+      tags: [company]
+      summary: List approvals
+      responses:
+        "200":
+          description: Approvals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Approval"
+  /company/activity:
+    get:
+      operationId: listActivity
+      tags: [company]
+      summary: List recent activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +181,200 @@ components:
           type: string
       required:
         - status
-
+    Metric:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+        change:
+          type: string
+      required: [label, value, change]
+    CompanyOverview:
+      type: object
+      properties:
+        activeProjects:
+          type: integer
+        pendingApprovals:
+          type: integer
+        monthlyCompletion:
+          type: integer
+        totalContractValue:
+          type: number
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/Metric"
+        departmentBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/Metric"
+      required: [activeProjects, pendingApprovals, monthlyCompletion, totalContractValue, metrics, departmentBreakdown]
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        department:
+          type: string
+        status:
+          type: string
+        joinedAt:
+          type: string
+          format: date-time
+      required: [id, name, email, phone, role, department, status, joinedAt]
+    CreateEmployeeInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+        department:
+          type: string
+      required: [name, email, phone, role, department]
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        clientName:
+          type: string
+        location:
+          type: string
+        stage:
+          type: string
+        status:
+          type: string
+        progress:
+          type: integer
+        budget:
+          type: number
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+      required: [id, name, clientName, location, stage, status, progress, budget, startsAt, endsAt]
+    CreateProjectInput:
+      type: object
+      properties:
+        name:
+          type: string
+        clientName:
+          type: string
+        location:
+          type: string
+        stage:
+          type: string
+        budget:
+          type: number
+      required: [name, clientName, location, stage, budget]
+    Contract:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        projectName:
+          type: string
+        clientName:
+          type: string
+        value:
+          type: number
+        paidAmount:
+          type: number
+        status:
+          type: string
+        signedAt:
+          type: string
+          format: date-time
+      required: [id, code, projectName, clientName, value, paidAmount, status, signedAt]
+    OperationalTask:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        category:
+          type: string
+        projectName:
+          type: string
+        assignee:
+          type: string
+        priority:
+          type: string
+        status:
+          type: string
+        dueAt:
+          type: string
+          format: date-time
+      required: [id, title, category, projectName, assignee, priority, status, dueAt]
+    CreateOperationalTaskInput:
+      type: object
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+        projectName:
+          type: string
+        assignee:
+          type: string
+        priority:
+          type: string
+      required: [title, category, projectName, assignee, priority]
+    Approval:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        type:
+          type: string
+        requester:
+          type: string
+        projectName:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, type, requester, projectName, status, createdAt]
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        actor:
+          type: string
+        module:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, description, actor, module, createdAt]
