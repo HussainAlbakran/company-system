@@ -15,6 +15,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+- **Frontend**: React + Vite web artifact for Company System
 
 ## Key Commands
 
@@ -23,5 +24,19 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - `pnpm --filter @workspace/api-server run dev` — run API server locally
+- `pnpm --filter @workspace/company-system run dev` — run Company System web app locally
 
 See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.
+
+## Company System
+
+- A React/Vite deployable web artifact exists at `artifacts/company-system` with preview path `/`.
+- The app is an Arabic RTL contracting company system MVP based on the user's approved canvas mockups and existing GitHub Laravel project reference.
+- Current frontend routes:
+  - `/` public contracting company homepage
+  - `/login` role-based MVP login screen
+  - `/employee` employee operations dashboard
+  - `/client` client project portal
+  - `/admin` administrative control center
+- The GitHub reference project is a Laravel system with modules for dashboard, reports, users/approvals, audit logs, employees, departments, leave requests, sales contracts/payments, architect tasks, engineering projects/updates, purchases, warehouse, factory production, installations, assets, AI assistant, and technical support.
+- Current login is a frontend MVP using localStorage role/session state. Real authentication and persistent database-backed workflows still need to be implemented before production use.

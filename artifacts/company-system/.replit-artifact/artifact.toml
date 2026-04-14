@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Company System"
+version = "1.0.0"
+id = "artifacts/company-system"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25181
+
+[services.development]
+run = "pnpm --filter @workspace/company-system run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/company-system", "run", "build" ]
+publicDir = "artifacts/company-system/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25181"
+BASE_PATH = "/"
