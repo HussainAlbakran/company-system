@@ -1,20 +1,20 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="text-xl font-semibold">
-            Products
+            المنتجات
         </h2>
     </x-slot>
 
     <div class="p-6">
         <a href="{{ route('products.create') }}" style="background:#22c55e;color:white;padding:10px;border-radius:6px;">
-            Add Product
+            إضافة منتج
         </a>
 
         <table border="1" width="100%" style="margin-top:20px">
             <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
+                <th>الاسم</th>
+                <th>الوصف</th>
+                <th>السعر</th>
             </tr>
 
             @forelse($products as $product)
@@ -25,7 +25,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3">No products found.</td>
+                    <td colspan="3">لا توجد منتجات.</td>
                 </tr>
             @endforelse
         </table>

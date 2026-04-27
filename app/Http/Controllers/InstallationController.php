@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\ProductionOrder;
 use App\Models\ArchitectTask;
 use App\Models\ArchitectMeasurement;
+use App\Models\InstallationFactoryRequest;
 use Illuminate\Support\Facades\Auth;
 
 class InstallationController extends Controller
@@ -40,7 +41,19 @@ class InstallationController extends Controller
 
         $productionOrders = $project->productionOrders()->latest()->get();
 
-        return view('installations.show', compact('project', 'architectTask', 'measurements', 'productionOrders'));
+        $installationFactoryRequests = InstallationFactoryRequest::query()
+            ->where('project_id', $project->id)
+            ->with('creator')
+            ->latest()
+            ->get();
+
+        return view('installations.show', compact(
+            'project',
+            'architectTask',
+            'measurements',
+            'productionOrders',
+            'installationFactoryRequests'
+        ));
     }
 
     public function complete($id)
@@ -60,7 +73,7 @@ class InstallationController extends Controller
             'description' => 'تم إنهاء التركيبات وإغلاق المشروع',
         ]);
 
-        return redirect()->route('installations.index')->with('success', 'تم إنهاء التركيبات وإغلاق المشروع');
+        return redirect()->route('installations.index')->with('success', __('factory.flash_installations_project_completed'));
     }
 
     private function hydrateProjectProductionStats(Project $project): void

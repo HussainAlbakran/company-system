@@ -1,12 +1,13 @@
 @extends('layouts.app')
 
-@section('page_title', 'General Purchases')
-@section('page_subtitle', 'Assets and maintenance expenses')
+@section('page_title', __('general_purchases.page_title'))
+@section('page_subtitle', __('general_purchases.page_subtitle'))
 
 @section('content')
-<x-ui.card title="General Purchases" subtitle="Asset purchasing and maintenance operations">
-    <div class="actions-row" style="margin-bottom:12px;">
-        <a href="{{ route('general-purchases.create') }}" class="btn btn-primary">+ Add New</a>
+<x-ui.card :title="__('general_purchases.card_title')" :subtitle="__('general_purchases.card_subtitle')">
+    <div class="actions-row" style="margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <a href="{{ route('general-purchases.create') }}" class="btn btn-primary">+ {{ __('general_purchases.add_new') }}</a>
+        <a href="{{ route('assets.registration-expiring-soon') }}" class="btn btn-warning btn-sm">{{ __('general_purchases.vehicle_expiry_link') }}</a>
     </div>
 
     @if(session('success'))
@@ -15,44 +16,42 @@
         </div>
     @endif
 
-    {{-- الفلترة --}}
     <div class="page-card" style="margin-bottom:20px;">
         <form method="GET" style="display:flex; gap:10px; flex-wrap:wrap;">
 
             <select name="type" class="form-control">
-                <option value="">كل الأنواع</option>
+                <option value="">{{ __('general_purchases.filter_all_types') }}</option>
                 <option value="asset_purchase" {{ request('type') == 'asset_purchase' ? 'selected' : '' }}>
-                    شراء أصول
+                    {{ __('general_purchases.type_asset_purchase') }}
                 </option>
                 <option value="general_maintenance" {{ request('type') == 'general_maintenance' ? 'selected' : '' }}>
-                    صيانة عامة
+                    {{ __('general_purchases.type_general_maintenance') }}
                 </option>
             </select>
 
-            <button class="btn btn-primary">Search</button>
+            <button class="btn btn-primary">{{ __('general_purchases.search') }}</button>
 
         </form>
     </div>
 
-    {{-- الإجماليات --}}
     <div class="form-grid" style="margin-bottom:20px;">
 
         <div class="detail-box">
-            <strong>Total Asset Purchases</strong>
+            <strong>{{ __('general_purchases.total_asset_purchases') }}</strong>
             <div class="badge badge-green">
                 {{ number_format($totalAssetPurchaseCost, 2) }}
             </div>
         </div>
 
         <div class="detail-box">
-            <strong>Total Maintenance</strong>
+            <strong>{{ __('general_purchases.total_maintenance') }}</strong>
             <div class="badge badge-orange">
                 {{ number_format($totalGeneralMaintenanceCost, 2) }}
             </div>
         </div>
 
         <div class="detail-box">
-            <strong>Grand Total</strong>
+            <strong>{{ __('general_purchases.grand_total') }}</strong>
             <div class="badge badge-blue">
                 {{ number_format($totalGeneralPurchasesCost, 2) }}
             </div>
@@ -60,22 +59,21 @@
 
     </div>
 
-    {{-- الجدول --}}
     <x-ui.table>
             <thead>
                 <tr>
-                    <th>#</th>
-                    <th>Type</th>
-                    <th>Item</th>
-                    <th>Qty</th>
+                    <th>{{ __('general_purchases.th_number') }}</th>
+                    <th>{{ __('general_purchases.th_type') }}</th>
+                    <th>{{ __('general_purchases.th_line') }}</th>
+                    <th>{{ __('general_purchases.th_quantity') }}</th>
 
                     @if(auth()->user()->role == 'admin' || auth()->user()->role == 'manager')
-                        <th>Cost</th>
+                        <th>{{ __('general_purchases.th_cost') }}</th>
                     @endif
 
-                    <th>Vendor</th>
-                    <th>Date</th>
-                    <th>Actions</th>
+                    <th>{{ __('general_purchases.th_vendor') }}</th>
+                    <th>{{ __('general_purchases.th_date') }}</th>
+                    <th>{{ __('general_purchases.th_actions') }}</th>
                 </tr>
             </thead>
 
@@ -86,9 +84,9 @@
 
                         <td>
                             @if($purchase->type == 'asset_purchase')
-                                <span class="badge badge-green">شراء أصول</span>
+                                <span class="badge badge-green">{{ __('general_purchases.type_asset_purchase') }}</span>
                             @else
-                                <span class="badge badge-orange">صيانة عامة</span>
+                                <span class="badge badge-orange">{{ __('general_purchases.type_general_maintenance') }}</span>
                             @endif
                         </td>
 
@@ -113,17 +111,17 @@
                         <td style="display:flex; gap:6px;">
                             <a href="{{ route('general-purchases.edit', $purchase->id) }}"
                                class="btn btn-warning btn-sm">
-                                Edit
+                                {{ __('general_purchases.edit') }}
                             </a>
 
                             <form action="{{ route('general-purchases.destroy', $purchase->id) }}"
                                   method="POST"
-                                  onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                                  onsubmit="return confirm(@json(__('general_purchases.confirm_delete')))">
                                 @csrf
                                 @method('DELETE')
 
                                 <button class="btn btn-danger btn-sm" type="submit">
-                                    Delete
+                                    {{ __('general_purchases.delete') }}
                                 </button>
                             </form>
                         </td>
@@ -131,14 +129,13 @@
                 @empty
                     <tr>
                         <td colspan="{{ (auth()->user()->role == 'admin' || auth()->user()->role == 'manager') ? 8 : 7 }}" class="empty-row">
-                            لا توجد بيانات حالياً
+                            {{ __('general_purchases.empty') }}
                         </td>
                     </tr>
                 @endforelse
             </tbody>
     </x-ui.table>
 
-    {{-- pagination --}}
     <div style="margin-top:16px;">
         {{ $purchases->links() }}
     </div>

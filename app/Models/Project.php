@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Project extends Model
 {
@@ -27,8 +27,10 @@ class Project extends Model
         'project_pdf',
         'current_stage',
         'notes',
+        'required_concrete_quantity',
         'created_by',
         'updated_by',
+        'client_user_id',
     ];
 
     protected $casts = [
@@ -37,6 +39,7 @@ class Project extends Model
         'progress_percentage' => 'decimal:2',
         'project_value' => 'decimal:2',
         'expenses' => 'decimal:2',
+        'required_concrete_quantity' => 'decimal:2',
     ];
 
     protected $appends = [
@@ -58,6 +61,11 @@ class Project extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function clientUser()
+    {
+        return $this->belongsTo(User::class, 'client_user_id');
     }
 
     public function department()
@@ -90,6 +98,11 @@ class Project extends Model
         return $this->hasMany(ArchitectMeasurement::class);
     }
 
+    public function architectMaterialRequests()
+    {
+        return $this->hasMany(ArchitectMaterialRequest::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Factory / Production
@@ -98,6 +111,11 @@ class Project extends Model
     public function productionOrders()
     {
         return $this->hasMany(ProductionOrder::class);
+    }
+
+    public function installationFactoryRequests()
+    {
+        return $this->hasMany(InstallationFactoryRequest::class);
     }
 
     public function productionEntries()

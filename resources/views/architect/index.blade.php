@@ -1,23 +1,26 @@
 @extends('layouts.app')
 
+@section('page_title', __('architect.index_title'))
+@section('page_subtitle', __('architect.index_subtitle'))
+
 @section('content')
 
 <div class="page-card">
 
     <div class="page-header">
-        <h2>المهندس المعماري</h2>
-        <p>المشاريع القادمة من المبيعات</p>
+        <h2>{{ __('architect.index_title') }}</h2>
+        <p>{{ __('architect.index_subtitle') }}</p>
     </div>
 
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>رقم المشروع</th>
-                    <th>اسم المشروع</th>
-                    <th>العميل</th>
-                    <th>المرحلة الحالية</th>
-                    <th>الإجراء</th>
+                    <th>{{ __('architect.th_project_code') }}</th>
+                    <th>{{ __('architect.th_project_name') }}</th>
+                    <th>{{ __('architect.th_client') }}</th>
+                    <th>{{ __('architect.th_stage') }}</th>
+                    <th>{{ __('architect.th_action') }}</th>
                 </tr>
             </thead>
 
@@ -35,18 +38,23 @@
                         </td>
 
                         <td>
-                            <form action="{{ route('architect.complete', $project->id) }}" method="POST">
-                                @csrf
-                                <button class="btn btn-success">
-                                    إنهاء وإرسال للمشتريات
-                                </button>
-                            </form>
+                            <div class="actions-row" style="flex-wrap:wrap; gap:8px;">
+                                <a href="{{ route('architect.project-material-requirements', $project) }}" class="btn btn-primary">
+                                    {{ __('architect.open') }}
+                                </a>
+                                <form action="{{ route('architect.complete', $project->id) }}" method="POST" style="display:inline;">
+                                    @csrf
+                                    <button type="submit" class="btn btn-success">
+                                        {{ __('architect.complete_send_purchasing') }}
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
                         <td colspan="5" class="empty-row">
-                            لا توجد مشاريع حالياً
+                            {{ __('architect.empty_projects') }}
                         </td>
                     </tr>
                 @endforelse

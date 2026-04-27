@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Models\Factory;
 use Illuminate\Database\Eloquent\Model;
 
 class Employee extends Model
@@ -71,5 +70,37 @@ class Employee extends Model
     public function assets()
     {
         return $this->hasMany(EmployeeAsset::class);
+    }
+
+    public function activeAssets()
+    {
+        return $this->hasMany(EmployeeAsset::class)->where('status', 'active');
+    }
+
+    public function assetAssignments()
+    {
+        return $this->hasMany(AssetAssignment::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Projects where this employee is the responsible assignee.
+     */
+    public function assignedProjects()
+    {
+        return $this->hasMany(Project::class, 'responsible_employee_id');
+    }
+
+    public function getHasCustodyAttribute(): bool
+    {
+        if (array_key_exists('active_assets_count', $this->attributes)) {
+            return (int) $this->attributes['active_assets_count'] > 0;
+        }
+
+        return $this->activeAssets()->exists();
     }
 }

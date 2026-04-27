@@ -10,8 +10,8 @@ class AuditLogController extends Controller
 {
     protected function authorizeAdmin(): void
     {
-        if (!auth()->check() || !auth()->user()->isAdmin()) {
-            abort(403, 'غير مصرح لك بالوصول إلى سجل العمليات.');
+        if (!auth()->check() || !auth()->user()->canViewAuditLogs()) {
+            abort(403, __('audit.abort_unauthorized'));
         }
     }
 

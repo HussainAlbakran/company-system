@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\AuditHelper;
 use App\Models\ArchitectMeasurement;
 use App\Models\ArchitectTask;
 use App\Models\AuditLog;
@@ -16,8 +17,8 @@ class ArchitectTaskController extends Controller
 {
     private function authorizeArchitect()
     {
-        if (!in_array(auth()->user()->role, ['admin', 'engineer'])) {
-            abort(403, 'غير مصرح لك بالدخول');
+        if (! auth()->check() || ! auth()->user()->canAccessDesignsModule()) {
+            abort(403, __('architect.abort_module'));
         }
     }
 
@@ -66,6 +67,13 @@ class ArchitectTaskController extends Controller
             'drawing_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,dwg,dxf,xlsx,xls,csv|max:10240',
             'planning_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png,dwg,dxf,xlsx,xls,csv|max:10240',
             'notes' => 'nullable|string',
+            'required_concrete_quantity' => 'nullable|numeric|min:0',
+        ]);
+
+        $project->update([
+            'required_concrete_quantity' => $request->filled('required_concrete_quantity')
+                ? (float) $request->input('required_concrete_quantity')
+                : null,
         ]);
 
         $architectTask = ArchitectTask::firstOrCreate(
@@ -85,6 +93,12 @@ class ArchitectTaskController extends Controller
             }
 
             $drawingFilePath = $request->file('drawing_file')->store('architect/drawings', 'public');
+            AuditHelper::log(
+                'file_uploaded',
+                'ArchitectTask',
+                null,
+                'module=designs | file_name=' . $request->file('drawing_file')->getClientOriginalName()
+            );
         }
 
         if ($request->hasFile('planning_file')) {
@@ -93,6 +107,12 @@ class ArchitectTaskController extends Controller
             }
 
             $planningFilePath = $request->file('planning_file')->store('architect/planning', 'public');
+            AuditHelper::log(
+                'file_uploaded',
+                'ArchitectTask',
+                null,
+                'module=designs | file_name=' . $request->file('planning_file')->getClientOriginalName()
+            );
         }
 
         $architectTask->update([
@@ -104,7 +124,7 @@ class ArchitectTaskController extends Controller
             'notes' => $request->notes,
         ]);
 
-        return back()->with('success', 'تم تحديث بيانات المعماري بنجاح');
+        return back()->with('success', __('architect.flash_architect_updated'));
     }
 
     public function storeMeasurement(Request $request, $projectId)
@@ -145,7 +165,7 @@ class ArchitectTaskController extends Controller
             ]);
         }
 
-        return back()->with('success', 'تم الحفظ');
+        return back()->with('success', __('architect.flash_measurements_saved'));
     }
 
     public function updateMeasurement(Request $request, $id)
@@ -168,7 +188,7 @@ class ArchitectTaskController extends Controller
 
         $measurement->update($validated);
 
-        return back()->with('success', 'تم تعديل المقاس بنجاح');
+        return back()->with('success', __('architect.flash_measurement_updated'));
     }
 
     public function destroyMeasurement($id)
@@ -178,7 +198,7 @@ class ArchitectTaskController extends Controller
         $measurement = ArchitectMeasurement::findOrFail($id);
         $measurement->delete();
 
-        return back()->with('success', 'تم حذف المقاس بنجاح');
+        return back()->with('success', __('architect.flash_measurement_deleted'));
     }
 
     public function sendToFactory($projectId, StageNotificationService $stageNotificationService)
@@ -187,24 +207,43 @@ class ArchitectTaskController extends Controller
 
         $project = Project::findOrFail($projectId);
 
-        $measurements = ArchitectMeasurement::where('project_id', $project->id)
-            ->where('quantity', '>', 0)
-            ->get();
+        $designConcrete = $project->required_concrete_quantity !== null
+            ? (float) $project->required_concrete_quantity
+            : 0.0;
 
-        if ($measurements->isEmpty()) {
-            return back()->with('error', 'لا توجد مقاسات');
-        }
+        if ($designConcrete > 0) {
+            ProductionOrder::updateOrCreate(
+                [
+                    'project_id' => $project->id,
+                    'order_number' => 'PRJ-' . $project->id . '-CONCRETE',
+                ],
+                [
+                    'project_id' => $project->id,
+                    'product_name' => 'خرسانة جاهزة',
+                    'planned_quantity' => $designConcrete,
+                    'status' => 'pending',
+                ]
+            );
+        } else {
+            $measurements = ArchitectMeasurement::where('project_id', $project->id)
+                ->where('quantity', '>', 0)
+                ->get();
 
-        foreach ($measurements as $m) {
-            ProductionOrder::updateOrCreate([
-                'project_id' => $project->id,
-                'order_number' => 'PRJ-' . $project->id . '-' . $m->id,
-            ], [
-                'project_id' => $project->id,
-                'product_name' => $m->name,
-                'planned_quantity' => $m->quantity,
-                'status' => 'pending',
-            ]);
+            if ($measurements->isEmpty()) {
+                return back()->with('error', __('architect.flash_concrete_required'));
+            }
+
+            foreach ($measurements as $m) {
+                ProductionOrder::updateOrCreate([
+                    'project_id' => $project->id,
+                    'order_number' => 'PRJ-' . $project->id . '-' . $m->id,
+                ], [
+                    'project_id' => $project->id,
+                    'product_name' => $m->name,
+                    'planned_quantity' => $m->quantity,
+                    'status' => 'pending',
+                ]);
+            }
         }
 
         $project->update([
@@ -216,7 +255,7 @@ class ArchitectTaskController extends Controller
         $stageNotificationService->sendInstallationStageNotification($project);
         $stageNotificationService->sendPurchasesStageNotification($project);
 
-        return back()->with('success', 'تم إرسال المشروع + الإيميلات');
+        return back()->with('success', __('architect.flash_project_sent'));
     }
 
     public function approve($projectId)
@@ -230,6 +269,6 @@ class ArchitectTaskController extends Controller
             'status' => 'ongoing',
         ]);
 
-        return redirect()->route('architect-tasks.index')->with('success', 'تم الاعتماد');
+        return redirect()->route('architect-tasks.index')->with('success', __('architect.flash_approved'));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\AuditHelper;
 use App\Models\Project;
 use App\Models\ProjectUpdate;
 use Illuminate\Http\Request;
@@ -14,7 +15,7 @@ class ProjectUpdateController extends Controller
     protected function authorizeProjects(): void
     {
         if (!auth()->check() || !auth()->user()->canManageProjects()) {
-            abort(403, 'غير مصرح لك بالوصول إلى تحديثات المشاريع.');
+            abort(403, __('projects.updates_abort_unauthorized'));
         }
     }
 
@@ -38,6 +39,12 @@ class ProjectUpdateController extends Controller
             if ($request->hasFile('attachment')) {
                 $file = $request->file('attachment');
                 $filePath = $file->store('project_updates', 'public');
+                AuditHelper::log(
+                    'file_uploaded',
+                    'ProjectUpdate',
+                    null,
+                    'module=projects | file_name=' . $file->getClientOriginalName()
+                );
 
                 $fullPath = storage_path('app/public/' . $filePath);
                 $extension = strtolower($file->getClientOriginalExtension());
@@ -71,7 +78,14 @@ class ProjectUpdateController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'تم إضافة التحديث ومعالجة المرفق بنجاح');
+            AuditHelper::log(
+                'create',
+                'ProjectUpdate',
+                null,
+                'تم إنشاء تحديث مشروع للمشروع رقم: ' . $project->id
+            );
+
+            return back()->with('success', __('projects.flash_update_added'));
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -81,7 +95,7 @@ class ProjectUpdateController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'حدث خطأ أثناء إضافة التحديث: ' . $e->getMessage());
+                ->with('error', __('projects.flash_update_error', ['message' => $e->getMessage()]));
         }
     }
 
@@ -110,11 +124,11 @@ class ProjectUpdateController extends Controller
 
             DB::commit();
 
-            return back()->with('success', 'تم حذف التحديث بنجاح.');
+            return back()->with('success', __('projects.flash_update_deleted'));
         } catch (\Throwable $e) {
             DB::rollBack();
 
-            return back()->with('error', 'حدث خطأ أثناء حذف التحديث: ' . $e->getMessage());
+            return back()->with('error', __('projects.flash_update_delete_error', ['message' => $e->getMessage()]));
         }
     }
 

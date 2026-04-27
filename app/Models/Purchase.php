@@ -8,6 +8,7 @@ class Purchase extends Model
 {
     protected $fillable = [
         'project_id',
+        'architect_material_request_id',
         'type',
         'title',
         'description',
@@ -41,6 +42,11 @@ class Purchase extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function architectMaterialRequest()
+    {
+        return $this->belongsTo(ArchitectMaterialRequest::class, 'architect_material_request_id');
     }
 
     /*

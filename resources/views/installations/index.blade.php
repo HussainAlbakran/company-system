@@ -1,26 +1,27 @@
 @extends('layouts.app')
 
-@section('page_title', 'Installation')
-@section('page_subtitle', 'Read-only execution from production orders')
+@section('page_title', __('factory.installations_index_title'))
+@section('page_subtitle', __('factory.installations_index_subtitle'))
 
 @section('content')
 
-<x-ui.card title="Installation Projects" subtitle="Required / Produced / Remaining from ProductionOrder only">
+<x-ui.card :title="__('factory.installations_card_title')" :subtitle="__('factory.installations_card_subtitle')">
     <x-ui.table>
             <thead>
                 <tr>
-                    <th>رقم المشروع</th>
-                    <th>اسم المشروع</th>
-                    <th>العميل</th>
-                    <th>ملف الرسم</th>
-                    <th>ملف التخطيط</th>
-                    <th>عدد المقاسات</th>
-                    <th>المطلوب</th>
-                    <th>تم إنتاجه</th>
-                    <th>المتبقي</th>
-                    <th>نسبة الإنجاز</th>
-                    <th>الحالة</th>
-                    <th>فتح المشروع</th>
+                    <th>{{ __('factory.project_code') }}</th>
+                    <th>{{ __('factory.project_name') }}</th>
+                    <th>{{ __('factory.client') }}</th>
+                    <th>{{ __('factory.th_drawing_file') }}</th>
+                    <th>{{ __('factory.th_planning_file') }}</th>
+                    <th>{{ __('factory.th_measurements_count') }}</th>
+                    <th>{{ __('factory.th_planned') }}</th>
+                    <th>{{ __('factory.th_produced_short') }}</th>
+                    <th>{{ __('factory.th_remaining_short') }}</th>
+                    <th>{{ __('factory.th_completion') }}</th>
+                    <th>{{ __('factory.th_status') }}</th>
+                    <th>{{ __('factory.th_open_project') }}</th>
+                    <th>{{ __('factory.th_factory_request') }}</th>
                 </tr>
             </thead>
 
@@ -33,17 +34,17 @@
 
                         <td>
                             @if($project->architectTask && $project->architectTask->drawing_file)
-                                <span class="badge badge-green">موجود</span>
+                                <span class="badge badge-green">{{ __('factory.file_present') }}</span>
                             @else
-                                <span class="badge badge-gray">غير مرفوع</span>
+                                <span class="badge badge-gray">{{ __('factory.file_not_uploaded') }}</span>
                             @endif
                         </td>
 
                         <td>
                             @if($project->architectTask && $project->architectTask->planning_file)
-                                <span class="badge badge-green">موجود</span>
+                                <span class="badge badge-green">{{ __('factory.file_present') }}</span>
                             @else
-                                <span class="badge badge-gray">غير مرفوع</span>
+                                <span class="badge badge-gray">{{ __('factory.file_not_uploaded') }}</span>
                             @endif
                         </td>
 
@@ -67,7 +68,7 @@
                                     {{ number_format($project->remaining_quantity, 2) }}
                                 </span>
                             @else
-                                <span class="badge badge-green">مكتمل</span>
+                                <span class="badge badge-green">{{ __('factory.status_completed') }}</span>
                             @endif
                         </td>
 
@@ -80,13 +81,16 @@
                         </td>
 
                         <td>
-                            <a href="{{ route('installations.show', $project->id) }}" class="btn btn-primary btn-sm">فتح المشروع</a>
+                            <a href="{{ route('installations.show', $project->id) }}" class="btn btn-primary btn-sm">{{ __('factory.th_open_project') }}</a>
+                        </td>
+                        <td>
+                            <a href="{{ route('installations.factory-requests.create', $project->id) }}" class="btn btn-secondary btn-sm">{{ __('factory.request_from_factory') }}</a>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="12" class="empty-row">
-                            لا توجد مشاريع حالياً
+                        <td colspan="13" class="empty-row">
+                            {{ __('factory.installations_empty') }}
                         </td>
                     </tr>
                 @endforelse

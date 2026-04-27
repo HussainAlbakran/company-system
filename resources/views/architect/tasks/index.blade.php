@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('page_title', 'Design')
-@section('page_subtitle', 'Architect stage projects')
+@section('page_title', __('architect.tasks_page_title'))
+@section('page_subtitle', __('architect.tasks_page_subtitle'))
 
 @section('content')
-<x-ui.card title="Design Projects" subtitle="Measurements and technical planning">
+<x-ui.card :title="__('architect.tasks_card_title')" :subtitle="__('architect.tasks_card_subtitle')">
     <x-ui.table>
             <thead>
                 <tr>
-                    <th>Project Code</th>
-                    <th>Project Name</th>
-                    <th>Client</th>
-                    <th>Stage</th>
-                    <th>Open</th>
+                    <th>{{ __('architect.th_project_code') }}</th>
+                    <th>{{ __('architect.th_project_name') }}</th>
+                    <th>{{ __('architect.th_client') }}</th>
+                    <th>{{ __('architect.th_stage_short') }}</th>
+                    <th>{{ __('architect.open') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -28,12 +28,12 @@
                         </td>
                         <td>
                             <a href="{{ route('architect-tasks.show', $project->id) }}" class="btn btn-primary btn-sm">
-                                Open
+                                {{ __('architect.open') }}
                             </a>
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="empty-row">No design projects</td></tr>
+                    <tr><td colspan="5" class="empty-row">{{ __('architect.tasks_empty') }}</td></tr>
                 @endforelse
             </tbody>
     </x-ui.table>

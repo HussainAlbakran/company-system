@@ -11,6 +11,7 @@ class Department extends Model
 
     protected $fillable = [
         'name',
+        'manager_user_id',
     ];
 
     public function employees()
@@ -21,5 +22,10 @@ class Department extends Model
     public function projects()
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function managerUser()
+    {
+        return $this->belongsTo(User::class, 'manager_user_id');
     }
 }

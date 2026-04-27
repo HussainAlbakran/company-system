@@ -1,12 +1,20 @@
- @extends('layouts.app')
+@extends('layouts.app')
+
+@section('page_title', __('contracts.show_title'))
+@section('page_subtitle', __('contracts.show_subtitle'))
 
 @section('content')
+@php
+    $u = auth()->user();
+    $finFull = $u->canViewProjectFinancials();
+    $finValueOnly = $u->canViewProjectValueOnly();
+@endphp
 
 <div class="page-card">
 
     <div class="page-header">
-        <h2>تفاصيل العقد</h2>
-        <p>عرض كامل لبيانات العقد والمشروع المرتبط به</p>
+        <h2>{{ __('contracts.show_title') }}</h2>
+        <p>{{ __('contracts.show_subtitle') }}</p>
     </div>
 
     @if(session('success'))
@@ -32,79 +40,83 @@
     @endif
 
     <div class="actions-row" style="margin-bottom: 20px;">
-        <a href="{{ route('sales-contracts.index') }}" class="btn btn-secondary">رجوع</a>
-        <a href="{{ route('sales-contracts.edit', $contract->id) }}" class="btn btn-warning">تعديل</a>
+        <a href="{{ route('sales-contracts.index') }}" class="btn btn-secondary">{{ __('common.back') }}</a>
+        <a href="{{ route('sales-contracts.edit', $contract->id) }}" class="btn btn-warning">{{ __('contracts.edit') }}</a>
+        @if($finFull)
         <button type="button" class="btn btn-primary" onclick="togglePaymentForm()">
-            ➕ إضافة دفعة
+            ➕ {{ __('contracts.add_payment') }}
         </button>
+        @endif
     </div>
 
     <div class="details-grid">
 
         <div class="detail-box">
-            <strong>رقم العقد</strong>
+            <strong>{{ __('contracts.field_contract_no') }}</strong>
             <div>{{ $contract->contract_no }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>تاريخ العقد</strong>
+            <strong>{{ __('contracts.field_contract_date') }}</strong>
             <div>{{ $contract->contract_date }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>اسم العميل</strong>
+            <strong>{{ __('contracts.field_client_name') }}</strong>
             <div>{{ $contract->client_name }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>المقاول الرئيسي</strong>
+            <strong>{{ __('contracts.field_main_contractor') }}</strong>
             <div>{{ $contract->main_contractor ?? '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>اسم المشروع</strong>
+            <strong>{{ __('contracts.field_project_name') }}</strong>
             <div>{{ $contract->project_name }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>موقع المشروع</strong>
+            <strong>{{ __('contracts.field_project_location') }}</strong>
             <div>{{ $contract->project_location ?? '-' }}</div>
         </div>
 
+        @if($finFull || $finValueOnly)
         <div class="detail-box">
-            <strong>قيمة المشروع</strong>
+            <strong>{{ __('contracts.field_project_value') }}</strong>
             <div>{{ number_format($contract->project_value ?? 0, 2) }}</div>
         </div>
+        @endif
 
         <div class="detail-box">
-            <strong>مدة المشروع</strong>
-            <div>{{ $contract->project_duration ? $contract->project_duration . ' يوم' : '-' }}</div>
+            <strong>{{ __('contracts.field_project_duration') }}</strong>
+            <div>{{ $contract->project_duration ? $contract->project_duration . ' ' . __('contracts.day_suffix') : '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>تاريخ البداية المتوقع</strong>
+            <strong>{{ __('contracts.field_expected_start') }}</strong>
             <div>{{ $contract->expected_start_date ?? '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>تاريخ البداية الفعلي</strong>
+            <strong>{{ __('contracts.field_actual_start') }}</strong>
             <div>{{ $contract->actual_start_date ?? '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>تاريخ النهاية المتوقع</strong>
+            <strong>{{ __('contracts.field_expected_end') }}</strong>
             <div>{{ $contract->expected_end_date ?? '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>حالة العقد</strong>
+            <strong>{{ __('contracts.th_status') }}</strong>
             <div>
                 <span class="badge badge-green">{{ $contract->status }}</span>
             </div>
         </div>
 
         <div class="detail-box">
-            <strong>المرحلة الحالية</strong>
+            <strong>{{ __('contracts.th_stage') }}</strong>
             <div>
                 @if($contract->project)
                     <span class="badge badge-blue">{{ $contract->project->current_stage }}</span>
@@ -114,13 +126,14 @@
             </div>
         </div>
 
+        @if($finFull)
         <div class="detail-box">
-            <strong>طريقة الدفع</strong>
+            <strong>{{ __('contracts.payment_method') }}</strong>
             <div>
                 @if($contract->payment_type === 'full')
-                    دفع كامل
+                    {{ __('contracts.payment_full') }}
                 @elseif($contract->payment_type === 'installments')
-                    دفعات
+                    {{ __('contracts.payment_installments') }}
                 @else
                     -
                 @endif
@@ -128,55 +141,58 @@
         </div>
 
         <div class="detail-box">
-            <strong>إجمالي المدفوع</strong>
+            <strong>{{ __('contracts.total_paid') }}</strong>
             <div>{{ number_format($contract->total_paid ?? 0, 2) }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>المتبقي</strong>
+            <strong>{{ __('contracts.remaining') }}</strong>
             <div>{{ number_format($contract->remaining_amount ?? 0, 2) }}</div>
         </div>
+        @endif
 
+        @if($finFull)
         <div class="detail-box">
-            <strong>هل تم تسجيل أول دفعة؟</strong>
+            <strong>{{ __('contracts.first_payment_recorded_q') }}</strong>
             <div>
                 @if($contract->hasFirstPayment())
-                    <span class="badge badge-green">نعم</span>
+                    <span class="badge badge-green">{{ __('contracts.yes') }}</span>
                 @else
-                    <span class="badge badge-gray">لا</span>
+                    <span class="badge badge-gray">{{ __('contracts.no') }}</span>
                 @endif
             </div>
         </div>
+        @endif
 
         <div class="detail-box">
-            <strong>رقم المشروع</strong>
+            <strong>{{ __('contracts.project_number') }}</strong>
             <div>{{ $contract->project->project_code ?? '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>منشئ العقد</strong>
+            <strong>{{ __('contracts.contract_creator') }}</strong>
             <div>{{ $contract->creator->name ?? '-' }}</div>
         </div>
 
         <div class="detail-box detail-box-full">
-            <strong>وصف المشروع</strong>
+            <strong>{{ __('contracts.field_project_description') }}</strong>
             <div>{{ $contract->description ?? '-' }}</div>
         </div>
 
         <div class="detail-box detail-box-full">
-            <strong>ملاحظات</strong>
+            <strong>{{ __('contracts.field_notes') }}</strong>
             <div>{{ $contract->notes ?? '-' }}</div>
         </div>
 
         <div class="detail-box detail-box-full">
-            <strong>ملف العقد</strong>
+            <strong>{{ __('contracts.field_contract_file') }}</strong>
             <div>
                 @if($contract->contract_file)
                     <a href="{{ asset('storage/' . $contract->contract_file) }}" target="_blank" class="btn btn-primary">
-                        فتح ملف العقد
+                        {{ __('contracts.open_contract_file') }}
                     </a>
                 @else
-                    لا يوجد ملف مرفوع
+                    {{ __('contracts.no_file_uploaded') }}
                 @endif
             </div>
         </div>
@@ -184,40 +200,41 @@
     </div>
 </div>
 
-@if($contract->payment_type === 'installments')
+@if($finFull && $contract->payment_type === 'installments')
 <div class="page-card" style="margin-top:24px;">
     <div class="page-header">
-        <h2>بيانات الدفعة الأولى</h2>
+        <h2>{{ __('contracts.first_payment_section') }}</h2>
     </div>
 
     <div class="details-grid">
         <div class="detail-box">
-            <strong>اسم الدفعة الأولى</strong>
+            <strong>{{ __('contracts.first_payment_name') }}</strong>
             <div>{{ $contract->first_payment_title ?? '-' }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>نسبة الدفعة الأولى</strong>
+            <strong>{{ __('contracts.first_payment_pct_label') }}</strong>
             <div>{{ $contract->first_payment_percentage ?? '-' }}%</div>
         </div>
 
         <div class="detail-box">
-            <strong>مبلغ الدفعة الأولى</strong>
+            <strong>{{ __('contracts.first_payment_amount_label') }}</strong>
             <div>{{ number_format($contract->first_payment_amount ?? 0, 2) }}</div>
         </div>
 
         <div class="detail-box">
-            <strong>تاريخ استحقاق الدفعة الأولى</strong>
+            <strong>{{ __('contracts.first_payment_due_label') }}</strong>
             <div>{{ $contract->first_payment_due_date ?? '-' }}</div>
         </div>
     </div>
 </div>
 @endif
 
+@if($finFull)
 <div class="page-card" style="margin-top:24px;">
     <div class="page-header">
-        <h2>إضافة دفعة</h2>
-        <p>العقد ينتقل إلى التصاميم إذا تم دفع المبلغ كامل أو تم تسجيل الدفعة الأولى</p>
+        <h2>{{ __('contracts.add_payment_section') }}</h2>
+        <p>{{ __('contracts.add_payment_hint') }}</p>
     </div>
 
     <form id="paymentForm" action="{{ route('contract-payments.store', $contract->id) }}" method="POST" style="display:none;">
@@ -225,30 +242,30 @@
 
         <div class="form-grid">
             <div class="form-group">
-                <label>المبلغ</label>
+                <label>{{ __('contracts.field_amount') }}</label>
                 <input type="number" step="0.01" name="amount" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label>تاريخ الدفع</label>
+                <label>{{ __('contracts.field_payment_date') }}</label>
                 <input type="date" name="payment_date" class="form-control" required>
             </div>
 
             <div class="form-group form-group-full">
-                <label>ملاحظات</label>
+                <label>{{ __('contracts.field_notes') }}</label>
                 <textarea name="notes" class="form-control" rows="3"></textarea>
             </div>
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-success">حفظ الدفعة</button>
+            <button type="submit" class="btn btn-success">{{ __('contracts.save_payment') }}</button>
         </div>
     </form>
 </div>
 
 <div class="page-card" style="margin-top:24px;">
     <div class="page-header">
-        <h2>سجل الدفعات</h2>
+        <h2>{{ __('contracts.payments_log') }}</h2>
     </div>
 
     <div class="table-wrap">
@@ -256,10 +273,10 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>نوع الدفعة</th>
-                    <th>المبلغ</th>
-                    <th>تاريخ الدفع</th>
-                    <th>ملاحظات</th>
+                    <th>{{ __('contracts.th_payment_type') }}</th>
+                    <th>{{ __('contracts.th_amount') }}</th>
+                    <th>{{ __('contracts.th_payment_date_col') }}</th>
+                    <th>{{ __('contracts.th_notes') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -268,9 +285,9 @@
                         <td>{{ $payment->id }}</td>
                         <td>
                             @if($payment->payment_type === 'full')
-                                دفع كامل
+                                {{ __('contracts.payment_type_full_row') }}
                             @else
-                                دفعة
+                                {{ __('contracts.payment_type_installment_row') }}
                             @endif
                         </td>
                         <td>{{ number_format($payment->amount, 2) }}</td>
@@ -279,17 +296,19 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="empty-row">لا توجد دفعات مسجلة حتى الآن</td>
+                        <td colspan="5" class="empty-row">{{ __('contracts.payments_empty') }}</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 </div>
+@endif
 
 <script>
 function togglePaymentForm() {
     const form = document.getElementById('paymentForm');
+    if (!form) return;
     form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
 }
 </script>

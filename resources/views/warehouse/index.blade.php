@@ -1,14 +1,31 @@
 @extends('layouts.app')
 
+@section('page_title', __('warehouse.page_title'))
+@section('page_subtitle', __('warehouse.page_subtitle'))
+
 @section('content')
+
+@php
+    $warehouseSections = [
+        'diesel',
+        'oils',
+        'wood',
+        'concrete-materials',
+        'concrete-chemicals',
+        'operational-materials',
+        'rebar',
+        'strands',
+        'extra-materials',
+    ];
+@endphp
 
 <div class="page-card">
 
     <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
         <div>
-            <h1 class="page-title">المستودع</h1>
+            <h1 class="page-title">{{ __('warehouse.page_title') }}</h1>
             <p style="margin:8px 0 0; color:#6b7280;">
-                الأقسام الرئيسية للمواد داخل المستودع
+                {{ __('warehouse.page_subtitle') }}
             </p>
         </div>
     </div>
@@ -17,141 +34,36 @@
         <table>
             <thead>
                 <tr>
-                    <th>القسم</th>
-                    <th>إدخال</th>
-                    <th>عرض</th>
+                    <th>{{ __('warehouse.th_section') }}</th>
+                    <th>{{ __('warehouse.th_input') }}</th>
+                    <th>{{ __('warehouse.th_view') }}</th>
                 </tr>
             </thead>
 
             <tbody>
-
-                <tr>
-                    <td>ديزل</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'diesel') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'diesel') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>زيوت</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'oils') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'oils') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>أخشاب</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'wood') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'wood') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>مواد خرسانة</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'concrete-materials') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'concrete-materials') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>كيمكال خرسانة</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'concrete-chemicals') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'concrete-chemicals') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>مواد تشغيلية متنوعة</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'operational-materials') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'operational-materials') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>حديد تسليح</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'rebar') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'rebar') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>استرندات</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'strands') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'strands') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
-                {{-- 🔥 الجديد --}}
-                <tr>
-                    <td>مواد إضافية</td>
-                    <td>
-                        <a href="{{ route('warehouse.section.input', 'extra-materials') }}" class="btn btn-primary btn-sm">
-                            إدخال
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ route('warehouse.section.show', 'extra-materials') }}" class="btn btn-secondary btn-sm">
-                            عرض
-                        </a>
-                    </td>
-                </tr>
-
+                @foreach($warehouseSections as $section)
+                    @php
+                        $slug = str_replace('-', '_', $section);
+                        $key = 'warehouse.section_'.$slug;
+                        $label = __($key);
+                        if ($label === $key) {
+                            $label = __('warehouse.section_unknown');
+                        }
+                    @endphp
+                    <tr>
+                        <td>{{ $label }}</td>
+                        <td>
+                            <a href="{{ route('warehouse.section.input', $section) }}" class="btn btn-primary btn-sm">
+                                {{ __('warehouse.input') }}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="{{ route('warehouse.section.show', $section) }}" class="btn btn-secondary btn-sm">
+                                {{ __('warehouse.view') }}
+                            </a>
+                        </td>
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>

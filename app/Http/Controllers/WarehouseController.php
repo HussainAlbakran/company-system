@@ -10,15 +10,12 @@ class WarehouseController extends Controller
     // عرض الجدول
     public function show($section)
     {
-        $sectionName = $this->getSectionName($section);
-
         $items = DB::table('warehouse_items')
             ->where('section', $section)
             ->latest()
             ->get();
 
         return view('warehouse.show', [
-            'section' => $sectionName,
             'sectionKey' => $section,
             'items' => $items,
         ]);
@@ -28,8 +25,7 @@ class WarehouseController extends Controller
     public function input($section)
     {
         return view('warehouse.input', [
-            'section' => $section,
-            'sectionName' => $this->getSectionName($section),
+            'sectionKey' => $section,
         ]);
     }
 
@@ -69,7 +65,7 @@ class WarehouseController extends Controller
 
         return redirect()
             ->route('warehouse.section.show', $section)
-            ->with('success', 'تم حفظ بيانات القسم بنجاح');
+            ->with('success', __('warehouse.flash_section_saved'));
     }
 
     // فتح صفحة التعديل
@@ -83,7 +79,7 @@ class WarehouseController extends Controller
 
         return view('warehouse.edit', [
             'item' => $item,
-            'sectionName' => $this->getSectionName($item->section),
+            'sectionKey' => $item->section,
         ]);
     }
 
@@ -107,7 +103,7 @@ class WarehouseController extends Controller
                 'updated_at' => now(),
             ]);
 
-        return back()->with('success', 'تم تعديل البيانات بنجاح');
+        return back()->with('success', __('warehouse.flash_updated'));
     }
 
     // حذف عنصر
@@ -115,23 +111,7 @@ class WarehouseController extends Controller
     {
         DB::table('warehouse_items')->where('id', $id)->delete();
 
-        return back()->with('success', 'تم حذف العنصر بنجاح');
+        return back()->with('success', __('warehouse.flash_deleted'));
     }
 
-    // تحويل الاسم من إنجليزي إلى عربي
-    private function getSectionName($section)
-    {
-        return match ($section) {
-            'diesel' => 'ديزل',
-            'oils' => 'زيوت',
-            'wood' => 'أخشاب',
-            'concrete-materials' => 'مواد خرسانة',
-            'concrete-chemicals' => 'كيمكال خرسانة',
-            'operational-materials' => 'مواد تشغيلية متنوعة',
-            'rebar' => 'حديد تسليح',
-            'strands' => 'استرندات',
-            'extra-materials' => 'مواد إضافية',
-            default => 'قسم غير معروف',
-        };
-    }
 }

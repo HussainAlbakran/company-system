@@ -54,6 +54,26 @@ class SalesContractController extends Controller
             'first_payment_due_date' => 'nullable|date',
         ]);
 
+        $user = auth()->user();
+        $canFullFin = $user->canViewProjectFinancials();
+        $canValueOnly = $user->canViewProjectValueOnly();
+
+        $resolvedProjectValue = 0.0;
+        if ($canFullFin || $canValueOnly) {
+            $resolvedProjectValue = (float) ($request->project_value ?? 0);
+        }
+
+        $fullPaymentAmount = $canFullFin && $request->payment_type === 'full'
+            ? (float) ($request->full_payment_amount ?? 0)
+            : 0.0;
+
+        $firstTitle = $canFullFin && $request->payment_type === 'installments' ? $request->first_payment_title : null;
+        $firstPct = $canFullFin && $request->payment_type === 'installments' ? $request->first_payment_percentage : null;
+        $firstAmt = $canFullFin && $request->payment_type === 'installments'
+            ? (float) ($request->first_payment_amount ?? 0)
+            : null;
+        $firstDue = $canFullFin && $request->payment_type === 'installments' ? $request->first_payment_due_date : null;
+
         $contractFilePath = null;
 
         if ($request->hasFile('contract_file')) {
@@ -76,7 +96,7 @@ class SalesContractController extends Controller
             'description' => $request->description,
             'start_date' => $startDate,
             'end_date' => $endDate,
-            'project_value' => $request->project_value ?? 0,
+            'project_value' => $resolvedProjectValue,
             'status' => 'pending',
             'current_stage' => 'contracts',
             'notes' => $request->notes,
@@ -91,7 +111,7 @@ class SalesContractController extends Controller
             'main_contractor' => $request->main_contractor,
             'project_name' => $request->project_name,
             'project_location' => $request->project_location,
-            'project_value' => $request->project_value,
+            'project_value' => $resolvedProjectValue,
             'project_duration' => $request->project_duration,
             'expected_start_date' => $request->expected_start_date,
             'actual_start_date' => $request->actual_start_date,
@@ -102,11 +122,11 @@ class SalesContractController extends Controller
 
             // بيانات الدفع
             'payment_type' => $request->payment_type,
-            'full_payment_amount' => $request->payment_type === 'full' ? ($request->full_payment_amount ?? 0) : null,
-            'first_payment_title' => $request->payment_type === 'installments' ? $request->first_payment_title : null,
-            'first_payment_percentage' => $request->payment_type === 'installments' ? $request->first_payment_percentage : null,
-            'first_payment_amount' => $request->payment_type === 'installments' ? $request->first_payment_amount : null,
-            'first_payment_due_date' => $request->payment_type === 'installments' ? $request->first_payment_due_date : null,
+            'full_payment_amount' => $request->payment_type === 'full' ? $fullPaymentAmount : null,
+            'first_payment_title' => $request->payment_type === 'installments' ? $firstTitle : null,
+            'first_payment_percentage' => $request->payment_type === 'installments' ? $firstPct : null,
+            'first_payment_amount' => $request->payment_type === 'installments' ? $firstAmt : null,
+            'first_payment_due_date' => $request->payment_type === 'installments' ? $firstDue : null,
 
             // لا ينتقل إلا بعد تسجيل دفعة
             'status' => 'awaiting_payment',
@@ -127,7 +147,7 @@ class SalesContractController extends Controller
 
         return redirect()
             ->route('sales-contracts.index')
-            ->with('success', 'تم إنشاء العقد بنجاح. لن ينتقل العقد إلى التصاميم إلا بعد دفع كامل المبلغ أو تسجيل الدفعة الأولى.');
+            ->with('success', __('contracts.flash_created'));
     }
 
     public function show($id)
@@ -185,6 +205,35 @@ class SalesContractController extends Controller
             $contractFilePath = $request->file('contract_file')->store('contracts', 'public');
         }
 
+        $user = auth()->user();
+        $canFullFin = $user->canViewProjectFinancials();
+        $canValueOnly = $user->canViewProjectValueOnly();
+
+        $resolvedProjectValue = (float) ($contract->project_value ?? 0);
+        if ($canFullFin || $canValueOnly) {
+            $resolvedProjectValue = (float) ($request->project_value ?? 0);
+        }
+
+        $paymentPayload = [
+            'payment_type' => $contract->payment_type,
+            'full_payment_amount' => $contract->full_payment_amount,
+            'first_payment_title' => $contract->first_payment_title,
+            'first_payment_percentage' => $contract->first_payment_percentage,
+            'first_payment_amount' => $contract->first_payment_amount,
+            'first_payment_due_date' => $contract->first_payment_due_date,
+        ];
+
+        if ($canFullFin) {
+            $paymentPayload = [
+                'payment_type' => $request->payment_type,
+                'full_payment_amount' => $request->payment_type === 'full' ? ($request->full_payment_amount ?? 0) : null,
+                'first_payment_title' => $request->payment_type === 'installments' ? $request->first_payment_title : null,
+                'first_payment_percentage' => $request->payment_type === 'installments' ? $request->first_payment_percentage : null,
+                'first_payment_amount' => $request->payment_type === 'installments' ? $request->first_payment_amount : null,
+                'first_payment_due_date' => $request->payment_type === 'installments' ? $request->first_payment_due_date : null,
+            ];
+        }
+
         $contract->update([
             'contract_no' => $request->contract_no,
             'contract_date' => $request->contract_date,
@@ -192,7 +241,7 @@ class SalesContractController extends Controller
             'main_contractor' => $request->main_contractor,
             'project_name' => $request->project_name,
             'project_location' => $request->project_location,
-            'project_value' => $request->project_value,
+            'project_value' => $resolvedProjectValue,
             'project_duration' => $request->project_duration,
             'expected_start_date' => $request->expected_start_date,
             'actual_start_date' => $request->actual_start_date,
@@ -201,13 +250,12 @@ class SalesContractController extends Controller
             'notes' => $request->notes,
             'contract_file' => $contractFilePath,
 
-            // بيانات الدفع
-            'payment_type' => $request->payment_type,
-            'full_payment_amount' => $request->payment_type === 'full' ? ($request->full_payment_amount ?? 0) : null,
-            'first_payment_title' => $request->payment_type === 'installments' ? $request->first_payment_title : null,
-            'first_payment_percentage' => $request->payment_type === 'installments' ? $request->first_payment_percentage : null,
-            'first_payment_amount' => $request->payment_type === 'installments' ? $request->first_payment_amount : null,
-            'first_payment_due_date' => $request->payment_type === 'installments' ? $request->first_payment_due_date : null,
+            'payment_type' => $paymentPayload['payment_type'],
+            'full_payment_amount' => $paymentPayload['full_payment_amount'],
+            'first_payment_title' => $paymentPayload['first_payment_title'],
+            'first_payment_percentage' => $paymentPayload['first_payment_percentage'],
+            'first_payment_amount' => $paymentPayload['first_payment_amount'],
+            'first_payment_due_date' => $paymentPayload['first_payment_due_date'],
         ]);
 
         if ($contract->project) {
@@ -222,7 +270,7 @@ class SalesContractController extends Controller
                 'description' => $request->description,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'project_value' => $request->project_value ?? 0,
+                'project_value' => $resolvedProjectValue,
                 'notes' => $request->notes,
             ]);
         }
@@ -237,7 +285,7 @@ class SalesContractController extends Controller
 
         return redirect()
             ->route('sales-contracts.index')
-            ->with('success', 'تم تحديث العقد بنجاح.');
+            ->with('success', __('contracts.flash_updated'));
     }
 
     public function destroy($id)
@@ -264,6 +312,6 @@ class SalesContractController extends Controller
 
         return redirect()
             ->route('sales-contracts.index')
-            ->with('success', 'تم حذف العقد بنجاح.');
+            ->with('success', __('contracts.flash_deleted'));
     }
 }

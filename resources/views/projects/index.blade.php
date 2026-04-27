@@ -1,16 +1,25 @@
 @extends('layouts.app')
 
+@section('page_title', __('projects.page_title'))
+@section('page_subtitle', __('projects.page_subtitle'))
+
 @section('content')
+@php
+    $u = auth()->user();
+    $showProjectValue = $u->canViewProjectFinancials() || $u->canViewProjectValueOnly();
+    $showProjectExpenses = $u->canViewProjectFinancials();
+    $tableColCount = 6 + ($showProjectValue ? 1 : 0) + ($showProjectExpenses ? 1 : 0);
+@endphp
 <div class="page-card">
 
     <div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
         <div>
-            <h1 class="page-title"> المشاريع الهندسية</h1>
-            <p>إدارة جميع المشاريع</p>
+            <h1 class="page-title">{{ __('projects.page_title') }}</h1>
+            <p>{{ __('projects.page_subtitle') }}</p>
         </div>
 
         <a href="{{ route('engineering-projects.create') }}" class="btn btn-primary">
-            ➕ إضافة مشروع
+            ➕ {{ __('projects.add_project') }}
         </a>
     </div>
 
@@ -18,14 +27,18 @@
         <table>
             <thead>
                 <tr>
-                    <th>المشروع</th>
-                    <th>القسم</th>
-                    <th>المسؤول</th>
-                    <th>الحالة</th>
-                    <th>نسبة الإنجاز</th>
-                    <th>القيمة</th>
-                    <th>المصاريف</th>
-                    <th>إجراءات</th>
+                    <th>{{ __('projects.th_project') }}</th>
+                    <th>{{ __('projects.th_department') }}</th>
+                    <th>{{ __('projects.th_responsible') }}</th>
+                    <th>{{ __('projects.th_status') }}</th>
+                    <th>{{ __('projects.th_progress') }}</th>
+                    @if($showProjectValue)
+                    <th>{{ __('projects.th_value') }}</th>
+                    @endif
+                    @if($showProjectExpenses)
+                    <th>{{ __('projects.th_expenses') }}</th>
+                    @endif
+                    <th>{{ __('projects.th_actions') }}</th>
                 </tr>
             </thead>
 
@@ -51,27 +64,31 @@
                         </span>
                     </td>
 
+                    @if($showProjectValue)
                     <td>{{ number_format($project->project_value, 2) }}</td>
+                    @endif
 
+                    @if($showProjectExpenses)
                     <td>{{ number_format($project->expenses, 2) }}</td>
+                    @endif
 
                     <td style="display:flex; gap:6px;">
-                        <a href="{{ route('engineering-projects.show', $project->id) }}" class="btn btn-sm btn-blue">عرض</a>
+                        <a href="{{ route('engineering-projects.show', $project->id) }}" class="btn btn-sm btn-blue">{{ __('common.view') }}</a>
 
-                        <a href="{{ route('engineering-projects.edit', $project->id) }}" class="btn btn-sm btn-orange">تعديل</a>
+                        <a href="{{ route('engineering-projects.edit', $project->id) }}" class="btn btn-sm btn-orange">{{ __('common.edit') }}</a>
 
-                        <form action="{{ route('engineering-projects.destroy', $project->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد؟')">
+                        <form action="{{ route('engineering-projects.destroy', $project->id) }}" method="POST" onsubmit="return confirm(@json(__('projects.confirm_delete')))">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-red">حذف</button>
+                            <button class="btn btn-sm btn-red">{{ __('common.delete') }}</button>
                         </form>
                     </td>
 
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="empty-row">
-                        لا توجد مشاريع
+                    <td colspan="{{ $tableColCount }}" class="empty-row">
+                        {{ __('projects.empty') }}
                     </td>
                 </tr>
                 @endforelse

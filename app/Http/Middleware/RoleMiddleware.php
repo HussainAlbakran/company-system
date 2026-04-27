@@ -16,6 +16,10 @@ class RoleMiddleware
             abort(403, 'غير مصرح لك.');
         }
 
+        if (method_exists($user, 'isAdminLike') && $user->isAdminLike()) {
+            return $next($request);
+        }
+
         if (! in_array($user->role, $roles, true)) {
             abort(403, 'ليس لديك صلاحية الوصول لهذه الصفحة.');
         }

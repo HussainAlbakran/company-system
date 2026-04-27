@@ -1,9 +1,12 @@
 @extends('layouts.app')
 
+@section('page_title', __('factory.create_order_title'))
+@section('page_subtitle', __('factory.index_page_subtitle'))
+
 @section('content')
 <div class="container py-4">
 
-    <h2 class="mb-4">إضافة أمر إنتاج</h2>
+    <h2 class="mb-4">{{ __('factory.create_order_title') }}</h2>
 
     @if($errors->any())
         <div class="alert alert-danger">
@@ -18,18 +21,24 @@
     <div class="card mb-4">
         <div class="card-body">
 
-            <form action="{{ route('production-orders.store') }}" method="POST">
+            <form action="{{ route('production-orders.store') }}" method="POST" data-autofill-form-key="factory" data-autofill-endpoint="{{ route('documents.parse') }}">
                 @csrf
 
-                {{-- اختيار المشروع --}}
                 <div class="mb-3">
-                    <label class="form-label">المشروع</label>
+                    <label class="form-label">{{ __('factory.smart_import_label') }}</label>
+                    <input type="file" name="document" class="form-control" accept=".pdf,.xlsx,.csv,.jpg,.jpeg,.png,.webp" data-autofill-document-input>
+                    <small data-autofill-status style="display:block; margin-top:6px; color:#94a3b8;">{{ __('factory.smart_import_hint') }}</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">{{ __('factory.select_project') }}</label>
                     <select name="project_id" id="projectSelect" class="form-control" required>
-                        <option value="">-- اختر المشروع --</option>
+                        <option value="">{{ __('factory.select_project_placeholder') }}</option>
                         @foreach($projects as $project)
                             <option 
                                 value="{{ $project->id }}"
                                 data-measurements='@json($project->architectMeasurements)'
+                                data-design-concrete="{{ $project->required_concrete_quantity }}"
                                 {{ old('project_id') == $project->id ? 'selected' : '' }}
                             >
                                 {{ $project->project_code }} - {{ $project->name }}
@@ -38,22 +47,21 @@
                     </select>
                 </div>
 
-                {{-- 🔥 عرض المقاسات --}}
                 <div id="measurementsBox" class="mb-4" style="display:none;">
-                    <h5>📐 مقاسات المشروع</h5>
+                    <h5>{{ __('factory.measurements_box_title') }}</h5>
 
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
-                                    <th>النوع</th>
-                                    <th>العنصر</th>
-                                    <th>الطول</th>
-                                    <th>العرض</th>
-                                    <th>الارتفاع</th>
-                                    <th>العدد</th>
-                                    <th>المساحة</th>
-                                    <th>الحجم</th>
+                                    <th>{{ __('architect.th_type') }}</th>
+                                    <th>{{ __('factory.th_element') }}</th>
+                                    <th>{{ __('architect.th_length') }}</th>
+                                    <th>{{ __('architect.th_width') }}</th>
+                                    <th>{{ __('architect.th_height') }}</th>
+                                    <th>{{ __('architect.th_count') }}</th>
+                                    <th>{{ __('architect.th_area') }}</th>
+                                    <th>{{ __('architect.th_volume') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="measurementsTable">
@@ -62,44 +70,44 @@
                     </div>
                 </div>
 
-                {{-- بيانات أمر الإنتاج --}}
                 <div class="mb-3">
-                    <label class="form-label">رقم أمر الإنتاج</label>
+                    <label class="form-label">{{ __('factory.field_order_number') }}</label>
                     <input type="text" name="order_number" class="form-control" value="{{ old('order_number') }}" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">اسم المنتج</label>
+                    <label class="form-label">{{ __('factory.product_name') }}</label>
                     <input type="text" name="product_name" class="form-control" value="{{ old('product_name') }}" required>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">الكمية المطلوبة</label>
-                    <input type="number" step="0.01" name="planned_quantity" class="form-control" value="{{ old('planned_quantity') }}" required>
+                    <label class="form-label">{{ __('factory.required_quantity_readonly') }}</label>
+                    <input type="number" step="0.01" name="planned_quantity" id="plannedQuantityInput" class="form-control" value="{{ old('planned_quantity') }}">
+                    <small id="plannedQuantityHint" class="form-text" style="display:block; margin-top:6px; color:#94a3b8;"></small>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">تاريخ بداية الإنتاج</label>
+                    <label class="form-label">{{ __('factory.field_entry_date') }}</label>
                     <input type="date" name="production_start_date" class="form-control" value="{{ old('production_start_date') }}">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">تاريخ النهاية المتوقع</label>
+                    <label class="form-label">{{ __('factory.expected_completion_days') }}</label>
                     <input type="date" name="expected_end_date" class="form-control" value="{{ old('expected_end_date') }}">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">الهدف اليومي</label>
+                    <label class="form-label">{{ __('factory.field_quantity') }}</label>
                     <input type="number" step="0.01" name="daily_target" class="form-control" value="{{ old('daily_target') }}">
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">ملاحظات</label>
+                    <label class="form-label">{{ __('factory.field_notes') }}</label>
                     <textarea name="notes" class="form-control" rows="3">{{ old('notes') }}</textarea>
                 </div>
 
-                <button type="submit" class="btn btn-success">حفظ</button>
-                <a href="{{ route('factory.index') }}" class="btn btn-secondary">رجوع</a>
+                <button type="submit" class="btn btn-success">{{ __('common.save') }}</button>
+                <a href="{{ route('factory.index') }}" class="btn btn-secondary">{{ __('common.back') }}</a>
 
             </form>
 
@@ -108,32 +116,31 @@
 
 </div>
 
-{{-- 🔥 سكربت عرض المقاسات --}}
 <script>
-document.getElementById('projectSelect').addEventListener('change', function () {
-
-    let selected = this.options[this.selectedIndex];
+const designQuantityReadonlyHint = @json(__('factory.design_quantity_readonly_hint'));
+function refreshProjectContext() {
+    let select = document.getElementById('projectSelect');
+    let selected = select.options[select.selectedIndex];
     let measurements = selected.getAttribute('data-measurements');
+    let designConcrete = selected.getAttribute('data-design-concrete');
 
     let box = document.getElementById('measurementsBox');
     let table = document.getElementById('measurementsTable');
+    let pq = document.getElementById('plannedQuantityInput');
+    let hint = document.getElementById('plannedQuantityHint');
 
     table.innerHTML = '';
 
     if (!measurements) {
         box.style.display = 'none';
-        return;
-    }
+    } else {
+        let data = JSON.parse(measurements);
 
-    let data = JSON.parse(measurements);
-
-    if (data.length === 0) {
-        box.style.display = 'none';
-        return;
-    }
-
-    data.forEach(item => {
-        table.innerHTML += `
+        if (data.length === 0) {
+            box.style.display = 'none';
+        } else {
+            data.forEach(item => {
+                table.innerHTML += `
             <tr>
                 <td>${item.type ?? '-'}</td>
                 <td>${item.name}</td>
@@ -145,10 +152,23 @@ document.getElementById('projectSelect').addEventListener('change', function () 
                 <td>${item.volume}</td>
             </tr>
         `;
-    });
+            });
+            box.style.display = 'block';
+        }
+    }
 
-    box.style.display = 'block';
-});
+    if (designConcrete !== null && designConcrete !== '' && parseFloat(designConcrete) > 0) {
+        pq.value = designConcrete;
+        pq.readOnly = true;
+        hint.textContent = designQuantityReadonlyHint;
+    } else {
+        pq.readOnly = false;
+        hint.textContent = '';
+    }
+}
+
+document.getElementById('projectSelect').addEventListener('change', refreshProjectContext);
+refreshProjectContext();
 </script>
 
 @endsection

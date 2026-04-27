@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\AuditHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use App\Models\AiChat;
@@ -13,6 +14,7 @@ use App\Models\Factory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionEntry;
 use App\Models\ProductionSupply;
+use App\Models\User;
 use Carbon\Carbon;
 
 class AiController extends Controller
@@ -26,6 +28,19 @@ class AiController extends Controller
 
     public function index()
     {
+        $user = auth()->user();
+        abort_unless($user && $user->canAccessAiAssistantNavigation(), 403);
+
+        if (! $user->isSuperAdmin()) {
+            AuditHelper::log(
+                'ai_opened',
+                'AiChat',
+                null,
+                'تم فتح صفحة المساعد الذكي',
+                (int) $user->id
+            );
+        }
+
         $chats = AiChat::where('user_id', auth()->id())
             ->latest()
             ->paginate(self::AI_CHATS_PER_PAGE);
@@ -35,6 +50,8 @@ class AiController extends Controller
 
     public function ask(Request $request)
     {
+        abort_unless(auth()->user() && auth()->user()->canAccessAiAssistantNavigation(), 403);
+
         $request->validate([
             'question' => 'required|string|max:5000',
         ]);
@@ -43,16 +60,27 @@ class AiController extends Controller
         $question = trim($request->question);
 
         if (! $user) {
-            return back()->with('ai_answer', 'غير مصرح لك بالوصول.');
+            return back()->with('ai_answer', __('ai.forbidden'));
         }
 
         $context = $this->buildContextByRole($user);
 
         if (empty(trim($context))) {
-            return back()->with('ai_answer', 'لا توجد بيانات مسموح لك بالوصول إليها.');
+            return back()->with('ai_answer', __('ai.no_allowed_data'));
         }
 
         $systemPrompt = $this->buildSystemPrompt($user);
+
+        if (! $user->isSuperAdmin()) {
+            $qPreview = mb_substr($question, 0, 2000);
+            AuditHelper::log(
+                'ai_request',
+                'AiChat',
+                null,
+                'تم إرسال سؤال إلى الذكاء الاصطناعي: «'.$qPreview.'»',
+                (int) $user->id
+            );
+        }
 
         try {
             $response = Http::withToken(env('OPENAI_API_KEY'))
@@ -73,12 +101,23 @@ class AiController extends Controller
                 ]);
 
             if (! $response->successful()) {
-                $answer = 'تعذر الوصول إلى خدمة الذكاء حاليًا.';
+                $answer = __('ai.service_unavailable');
             } else {
-                $answer = $response->json('choices.0.message.content') ?? 'لم يتم العثور على إجابة مناسبة.';
+                $answer = $response->json('choices.0.message.content') ?? __('ai.no_answer_found');
             }
         } catch (\Throwable $e) {
-            $answer = 'حدث خطأ أثناء معالجة السؤال.';
+            $answer = __('ai.processing_error');
+        }
+
+        if (! $user->isSuperAdmin()) {
+            $answerPreview = mb_substr($answer, 0, 2500);
+            AuditHelper::log(
+                'ai_response',
+                'AiChat',
+                null,
+                'تم تسجيل رد من الذكاء الاصطناعي: «'.$answerPreview.'»',
+                (int) $user->id
+            );
         }
 
         AiChat::create([
@@ -92,35 +131,32 @@ class AiController extends Controller
 
     public function clear()
     {
+        abort_unless(auth()->user() && auth()->user()->canAccessAiAssistantNavigation(), 403);
+
         AiChat::where('user_id', auth()->id())->delete();
 
-        return redirect()->route('ai.page')->with('success', 'تم مسح المحادثات بنجاح.');
+        return redirect()->route('ai.page')->with('success', __('ai.cleared_success'));
     }
 
     protected function buildSystemPrompt($user): string
     {
+        $moduleLabels = [
+            'employees' => 'الموظفين',
+            'departments' => 'الأقسام',
+            'assets' => 'الأصول',
+            'leaves' => 'الإجازات',
+            'contracts' => 'العقود',
+            'engineering' => 'الهندسة والتصاميم',
+            'projects' => 'المشاريع',
+            'factory' => 'المصنع والإنتاج',
+            'installation' => 'التركيبات',
+            'purchases' => 'المشتريات',
+            'warehouse' => 'المستودع',
+        ];
+
         $allowedAreas = [];
-
-        if ($user->isAdmin()) {
-            $allowedAreas[] = 'جميع البيانات';
-        } else {
-            if ($user->canManageEmployees()) {
-                $allowedAreas[] = 'الموظفين';
-                $allowedAreas[] = 'الأقسام';
-                $allowedAreas[] = 'الإقامات';
-            }
-
-            if ($user->canManageProjects()) {
-                $allowedAreas[] = 'المشاريع';
-                $allowedAreas[] = 'تحديثات المشاريع';
-                $allowedAreas[] = 'مرفقات المشاريع';
-            }
-
-            if ($user->canManageProduction()) {
-                $allowedAreas[] = 'المصنع';
-                $allowedAreas[] = 'الإنتاج';
-                $allowedAreas[] = 'المستلزمات';
-            }
+        foreach ($user->aiAllowedModules() as $module) {
+            $allowedAreas[] = $moduleLabels[$module] ?? $module;
         }
 
         $allowedAreasText = implode('، ', array_unique($allowedAreas));
@@ -140,23 +176,27 @@ class AiController extends Controller
     protected function buildContextByRole($user): string
     {
         $sections = [];
+        $modules = $user->aiAllowedModules();
 
-        if ($user->isAdmin()) {
+        if ($user->isAdminLike()) {
             $sections[] = $this->employeesContext();
             $sections[] = $this->departmentsContext();
-            $sections[] = $this->projectsContext();
+            $sections[] = $this->projectsContext($user);
             $sections[] = $this->factoryContext();
         } else {
-            if ($user->canManageEmployees()) {
+            if (in_array('employees', $modules, true)) {
                 $sections[] = $this->employeesContext();
+            }
+
+            if (in_array('departments', $modules, true)) {
                 $sections[] = $this->departmentsContext();
             }
 
-            if ($user->canManageProjects()) {
-                $sections[] = $this->projectsContext();
+            if (in_array('projects', $modules, true) || in_array('engineering', $modules, true) || in_array('contracts', $modules, true)) {
+                $sections[] = $this->projectsContext($user);
             }
 
-            if ($user->canManageProduction()) {
+            if (in_array('factory', $modules, true) || in_array('installation', $modules, true)) {
                 $sections[] = $this->factoryContext();
             }
         }
@@ -228,8 +268,11 @@ class AiController extends Controller
         return $text;
     }
 
-    protected function projectsContext(): string
+    protected function projectsContext(User $user): string
     {
+        $canFullFinancials = $user->canViewProjectFinancials();
+        $canValueOnly = $user->canViewProjectValueOnly();
+
         $projects = Project::with(['department', 'responsibleEmployee'])
             ->select([
                 'id',
@@ -294,8 +337,6 @@ class AiController extends Controller
                 }
             }
 
-            $remainingBudget = (float) ($project->project_value ?? 0) - (float) ($project->expenses ?? 0);
-
             $text .= "====================================\n";
             $text .= "المشروع: {$project->name}\n";
             $text .= "القسم: " . ($project->department->name ?? '-') . "\n";
@@ -305,9 +346,16 @@ class AiController extends Controller
             $text .= "النهاية: " . ($project->end_date ?? '-') . "\n";
             $text .= "المتبقي بالأيام: {$daysRemainingText}\n";
             $text .= "وضع المدة: {$delayStatus}\n";
-            $text .= "القيمة: " . ($project->project_value ?? 0) . "\n";
-            $text .= "المصاريف: " . ($project->expenses ?? 0) . "\n";
-            $text .= "المتبقي المالي: {$remainingBudget}\n";
+
+            if ($canFullFinancials) {
+                $remainingBudget = (float) ($project->project_value ?? 0) - (float) ($project->expenses ?? 0);
+                $text .= "القيمة: " . ($project->project_value ?? 0) . "\n";
+                $text .= "المصاريف: " . ($project->expenses ?? 0) . "\n";
+                $text .= "المتبقي المالي: {$remainingBudget}\n";
+            } elseif ($canValueOnly) {
+                $text .= "القيمة: " . ($project->project_value ?? 0) . "\n";
+            }
+
             $text .= "الملاحظات: " . ($project->notes ?? '-') . "\n";
 
             $projectUpdates = $updates->get($project->id, collect());

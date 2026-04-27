@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\AuditLog;
+use App\Services\StageNotificationService;
 use Illuminate\Support\Facades\Auth;
 
 class ArchitectController extends Controller
 {
+    private function authorizeDesigns(): void
+    {
+        abort_unless(auth()->check() && auth()->user()->canAccessDesignsModule(), 403, __('architect.abort_module'));
+    }
+
     public function index()
     {
+        $this->authorizeDesigns();
+
         $projects = Project::where('current_stage', 'architect')
             ->latest()
             ->get();
@@ -17,8 +25,10 @@ class ArchitectController extends Controller
         return view('architect.index', compact('projects'));
     }
 
-    public function complete($id)
+    public function complete($id, StageNotificationService $stageNotificationService)
     {
+        $this->authorizeDesigns();
+
         $project = Project::findOrFail($id);
 
         // تحويل المشروع مباشرة إلى المشتريات
@@ -26,6 +36,8 @@ class ArchitectController extends Controller
             'current_stage' => 'purchasing',
             'status' => 'ongoing',
         ]);
+
+        $stageNotificationService->sendPurchasesStageNotification($project);
 
         AuditLog::create([
             'user_id' => Auth::id(),
@@ -37,6 +49,6 @@ class ArchitectController extends Controller
 
         return redirect()
             ->back()
-            ->with('success', 'تم إنهاء المرحلة المعمارية وتحويل المشروع إلى المشتريات.');
+            ->with('success', __('architect.flash_complete'));
     }
 }

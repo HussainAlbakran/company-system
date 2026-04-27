@@ -1,12 +1,15 @@
 @extends('layouts.app')
 
+@section('page_title', __('purchases.edit_purchase_title'))
+@section('page_subtitle', __('purchases.edit_purchase_subtitle'))
+
 @section('content')
 
 <div class="page-card">
 
     <div class="page-header">
-        <h2>تعديل عملية شراء / إصلاح</h2>
-        <p>تحديث بيانات العملية المرتبطة بالمشروع</p>
+        <h2>{{ __('purchases.edit_purchase_title') }}</h2>
+        <p>{{ __('purchases.edit_purchase_subtitle') }}</p>
     </div>
 
     @if($errors->any())
@@ -26,9 +29,9 @@
         <div class="form-grid">
 
             <div class="form-group">
-                <label>المشروع</label>
+                <label>{{ __('purchases.field_project') }}</label>
                 <select name="project_id" required>
-                    <option value="">اختر المشروع</option>
+                    <option value="">{{ __('purchases.select_project') }}</option>
                     @foreach($projects as $project)
                         <option value="{{ $project->id }}"
                             {{ old('project_id', $purchase->project_id) == $project->id ? 'selected' : '' }}>
@@ -39,48 +42,48 @@
             </div>
 
             <div class="form-group">
-                <label>نوع العملية</label>
+                <label>{{ __('purchases.field_operation_type') }}</label>
                 <select name="type" required>
-                    <option value="purchase" {{ old('type', $purchase->type) == 'purchase' ? 'selected' : '' }}>شراء</option>
-                    <option value="repair" {{ old('type', $purchase->type) == 'repair' ? 'selected' : '' }}>إصلاح</option>
+                    <option value="purchase" {{ old('type', $purchase->type) == 'purchase' ? 'selected' : '' }}>{{ __('purchases.type_purchase') }}</option>
+                    <option value="repair" {{ old('type', $purchase->type) == 'repair' ? 'selected' : '' }}>{{ __('purchases.type_repair_alt') }}</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label>اسم البند</label>
+                <label>{{ __('purchases.field_line_title') }}</label>
                 <input type="text" name="title" value="{{ old('title', $purchase->title) }}" required>
             </div>
 
             <div class="form-group">
-                <label>التكلفة</label>
+                <label>{{ __('purchases.field_cost') }}</label>
                 <input type="number" step="0.01" name="cost" value="{{ old('cost', $purchase->cost) }}" required>
             </div>
 
             <div class="form-group">
-                <label>المورد / الجهة</label>
+                <label>{{ __('purchases.field_vendor_party') }}</label>
                 <input type="text" name="vendor" value="{{ old('vendor', $purchase->vendor) }}">
             </div>
 
             <div class="form-group">
-                <label>تاريخ العملية</label>
+                <label>{{ __('purchases.field_operation_date') }}</label>
                 <input type="date" name="purchase_date" value="{{ old('purchase_date', optional($purchase->purchase_date)->format('Y-m-d') ?? $purchase->purchase_date) }}">
             </div>
 
             <div class="form-group form-group-full">
-                <label>الوصف</label>
+                <label>{{ __('purchases.field_description') }}</label>
                 <textarea name="description">{{ old('description', $purchase->description) }}</textarea>
             </div>
 
             <div class="form-group form-group-full">
-                <label>ملاحظات</label>
+                <label>{{ __('common.notes') }}</label>
                 <textarea name="notes">{{ old('notes', $purchase->notes) }}</textarea>
             </div>
 
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-success">حفظ التعديل</button>
-            <a href="{{ route('purchases.index') }}" class="btn btn-secondary">رجوع</a>
+            <button type="submit" class="btn btn-success">{{ __('purchases.save_changes') }}</button>
+            <a href="{{ route('purchases.index') }}" class="btn btn-secondary">{{ __('common.back') }}</a>
         </div>
 
     </form>

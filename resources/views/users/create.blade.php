@@ -1,76 +1,66 @@
 @extends('layouts.app')
 
+@php
+    $userRoleKeys = [
+        'super_admin', 'admin', 'sales_manager', 'sales', 'engineering_manager',
+        'hr', 'hr_manager', 'engineer', 'procurement_manager', 'procurement',
+        'operations_manager', 'factory_manager', 'manager', 'user',
+    ];
+@endphp
+
+@section('page_title', __('users.create_page_title'))
+@section('page_subtitle', __('users.create_page_subtitle'))
+
 @section('content')
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">إضافة مستخدم جديد</h2>
-        <a href="{{ route('users.index') }}" class="btn btn-secondary">رجوع</a>
-    </div>
-
-    @if($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+<div class="dashboard-stack">
+    <section class="dashboard-panel">
+        <div class="panel-head">
+            <div>
+                <h2 class="panel-title">{{ __('users.create_panel_title') }}</h2>
+                <p class="panel-subtitle">{{ __('users.create_panel_subtitle') }}</p>
+            </div>
+            <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm">{{ __('users.back') }}</a>
         </div>
-    @endif
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <form action="{{ route('users.store') }}" method="POST">
+        <form action="{{ route('users.store') }}" method="POST">
                 @csrf
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">الاسم</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
+                <div class="form-grid">
+                    <div>
+                        <label>{{ __('common.name') }}</label>
+                        <input type="text" name="name" value="{{ old('name') }}" required>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">البريد الإلكتروني</label>
-                        <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
+                    <div>
+                        <label>{{ __('common.email') }}</label>
+                        <input type="email" name="email" value="{{ old('email') }}" required>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">كلمة المرور</label>
-                        <input type="password" name="password" class="form-control" required>
+                    <div>
+                        <label>{{ __('auth.password') }}</label>
+                        <input type="password" name="password" required>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">الصلاحية</label>
-                        <select name="role" class="form-select" required>
-                            <option value="">-- اختر الصلاحية --</option>
+                    <div>
+                        <label>{{ __('users.role') }}</label>
+                        <select name="role" required>
+                            <option value="">{{ __('users.select_role') }}</option>
 
-                            <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>
-                                Admin
+                            @foreach($userRoleKeys as $roleKey)
+                            <option value="{{ $roleKey }}" {{ old('role') == $roleKey ? 'selected' : '' }}>
+                                {{ __('roles.'.$roleKey) }}
                             </option>
-
-                            <option value="hr" {{ old('role') == 'hr' ? 'selected' : '' }}>
-                                HR
-                            </option>
-
-                            <option value="engineer" {{ old('role') == 'engineer' ? 'selected' : '' }}>
-                                Engineer
-                            </option>
-
-                            <option value="factory_manager" {{ old('role') == 'factory_manager' ? 'selected' : '' }}>
-                                Factory Manager
-                            </option>
-
-                            <!-- 🔥 الجديد -->
-                            <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>
-                                Manager (مدير)
-                            </option>
+                            @endforeach
 
                         </select>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">حفظ المستخدم</button>
-            </form>
-        </div>
-    </div>
+                <div class="actions-row" style="margin-top:12px;">
+                    <button type="submit" class="btn btn-primary">{{ __('users.save_user') }}</button>
+                    <a href="{{ route('users.index') }}" class="btn btn-secondary">{{ __('common.cancel') }}</a>
+                </div>
+        </form>
+    </section>
 </div>
 @endsection

@@ -7,6 +7,7 @@ use App\Models\ArchitectTask;
 use App\Models\ProductionOrder;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class FactoryController extends Controller
 {
@@ -45,18 +46,32 @@ class FactoryController extends Controller
             'project_id' => ['required', 'exists:projects,id'],
             'order_number' => ['required', 'string', 'max:255'],
             'product_name' => ['required', 'string', 'max:255'],
-            'planned_quantity' => ['required', 'numeric', 'min:0.01'],
+            'planned_quantity' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                Rule::requiredIf(function () use ($request) {
+                    $p = Project::find($request->input('project_id'));
+
+                    return ! $p || $p->required_concrete_quantity === null || (float) $p->required_concrete_quantity <= 0;
+                }),
+            ],
             'production_start_date' => ['nullable', 'date'],
             'expected_end_date' => ['nullable', 'date'],
             'daily_target' => ['nullable', 'numeric', 'min:0'],
             'notes' => ['nullable', 'string'],
         ]);
 
+        $project = Project::findOrFail($validated['project_id']);
+        $plannedQuantity = ($project->required_concrete_quantity !== null && (float) $project->required_concrete_quantity > 0)
+            ? (float) $project->required_concrete_quantity
+            : (float) ($validated['planned_quantity'] ?? 0);
+
         ProductionOrder::create([
             'project_id' => $validated['project_id'],
             'order_number' => $validated['order_number'],
             'product_name' => $validated['product_name'],
-            'planned_quantity' => $validated['planned_quantity'],
+            'planned_quantity' => $plannedQuantity,
             'produced_quantity' => 0,
             'supplied_quantity' => 0,
             'production_start_date' => $validated['production_start_date'] ?? null,
@@ -68,7 +83,7 @@ class FactoryController extends Controller
 
         return redirect()
             ->route('factory.index')
-            ->with('success', 'تم إنشاء أمر الإنتاج وربطه بالمشروع بنجاح');
+            ->with('success', __('factory.flash_order_created'));
     }
 
     public function show($id)
@@ -113,7 +128,6 @@ class FactoryController extends Controller
             'project_id' => ['required', 'exists:projects,id'],
             'order_number' => ['required', 'string', 'max:255'],
             'product_name' => ['required', 'string', 'max:255'],
-            'planned_quantity' => ['required', 'numeric', 'min:0.01'],
             'production_start_date' => ['nullable', 'date'],
             'expected_end_date' => ['nullable', 'date'],
             'daily_target' => ['nullable', 'numeric', 'min:0'],
@@ -124,7 +138,6 @@ class FactoryController extends Controller
             'project_id' => $validated['project_id'],
             'order_number' => $validated['order_number'],
             'product_name' => $validated['product_name'],
-            'planned_quantity' => $validated['planned_quantity'],
             'production_start_date' => $validated['production_start_date'] ?? null,
             'expected_end_date' => $validated['expected_end_date'] ?? null,
             'daily_target' => $validated['daily_target'] ?? null,
@@ -133,7 +146,7 @@ class FactoryController extends Controller
 
         return redirect()
             ->route('factory.index')
-            ->with('success', 'تم تحديث أمر الإنتاج بنجاح');
+            ->with('success', __('factory.flash_order_updated'));
     }
 
     public function destroy($id)
@@ -143,6 +156,6 @@ class FactoryController extends Controller
 
         return redirect()
             ->route('factory.index')
-            ->with('success', 'تم حذف أمر الإنتاج بنجاح');
+            ->with('success', __('factory.flash_order_deleted'));
     }
 }

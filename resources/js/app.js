@@ -1,4 +1,5 @@
 import './bootstrap';
+import './document-autofill';
 
 import Alpine from 'alpinejs';
 

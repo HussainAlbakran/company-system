@@ -1,16 +1,28 @@
 @extends('layouts.app')
 
+@php
+    $slug = str_replace('-', '_', $sectionKey);
+    $sectionTransKey = 'warehouse.section_'.$slug;
+    $sectionLabel = __($sectionTransKey);
+    if ($sectionLabel === $sectionTransKey) {
+        $sectionLabel = __('warehouse.section_unknown');
+    }
+@endphp
+
+@section('page_title', $sectionLabel)
+@section('page_subtitle', __('warehouse.page_title'))
+
 @section('content')
 
 <div class="page-card" dir="rtl" style="text-align:right;">
 
     <div style="margin-bottom:15px; display:flex; gap:10px;">
         <a href="{{ route('warehouse.index') }}" class="btn btn-secondary">
-            رجوع
+            {{ __('warehouse.back') }}
         </a>
 
         <a href="{{ route('warehouse.section.input', $sectionKey) }}" class="btn btn-primary">
-            إضافة
+            {{ __('warehouse.add') }}
         </a>
     </div>
 
@@ -24,11 +36,11 @@
         <table>
             <thead>
                 <tr>
-                    <th>الاسم</th>
-                    <th>الكمية</th>
-                    <th>الوحدة</th>
-                    <th>ملاحظات</th>
-                    <th>الإجراء</th>
+                    <th>{{ __('warehouse.th_name') }}</th>
+                    <th>{{ __('warehouse.th_quantity') }}</th>
+                    <th>{{ __('warehouse.th_unit') }}</th>
+                    <th>{{ __('warehouse.th_notes') }}</th>
+                    <th>{{ __('warehouse.th_action') }}</th>
                 </tr>
             </thead>
 
@@ -43,18 +55,16 @@
 
                         <td style="display:flex; gap:6px;">
 
-                            {{-- تعديل --}}
                             <a href="{{ route('warehouse.edit', $item->id) }}" class="btn btn-sm btn-primary">
-                                تعديل
+                                {{ __('warehouse.edit') }}
                             </a>
 
-                            {{-- حذف --}}
-                            <form action="{{ route('warehouse.destroy', $item->id) }}" method="POST" onsubmit="return confirm('هل أنت متأكد من الحذف؟')">
+                            <form action="{{ route('warehouse.destroy', $item->id) }}" method="POST" onsubmit="return confirm(@json(__('warehouse.confirm_delete')))">
                                 @csrf
                                 @method('DELETE')
 
                                 <button type="submit" class="btn btn-sm btn-danger">
-                                    حذف
+                                    {{ __('warehouse.delete') }}
                                 </button>
                             </form>
 
@@ -63,7 +73,7 @@
                 @empty
                     <tr>
                         <td colspan="5" class="empty-row">
-                            لا توجد بيانات لهذا القسم
+                            {{ __('warehouse.empty_section') }}
                         </td>
                     </tr>
                 @endforelse

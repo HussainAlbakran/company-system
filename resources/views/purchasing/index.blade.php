@@ -5,8 +5,8 @@
 <div class="page-card">
 
     <div class="page-header">
-        <h1 class="page-title">Purchasing Approval</h1>
-        <p style="color:#6b7280;">Approve purchases or repairs before execution</p>
+        <h1 class="page-title">اعتماد المشتريات</h1>
+        <p style="color:#6b7280;">اعتماد عمليات الشراء أو الإصلاح قبل التنفيذ</p>
     </div>
 
     <form action="{{ route('purchases.store') }}" method="POST">
@@ -16,9 +16,9 @@
 
             {{-- Project --}}
             <div class="form-group">
-                <label>Project</label>
+                <label>المشروع</label>
                 <select name="project_id" required>
-                    <option value="">Select Project</option>
+                    <option value="">اختر المشروع</option>
                     @foreach($projects as $project)
                         <option value="{{ $project->id }}">
                             {{ $project->project_code }} - {{ $project->name }}
@@ -29,39 +29,39 @@
 
             {{-- Type --}}
             <div class="form-group">
-                <label>Type</label>
+                <label>النوع</label>
                 <select name="type" id="type" onchange="toggleFields()" required>
-                    <option value="purchase">Purchase</option>
-                    <option value="repair">Repair</option>
+                    <option value="purchase">شراء</option>
+                    <option value="repair">إصلاح</option>
                 </select>
             </div>
 
             {{-- 🔹 Purchase Fields --}}
             <div class="form-group purchase-field">
-                <label>Item Name</label>
-                <input type="text" name="title" placeholder="Cement / Steel / Equipment">
+                <label>اسم البند</label>
+                <input type="text" name="title" placeholder="إسمنت / حديد / معدات">
             </div>
 
             <div class="form-group purchase-field">
-                <label>Quantity</label>
+                <label>الكمية</label>
                 <input type="number" name="quantity" min="1">
             </div>
 
             {{-- 🔹 Repair Field --}}
             <div class="form-group repair-field" style="display:none;">
-                <label>Repair Item</label>
-                <input type="text" name="title" placeholder="Pump repair / Machine fix">
+                <label>عنصر الإصلاح</label>
+                <input type="text" name="title" placeholder="إصلاح مضخة / إصلاح آلة">
             </div>
 
             {{-- Cost --}}
             <div class="form-group">
-                <label>Cost</label>
+                <label>التكلفة</label>
                 <input type="number" step="0.01" name="cost" required>
             </div>
 
             {{-- Date --}}
             <div class="form-group">
-                <label>Date</label>
+                <label>التاريخ</label>
                 <input type="date" name="purchase_date">
             </div>
 
@@ -69,7 +69,7 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-success">
-                Save Approval
+                حفظ الاعتماد
             </button>
         </div>
 

@@ -13,6 +13,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                arabic: ['Cairo', 'Figtree', ...defaultTheme.fontFamily.sans],
             },
         },
     },

@@ -7,10 +7,14 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Validation\ValidationException;
 
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable;
+
+    public const ROLE_SUPER_ADMIN = 'super_admin';
+    public const ROLE_ADMIN = 'admin';
 
     protected $fillable = [
         'name',
@@ -21,6 +25,7 @@ class User extends Authenticatable implements FilamentUser
         'is_active',
         'approved_at',
         'approved_by',
+        'rejection_reason',
         'email_verified_at',
         'remember_token',
     ];
@@ -40,6 +45,17 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::deleting(function (User $user): void {
+            if ($user->portalLinkedProjects()->exists()) {
+                throw ValidationException::withMessages([
+                    'user' => [__('users.cannot_delete_portal_linked')],
+                ]);
+            }
+        });
+    }
+
     // =========================
     // Relationships
     // =========================
@@ -55,17 +71,27 @@ class User extends Authenticatable implements FilamentUser
 
     public function isAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->role === self::ROLE_ADMIN || $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === self::ROLE_SUPER_ADMIN;
+    }
+
+    public function isAdminLike(): bool
+    {
+        return $this->hasAnyRole([self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN]);
     }
 
     public function isHR(): bool
     {
-        return $this->role === 'hr';
+        return $this->role === 'hr' || $this->role === 'hr_manager';
     }
 
     public function isEngineer(): bool
     {
-        return $this->role === 'engineer';
+        return $this->role === 'engineer' || $this->role === 'engineering_manager';
     }
 
     public function isFactoryManager(): bool
@@ -78,38 +104,190 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'manager';
     }
 
+    public function isBasicUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    public function canViewProjectFinancials(): bool
+    {
+        return in_array($this->role, ['admin', 'super_admin'], true);
+    }
+
+    public function canViewProjectValueOnly(): bool
+    {
+        return $this->role === 'operations_manager';
+    }
+
+    public function canAccessDesignsModule(): bool
+    {
+        return in_array($this->role, [
+            'super_admin',
+            'admin',
+            'engineering_manager',
+            'engineer',
+            'operations_manager',
+        ], true);
+    }
+
+    public function getRoleLabel(): string
+    {
+        $key = 'roles.'.$this->role;
+        $label = __($key);
+
+        return $label !== $key ? $label : $this->role;
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        return in_array($this->role, $roles, true);
+    }
+
+    public function isApprovedAndActive(): bool
+    {
+        return $this->approval_status === 'approved' && $this->is_active;
+    }
+
+    /**
+     * «طلب إجازة» navigation: HR may always open the form; others need a linked employee profile.
+     */
+    public function canAccessLeaveRequestNavigation(): bool
+    {
+        if (! $this->isApprovedAndActive()) {
+            return false;
+        }
+
+        return $this->canAccessHRModule() || $this->employee !== null || $this->isBasicUser();
+    }
+
+    /**
+     * AI assistant: at least one data module is allowed for this role (see aiAllowedModules()).
+     */
+    public function canAccessAiAssistantNavigation(): bool
+    {
+        return $this->isApprovedAndActive() && count($this->aiAllowedModules()) > 0;
+    }
+
+    /**
+     * Engineering / ERP projects linked to external portal user.
+     */
+    public function portalLinkedProjects()
+    {
+        return $this->hasMany(Project::class, 'client_user_id');
+    }
+
     // =========================
     // Permissions
     // =========================
 
     public function canManageUsers(): bool
     {
-        return $this->role === 'admin';
+        return $this->isAdminLike();
+    }
+
+    public function canAccessContractsModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->hasAnyRole(['sales_manager', 'sales'])
+            || $this->hasAnyRole(['manager']); // legacy compatibility
+    }
+
+    public function canAccessEngineeringModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->hasAnyRole(['engineering_manager', 'engineer', 'operations_manager'])
+            || $this->hasAnyRole(['engineer']); // legacy compatibility
+    }
+
+    public function canAccessProcurementModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->hasAnyRole(['procurement_manager', 'procurement'])
+            || $this->hasAnyRole(['manager']); // legacy compatibility
+    }
+
+    public function canAccessHRModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->hasAnyRole(['hr_manager', 'hr']);
+    }
+
+    public function canAccessOperationsModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->role === 'operations_manager'
+            || $this->hasAnyRole(['factory_manager', 'manager']); // legacy compatibility
     }
 
     public function canManageEmployees(): bool
     {
-        return in_array($this->role, ['admin', 'hr']);
+        return $this->canAccessHRModule();
     }
 
     public function canManageDepartments(): bool
     {
-        return in_array($this->role, ['admin', 'hr']);
+        return $this->canAccessHRModule();
+    }
+
+    public function canManageAssets(): bool
+    {
+        return $this->canAccessHRModule();
+    }
+
+    public function canManageLeaveApprovals(): bool
+    {
+        return $this->canAccessHRModule();
+    }
+
+    public function canCreateLeaveRequest(): bool
+    {
+        return $this->isApprovedAndActive();
     }
 
     public function canManageProjects(): bool
     {
-        return in_array($this->role, ['admin', 'engineer', 'manager']);
+        return $this->canAccessEngineeringModule();
     }
 
     public function canManageProduction(): bool
     {
-        return in_array($this->role, ['admin', 'factory_manager', 'manager']);
+        return $this->canAccessOperationsModule();
+    }
+
+    public function canManageInstallations(): bool
+    {
+        return $this->canAccessOperationsModule();
     }
 
     public function canViewAuditLogs(): bool
     {
-        return $this->role === 'admin';
+        return $this->isAdminLike();
+    }
+
+    public function aiAllowedModules(): array
+    {
+        if ($this->isAdminLike()) {
+            return ['employees', 'departments', 'assets', 'leaves', 'contracts', 'engineering', 'projects', 'factory', 'installation', 'purchases', 'warehouse'];
+        }
+
+        $modules = [];
+        if ($this->canAccessHRModule()) {
+            $modules = array_merge($modules, ['employees', 'departments', 'assets', 'leaves']);
+        }
+        if ($this->canAccessContractsModule()) {
+            $modules[] = 'contracts';
+        }
+        if ($this->canAccessEngineeringModule()) {
+            $modules = array_merge($modules, ['engineering', 'projects']);
+        }
+        if ($this->canAccessOperationsModule()) {
+            $modules = array_merge($modules, ['factory', 'installation']);
+        }
+        if ($this->canAccessProcurementModule()) {
+            $modules = array_merge($modules, ['purchases', 'warehouse']);
+        }
+
+        return array_values(array_unique($modules));
     }
 
     public function canAccessPanel(Panel $panel): bool
@@ -118,10 +296,23 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        if (($this->approval_status ?? null) !== 'approved' || ! $this->is_active) {
+        if (! $this->isApprovedAndActive()) {
             return false;
         }
 
-        return in_array($this->role, ['admin', 'hr', 'engineer', 'factory_manager', 'manager'], true);
+        return $this->isAdminLike()
+            || $this->hasAnyRole([
+                'sales_manager',
+                'sales',
+                'engineering_manager',
+                'engineer',
+                'procurement_manager',
+                'procurement',
+                'hr_manager',
+                'hr',
+                'operations_manager',
+                'factory_manager',
+                'manager',
+            ]);
     }
 }

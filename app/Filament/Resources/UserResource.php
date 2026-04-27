@@ -2,18 +2,20 @@
 
 namespace App\Filament\Resources;
 
-use App\Models\User;
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\User;
 use Filament\Forms;
-use Filament\Tables;
-use Filament\Resources\Resource;
 use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
 use Filament\Tables\Table;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-users';
+
     protected static ?string $navigationGroup = 'System Management';
 
     // القفل: يسمح للـ Admin فقط برؤية هذا القسم
@@ -36,6 +38,7 @@ class UserResource extends Resource
                             'engineer' => 'Site Engineer',
                             'factory_manager' => 'Factory Manager',
                             'manager' => 'Manager',
+                            'user' => 'Basic user',
                         ])->required(),
                     Forms\Components\Select::make('approval_status')
                         ->options([

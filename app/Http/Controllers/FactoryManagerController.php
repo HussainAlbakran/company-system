@@ -27,7 +27,7 @@ class FactoryManagerController extends Controller
         }
 
         if (! $factory) {
-            return redirect()->back()->with('error', 'لا يوجد مصنع مربوط بهذا المدير');
+            return redirect()->back()->with('error', __('factory.flash_no_factory_for_manager'));
         }
 
         $employeesCount = Employee::where('factory_id', $factory->id)->count();
@@ -90,7 +90,7 @@ class FactoryManagerController extends Controller
             'تم تسجيل إنتاج لأمر الإنتاج رقم: ' . ($productionOrder->order_number ?? $productionOrder->id)
         );
 
-        return back()->with('success', 'تم تسجيل الإنتاج بنجاح');
+        return back()->with('success', __('factory.flash_production_entry_saved'));
     }
 
     public function storeSupply(Request $request, $order)
@@ -131,6 +131,6 @@ class FactoryManagerController extends Controller
             'تم تسجيل توريد لأمر الإنتاج رقم: ' . ($productionOrder->order_number ?? $productionOrder->id)
         );
 
-        return back()->with('success', 'تم تسجيل التوريد بنجاح');
+        return back()->with('success', __('factory.flash_supply_saved'));
     }
 }

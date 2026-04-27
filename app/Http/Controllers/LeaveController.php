@@ -18,42 +18,76 @@ class LeaveController extends Controller
 
     public function create()
     {
-        $employees = Employee::all();
+        $user = auth()->user();
+        $isPrivileged = $user && $user->canAccessHRModule();
 
-        return view('leaves.create', compact('employees'));
+        if ($isPrivileged) {
+            $employees = Employee::query()->orderBy('name')->get();
+        } else {
+            $employee = $user?->employee;
+            if (! $employee) {
+                return back()->withErrors(['error' => __('leaves.error_employee_required')]);
+            }
+            $employees = collect([$employee]);
+        }
+
+        return view('leaves.create', [
+            'employees' => $employees,
+            'canChooseEmployee' => $isPrivileged,
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'employee_id' => 'required|exists:employees,id',
+        $user = auth()->user();
+        $isPrivileged = $user && $user->canAccessHRModule();
+
+        $rules = [
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'nullable|string',
-        ]);
+        ];
 
-        $employee = Employee::findOrFail($request->employee_id);
-
-        $days = Carbon::parse($request->start_date)
-            ->diffInDays(Carbon::parse($request->end_date)) + 1;
-
-        if ($employee->leave_balance < $days) {
-            return back()->with('error', 'رصيد الإجازات غير كافي (الرصيد الحالي: ' . $employee->leave_balance . ')');
+        if ($isPrivileged) {
+            $rules['employee_id'] = 'required|exists:employees,id';
         }
 
-        Leave::create([
-            'employee_id' => $request->employee_id,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
+        $validated = $request->validate($rules);
+
+        if ($isPrivileged) {
+            $employee = Employee::findOrFail($validated['employee_id']);
+        } else {
+            if (! $user?->employee) {
+                return back()->withErrors(['error' => __('leaves.error_employee_required')]);
+            }
+            $employee = $user->employee;
+        }
+
+        $days = Carbon::parse($validated['start_date'])
+            ->diffInDays(Carbon::parse($validated['end_date'])) + 1;
+
+        if ($employee->leave_balance < $days) {
+            return back()->with('error', __('leaves.error_insufficient_balance', ['balance' => $employee->leave_balance]));
+        }
+
+        $payload = [
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
             'days' => $days,
-            'reason' => $request->reason,
+            'reason' => $validated['reason'] ?? null,
             'status' => 'pending',
             'approved_at' => null,
             'is_deducted' => false,
             'deducted_at' => null,
-        ]);
+        ];
 
-        return back()->with('success', 'تم تقديم طلب الإجازة بنجاح');
+        $payload['employee_id'] = $isPrivileged
+            ? $employee->id
+            : $user->employee->id;
+
+        Leave::create($payload);
+
+        return back()->with('success', __('leaves.success_submitted'));
     }
 
     public function approve($id)
@@ -61,13 +95,13 @@ class LeaveController extends Controller
         $leave = Leave::findOrFail($id);
 
         if ($leave->status !== 'pending') {
-            return back()->with('error', 'تمت معالجة هذا الطلب مسبقًا');
+            return back()->with('error', __('leaves.error_already_processed'));
         }
 
         $employee = $leave->employee;
 
         if ($employee->leave_balance < $leave->days) {
-            return back()->with('error', 'رصيد الإجازات غير كافي');
+            return back()->with('error', __('leaves.error_insufficient_simple'));
         }
 
         $leave->status = 'approved';
@@ -76,7 +110,7 @@ class LeaveController extends Controller
         $leave->deducted_at = null;
         $leave->save();
 
-        return back()->with('success', 'تم اعتماد الإجازة، وسيتم خصم الرصيد تلقائيًا عند بداية الإجازة');
+        return back()->with('success', __('leaves.success_approved'));
     }
 
     public function reject($id)
@@ -84,7 +118,7 @@ class LeaveController extends Controller
         $leave = Leave::findOrFail($id);
 
         if ($leave->status !== 'pending') {
-            return back()->with('error', 'تمت معالجة هذا الطلب مسبقًا');
+            return back()->with('error', __('leaves.error_already_processed'));
         }
 
         $leave->status = 'rejected';
@@ -93,6 +127,6 @@ class LeaveController extends Controller
         $leave->deducted_at = null;
         $leave->save();
 
-        return back()->with('success', 'تم رفض الإجازة');
+        return back()->with('success', __('leaves.success_rejected'));
     }
 }

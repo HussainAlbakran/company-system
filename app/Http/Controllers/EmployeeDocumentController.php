@@ -32,6 +32,13 @@ class EmployeeDocumentController extends Controller
         $uploadedFile = $request->file('file');
         $path = $uploadedFile->store('employee_documents', 'public');
 
+        AuditHelper::log(
+            'file_uploaded',
+            'EmployeeDocument',
+            null,
+            'module=employees | file_name=' . $uploadedFile->getClientOriginalName()
+        );
+
         // 🔥 إنشاء السجل أولاً
         $document = EmployeeDocument::create([
             'employee_id'            => $employee->id,

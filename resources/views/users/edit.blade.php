@@ -1,10 +1,21 @@
 @extends('layouts.app')
 
+@php
+    $userRoleKeys = [
+        'super_admin', 'admin', 'sales_manager', 'sales', 'engineering_manager',
+        'hr', 'hr_manager', 'engineer', 'procurement_manager', 'procurement',
+        'operations_manager', 'factory_manager', 'manager', 'user',
+    ];
+@endphp
+
+@section('page_title', __('users.edit_title'))
+@section('page_subtitle', '')
+
 @section('content')
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">تعديل المستخدم</h2>
-        <a href="{{ route('users.index') }}" class="btn btn-secondary">رجوع</a>
+        <h2 class="mb-0">{{ __('users.edit_title') }}</h2>
+        <a href="{{ route('users.index') }}" class="btn btn-secondary">{{ __('users.back') }}</a>
     </div>
 
     @if($errors->any())
@@ -25,32 +36,35 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">الاسم</label>
+                        <label class="form-label">{{ __('common.name') }}</label>
                         <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">البريد الإلكتروني</label>
+                        <label class="form-label">{{ __('common.email') }}</label>
                         <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">الصلاحية</label>
-                        <select name="role" class="form-select" required>
-                            <option value="admin" {{ old('role', $user->role) == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="hr" {{ old('role', $user->role) == 'hr' ? 'selected' : '' }}>HR</option>
-                            <option value="engineer" {{ old('role', $user->role) == 'engineer' ? 'selected' : '' }}>Engineer</option>
-                            <option value="factory_manager" {{ old('role', $user->role) == 'factory_manager' ? 'selected' : '' }}>Factory Manager</option>
-                        </select>
+                        <label class="form-label">{{ __('users.role') }}</label>
+                        @if($canEditRole ?? false)
+                            <select name="role" class="form-select" required>
+                                @foreach($userRoleKeys as $roleKey)
+                                <option value="{{ $roleKey }}" {{ old('role', $user->role) == $roleKey ? 'selected' : '' }}>{{ __('roles.'.$roleKey) }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input type="text" class="form-control" value="{{ $user->getRoleLabel() }}" disabled>
+                        @endif
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">كلمة مرور جديدة (اختياري)</label>
+                        <label class="form-label">{{ __('users.new_password_optional') }}</label>
                         <input type="password" name="password" class="form-control">
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">تحديث المستخدم</button>
+                <button type="submit" class="btn btn-primary">{{ __('users.update_user') }}</button>
             </form>
         </div>
     </div>

@@ -1,12 +1,15 @@
 @extends('layouts.app')
 
+@section('page_title', __('warehouse.input'))
+@section('page_subtitle', __('warehouse.page_title'))
+
 @section('content')
 
 <div class="page-card">
 
     <div style="margin-bottom:15px;">
         <a href="{{ route('warehouse.index') }}" class="btn btn-secondary">
-            رجوع
+            {{ __('warehouse.back') }}
         </a>
     </div>
 
@@ -26,17 +29,17 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('warehouse.store', $section) }}">
+    <form method="POST" action="{{ route('warehouse.store', $sectionKey) }}">
         @csrf
 
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
+                        <th>{{ __('warehouse.th_name') }}</th>
+                        <th>{{ __('warehouse.th_quantity') }}</th>
+                        <th>{{ __('warehouse.th_unit') }}</th>
+                        <th>{{ __('warehouse.th_notes') }}</th>
                     </tr>
                 </thead>
 
@@ -63,7 +66,7 @@
 
         <div style="margin-top:20px;">
             <button type="submit" class="btn btn-primary">
-                حفظ
+                {{ __('warehouse.save') }}
             </button>
         </div>
 

@@ -2,15 +2,26 @@
 
 namespace App\Console;
 
+use App\Models\DismissedRequest;
 use App\Models\Leave;
 use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
     {
+        $schedule->call(function () {
+            try {
+                app(\App\Services\EmployeeDocumentExpiryReminderService::class)->handle();
+                app(\App\Services\ExpiryAlertService::class)->handle();
+            } catch (\Throwable $e) {
+                Log::error('Scheduler failed: '.$e->getMessage());
+            }
+        })->daily();
+
         $schedule->call(function () {
             $today = Carbon::today();
             $leaves = Leave::where('status', 'approved')
@@ -29,10 +40,18 @@ class Kernel extends ConsoleKernel
                 }
             }
         })->daily();
+
+        $schedule->call(function (): void {
+            DismissedRequest::query()
+                ->where('hidden_until', '<=', now())
+                ->delete();
+        })->hourly();
     }
 
     protected function commands(): void
     {
-        $this->load(__DIR__ . '/Commands');
+        $this->load(__DIR__.'/Commands');
+
+        require base_path('routes/console.php');
     }
 }

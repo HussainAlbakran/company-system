@@ -1,9 +1,8 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Construction ERP</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -38,21 +37,23 @@
             font-family: Inter, Tahoma, Arial, sans-serif;
             color: var(--text);
             background:
-                radial-gradient(circle at 10% 8%, #1b2943 0%, transparent 30%),
-                radial-gradient(circle at 90% 0%, #1a2945 0%, transparent 28%),
+                radial-gradient(circle at 10% 8%, rgba(27,41,67,.72) 0%, transparent 30%),
+                radial-gradient(circle at 90% 0%, rgba(26,41,69,.66) 0%, transparent 28%),
+                url('/images/public/hero.png') center top / cover no-repeat fixed,
                 var(--bg);
         }
 
-        .main-layout { display: flex; min-height: 100vh; direction: ltr; }
+        .main-layout { display: flex; min-height: 100vh; direction: ltr; position: relative; z-index: 1; }
         .layout-content { flex: 1; min-width: 0; direction: rtl; }
 
         .sidebar {
-            width: 220px;
+            width: 236px;
             background: linear-gradient(180deg, #080f1c 0%, #0d1528 100%);
             border-left: 1px solid var(--border);
             box-shadow: 5px 0 24px rgba(0, 0, 0, 0.45);
-            padding: 12px 9px;
+            padding: 14px 10px;
             flex-shrink: 0;
+            z-index: 30;
         }
 
         .brand-box {
@@ -154,17 +155,77 @@
         .user-pill .name { font-size: 12px; font-weight: 700; color: #f2f7ff; }
         .user-pill .meta { margin-top: 2px; font-size: 10px; color: #9fc6ff; }
 
-        .page-content { padding: 11px; }
+        .language-card {
+            min-width: 170px;
+            border: 1px solid var(--border-strong);
+            border-radius: 11px;
+            background: rgba(15, 23, 42, 0.78);
+            padding: 8px;
+        }
+
+        .language-card-title {
+            margin: 0 0 6px;
+            color: #d8e6fb;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: .35px;
+        }
+
+        .language-list { display: grid; gap: 5px; }
+
+        .language-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            text-decoration: none;
+            border: 1px solid rgba(146,166,196,.25);
+            background: rgba(146,166,196,.09);
+            color: #e0e9fa;
+            font-size: 11px;
+            font-weight: 700;
+            transition: .16s ease;
+        }
+
+        .language-link:hover {
+            background: rgba(59,130,246,.16);
+            border-color: rgba(59,130,246,.40);
+            color: #fff;
+        }
+
+        .language-link.active {
+            background: linear-gradient(135deg, rgba(59,130,246,.28), rgba(37,99,235,.14));
+            border-color: rgba(59,130,246,.55);
+            color: #fff;
+            box-shadow: inset 0 0 0 1px rgba(147,197,253,.20);
+        }
+
+        .language-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: rgba(191, 219, 254, 0.55);
+            flex-shrink: 0;
+        }
+
+        .language-link.active .language-dot {
+            background: #93c5fd;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.20);
+        }
+
+        .page-content { padding: 14px; }
 
         .page-card, .card {
             background: linear-gradient(180deg, rgba(24,36,59,.96), rgba(17,28,47,.96));
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-soft);
-            padding: 11px;
+            padding: 12px;
         }
 
-        .page-header {
+        .page-header, .panel-head {
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
@@ -174,17 +235,37 @@
         }
 
         .page-title { margin: 0; font-size: 20px; font-weight: 800; color: #f8fbff; }
-        .page-subtitle { margin: 3px 0 0; color: var(--text-muted); font-size: 11px; }
+        .page-subtitle, .panel-subtitle { margin: 3px 0 0; color: var(--text-muted); font-size: 11px; }
+        .panel-title { margin: 0; font-size: 13px; font-weight: 800; color: #f8fbff; }
 
-        .stats-grid, .form-grid, .details-grid {
+        .dashboard-stack, .stats-grid, .form-grid, .details-grid {
             display: grid;
             gap: 8px;
+        }
+
+        .dashboard-stack { grid-template-columns: 1fr; }
+
+        .stats-grid, .form-grid, .details-grid {
             grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
         }
 
-        .stat-card, .detail-box {
-            background: rgba(146,166,196,.06);
-            border: 1px solid var(--border);
+        .panel-grid-2 {
+            display: grid;
+            gap: 10px;
+            margin-top: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        .kpi-card,
+        .stat-card,
+        .detail-box,
+        .dashboard-panel {
+            background: #0f172a !important;
+            border: 1px solid rgba(146,166,196,0.25);
+            backdrop-filter: none !important;
+        }
+
+        .stat-card, .detail-box, .dashboard-panel {
             border-radius: var(--radius-md);
             padding: 9px;
         }
@@ -309,6 +390,22 @@
         input::placeholder, textarea::placeholder { color: #91a3c0; }
         textarea { min-height: 74px; resize: vertical; }
 
+        select {
+            color: #ffffff !important;
+            background-color: #0f172a !important;
+            border: 1px solid rgba(146,166,196,.4) !important;
+        }
+
+        select option {
+            color: #ffffff !important;
+            background-color: #0f172a !important;
+        }
+
+        select:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 1px rgba(59,130,246,.4);
+        }
+
         @media (max-width: 992px) {
             .main-layout { flex-direction: column; }
             .sidebar { width: 100%; }
@@ -318,15 +415,15 @@
         }
     </style>
 </head>
-<body>
+<body dir="{{ in_array(app()->getLocale(), config('locales.rtl', ['ar', 'ur']), true) ? 'rtl' : 'ltr' }}">
     <div class="main-layout">
         @include('layouts.navigation')
 
         <div class="layout-content">
-            <div class="topbar">
+            <div class="topbar bg-white/5 backdrop-blur-xl border-b border-white/10">
                 <div>
-                    <h1>@yield('page_title', 'Construction ERP Dashboard')</h1>
-                    <p>@yield('page_subtitle', 'Advanced Concrete Company')</p>
+                    <h1>@yield('page_title', __('layout.page_title_default'))</h1>
+                    <p>@yield('page_subtitle', __('layout.page_subtitle_default'))</p>
                 </div>
 
                 <div class="topbar-right">
@@ -337,36 +434,39 @@
                     @auth
                         <div class="user-pill">
                             <div class="name">{{ auth()->user()->name }}</div>
-                            <div class="meta">{{ auth()->user()->role }}</div>
+                            <div class="meta">{{ auth()->user()->getRoleLabel() }}</div>
                         </div>
                     @endauth
+
                 </div>
             </div>
 
             <div class="page-content">
-                @if(session('success'))
-                    <div class="alert-success">{{ session('success') }}</div>
-                @endif
+                <div class="page-shell">
+                    @if(session('success'))
+                        <div class="alert-success">{{ session('success') }}</div>
+                    @endif
 
-                @if(session('error'))
-                    <div class="alert-danger">{{ session('error') }}</div>
-                @endif
+                    @if(session('error'))
+                        <div class="alert-danger">{{ session('error') }}</div>
+                    @endif
 
-                @if ($errors->any())
-                    <div class="alert-error">
-                        <ul style="margin:0; padding-right:18px;">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                    @if ($errors->any())
+                        <div class="alert-error">
+                            <ul style="margin:0; padding-right:18px;">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                @if (isset($slot))
-                    {{ $slot }}
-                @else
-                    @yield('content')
-                @endif
+                    @if (isset($slot))
+                        {{ $slot }}
+                    @else
+                        @yield('content')
+                    @endif
+                </div>
             </div>
         </div>
     </div>

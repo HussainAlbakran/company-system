@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\AuditHelper;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -28,7 +30,7 @@ class AuthenticatedSessionController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        $user = \App\Models\User::where('email', $credentials['email'])->first();
+        $user = User::where('email', $credentials['email'])->first();
 
         if (! $user) {
             return back()->withErrors([
@@ -45,7 +47,7 @@ class AuthenticatedSessionController extends Controller
             ])->onlyInput('email');
         }
 
-        if ($user->approval_status !== 'approved' || (int) $user->is_active !== 1) {
+        if (! $user->isApprovedAndActive()) {
             Auth::logout();
 
             return back()->withErrors([
@@ -55,6 +57,19 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        AuditHelper::log(
+            'login',
+            'user',
+            $user->id,
+            sprintf(
+                'route=%s | ip=%s | user_agent=%s | timestamp=%s',
+                $request->route()?->getName() ?? 'login',
+                $request->ip() ?? '-',
+                (string) $request->userAgent(),
+                now()->toDateTimeString()
+            ),
+            (int) $user->id
+        );
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
@@ -63,6 +78,23 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        if ($user) {
+            AuditHelper::log(
+                'logout',
+                'user',
+                $user->id,
+                sprintf(
+                    'route=%s | ip=%s | user_agent=%s | timestamp=%s',
+                    $request->route()?->getName() ?? 'logout',
+                    $request->ip() ?? '-',
+                    (string) $request->userAgent(),
+                    now()->toDateTimeString()
+                ),
+                (int) $user->id
+            );
+        }
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();

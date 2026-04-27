@@ -58,7 +58,7 @@ class AdminApprovalController extends Controller
     {
         $this->authorizeUsers();
 
-        $request->validate([
+        $validated = $request->validate([
             'rejection_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -66,7 +66,9 @@ class AdminApprovalController extends Controller
             'approval_status' => 'rejected',
             'approved_at' => null,
             'approved_by' => auth()->id(),
-            'rejection_reason' => $request->rejection_reason,
+            'rejection_reason' => isset($validated['rejection_reason']) && trim((string) $validated['rejection_reason']) !== ''
+                ? trim((string) $validated['rejection_reason'])
+                : null,
             'is_active' => false,
         ]);
 

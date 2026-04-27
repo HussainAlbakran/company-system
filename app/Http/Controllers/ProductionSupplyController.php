@@ -9,6 +9,13 @@ use Illuminate\Http\Request;
 
 class ProductionSupplyController extends Controller
 {
+    private function wantsJson(Request $request): bool
+    {
+        return $request->expectsJson()
+            || $request->wantsJson()
+            || $request->ajax();
+    }
+
     public function index()
     {
         $perPage = (int) request()->integer('per_page', 20);
@@ -34,19 +41,31 @@ class ProductionSupplyController extends Controller
         $futureSupplied = (float) $order->supplied_quantity + (float) $validated['quantity'];
 
         if ($futureSupplied > (float) $order->produced_quantity) {
-            return response()->json([
-                'message' => 'لا يمكن توريد كمية أكبر من الكمية المنتجة',
-            ], 422);
+            if ($this->wantsJson($request)) {
+                return response()->json([
+                    'message' => 'لا يمكن توريد كمية أكبر من الكمية المنتجة',
+                ], 422);
+            }
+
+            return back()
+                ->withInput()
+                ->with('error', 'لا يمكن توريد كمية أكبر من الكمية المنتجة');
         }
 
         $supply = ProductionSupply::create($validated);
 
         $calculator->recalculate($order);
 
-        return response()->json([
-            'message' => 'تم تسجيل التوريد بنجاح',
-            'data' => $supply->load('order'),
-        ], 201);
+        if ($this->wantsJson($request)) {
+            return response()->json([
+                'message' => 'تم تسجيل التوريد بنجاح',
+                'data' => $supply->load('order'),
+            ], 201);
+        }
+
+        return redirect()
+            ->route('production-orders.show', $order->id)
+            ->with('success', 'تم تسجيل التوريد بنجاح');
     }
 
     public function show($id)
@@ -78,22 +97,34 @@ class ProductionSupplyController extends Controller
             ->sum('quantity');
 
         if (($otherSuppliesSum + $newQuantity) > (float) $order->produced_quantity) {
-            return response()->json([
-                'message' => 'لا يمكن أن يصبح إجمالي التوريد أكبر من الكمية المنتجة',
-            ], 422);
+            if ($this->wantsJson($request)) {
+                return response()->json([
+                    'message' => 'لا يمكن أن يصبح إجمالي التوريد أكبر من الكمية المنتجة',
+                ], 422);
+            }
+
+            return back()
+                ->withInput()
+                ->with('error', 'لا يمكن أن يصبح إجمالي التوريد أكبر من الكمية المنتجة');
         }
 
         $supply->update($validated);
 
         $calculator->recalculate($order);
 
-        return response()->json([
-            'message' => 'تم تحديث التوريد بنجاح',
-            'data' => $supply->fresh()->load('order'),
-        ]);
+        if ($this->wantsJson($request)) {
+            return response()->json([
+                'message' => 'تم تحديث التوريد بنجاح',
+                'data' => $supply->fresh()->load('order'),
+            ]);
+        }
+
+        return redirect()
+            ->route('production-orders.show', $order->id)
+            ->with('success', 'تم تحديث التوريد بنجاح');
     }
 
-    public function destroy($id, ProductionOrderCalculatorService $calculator)
+    public function destroy(Request $request, $id, ProductionOrderCalculatorService $calculator)
     {
         $supply = ProductionSupply::findOrFail($id);
         $order = $supply->order;
@@ -102,8 +133,14 @@ class ProductionSupplyController extends Controller
 
         $calculator->recalculate($order);
 
-        return response()->json([
-            'message' => 'تم حذف التوريد بنجاح',
-        ]);
+        if ($this->wantsJson($request)) {
+            return response()->json([
+                'message' => 'تم حذف التوريد بنجاح',
+            ]);
+        }
+
+        return redirect()
+            ->route('production-orders.show', $order->id)
+            ->with('success', 'تم حذف التوريد بنجاح');
     }
 }

@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use App\Helpers\AuditHelper;
 use App\Models\Factory;
 use App\Models\EmployeeAsset;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class EmployeeController extends Controller
 {
@@ -23,6 +26,7 @@ class EmployeeController extends Controller
         $this->authorizeHR();
 
         $employees = Employee::with('department')
+            ->withCount(['activeAssets as active_assets_count'])
             ->when($request->search, function ($query) use ($request) {
                 $query->where('name', 'like', '%' . $request->search . '%')
                     ->orWhere('employee_number', 'like', '%' . $request->search . '%')
@@ -49,6 +53,18 @@ class EmployeeController extends Controller
     {
         $this->authorizeHR();
 
+        $employeeAllowedAccountRoles = [
+            'sales_manager',
+            'sales',
+            'engineering_manager',
+            'engineer',
+            'procurement_manager',
+            'procurement',
+            'hr_manager',
+            'hr',
+            'operations_manager',
+        ];
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'employee_number' => 'nullable|string|max:255|unique:employees,employee_number',
@@ -63,9 +79,49 @@ class EmployeeController extends Controller
             'factory_id' => 'nullable|exists:factories,id',
             'manager_id' => 'nullable|exists:employees,id',
             'user_id' => 'nullable|exists:users,id',
+            'passport_number' => 'nullable|string|max:255',
+            'passport_expiry_date' => 'nullable|date',
             'residency_expiry_date' => 'nullable|date',
             'leave_balance' => 'nullable|integer|min:0',
+            'create_system_account' => 'nullable|boolean',
+            'account_name' => 'nullable|string|max:255|required_if:create_system_account,1',
+            'account_email' => 'nullable|email|max:255|required_if:create_system_account,1|unique:users,email',
+            'account_password' => 'nullable|string|min:8|required_if:create_system_account,1',
+            'account_role' => [
+                'nullable',
+                'required_if:create_system_account,1',
+                Rule::in($employeeAllowedAccountRoles),
+            ],
         ]);
+
+        if (($validated['create_system_account'] ?? false) && in_array(($validated['account_role'] ?? null), ['super_admin', 'admin'], true)) {
+            return back()
+                ->withErrors(['account_role' => 'هذه الصلاحية لا يمكن إنشاؤها من الموظفين'])
+                ->withInput();
+        }
+
+        if ($validated['create_system_account'] ?? false) {
+            $user = User::create([
+                'name' => $validated['account_name'],
+                'email' => $validated['account_email'],
+                'password' => Hash::make($validated['account_password']),
+                'role' => $validated['account_role'],
+                'approval_status' => 'approved',
+                'is_active' => true,
+                'approved_at' => now(),
+                'approved_by' => auth()->id(),
+            ]);
+
+            $validated['user_id'] = $user->id;
+        }
+
+        unset(
+            $validated['create_system_account'],
+            $validated['account_name'],
+            $validated['account_email'],
+            $validated['account_password'],
+            $validated['account_role']
+        );
 
         if (!isset($validated['leave_balance']) || $validated['leave_balance'] === null) {
             $validated['leave_balance'] = 26;
@@ -87,7 +143,7 @@ class EmployeeController extends Controller
     {
         $this->authorizeHR();
 
-        $employee->load(['documents', 'department', 'assets']);
+        $employee->load(['documents', 'department', 'assets', 'assetAssignments.asset']);
 
         return view('employees.show', compact('employee'));
     }
@@ -120,6 +176,8 @@ class EmployeeController extends Controller
             'factory_id' => 'nullable|exists:factories,id',
             'manager_id' => 'nullable|exists:employees,id',
             'user_id' => 'nullable|exists:users,id',
+            'passport_number' => 'nullable|string|max:255',
+            'passport_expiry_date' => 'nullable|date',
             'residency_expiry_date' => 'nullable|date',
             'leave_balance' => 'nullable|integer|min:0',
         ]);

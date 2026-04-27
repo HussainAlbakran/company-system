@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\AuditHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -39,7 +40,7 @@ class UserManagementController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'in:admin,hr,engineer,factory_manager,manager'],
+            'role' => ['required', 'in:super_admin,admin,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user'],
         ]);
 
         User::create([
@@ -67,27 +68,45 @@ class UserManagementController extends Controller
     {
         $this->authorizeUsers();
 
-        return view('users.edit', compact('user'));
+        return view('users.edit', [
+            'user' => $user,
+            'canEditRole' => auth()->user()->isAdminLike(),
+        ]);
     }
 
     public function update(Request $request, User $user)
     {
         $this->authorizeUsers();
+        $oldRole = (string) $user->role;
 
-        $validated = $request->validate([
+        $canEditRole = auth()->user()->isAdminLike();
+
+        if (! $canEditRole && $request->has('role')) {
+            $request->request->remove('role');
+        }
+
+        $rules = [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role' => ['required', 'in:admin,hr,engineer,factory_manager,manager'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
             'password' => ['nullable', 'string', 'min:8'],
             'approval_status' => ['nullable', 'in:pending,approved,rejected,suspended'],
             'is_active' => ['nullable', 'boolean'],
-        ]);
+        ];
+
+        if ($canEditRole) {
+            $rules['role'] = ['required', 'in:super_admin,admin,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user'];
+        }
+
+        $validated = $request->validate($rules);
 
         $data = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'role' => $validated['role'],
         ];
+
+        if ($canEditRole && array_key_exists('role', $validated)) {
+            $data['role'] = $validated['role'];
+        }
 
         if (array_key_exists('approval_status', $validated)) {
             $data['approval_status'] = $validated['approval_status'];
@@ -102,6 +121,20 @@ class UserManagementController extends Controller
         }
 
         $user->update($data);
+
+        if ($canEditRole && array_key_exists('role', $data) && $oldRole !== (string) $data['role']) {
+            AuditHelper::log(
+                'role_changed',
+                'User',
+                $user->id,
+                sprintf(
+                    'old_role=%s | new_role=%s | changed_by=%s',
+                    $oldRole,
+                    (string) $data['role'],
+                    (string) auth()->id()
+                )
+            );
+        }
 
         return redirect()->route('users.index')->with('success', 'تم تحديث المستخدم بنجاح.');
     }
