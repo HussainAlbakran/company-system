@@ -100,9 +100,13 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
         Route::middleware('role:super_admin,admin,hr_manager,hr')->group(function () {
 
             Route::resource('departments', DepartmentController::class);
+            Route::get('/employees/payroll-register', [EmployeeController::class, 'payrollRegister'])
+                ->name('employees.payroll-register');
+            Route::post('/employees/payroll-register/approve', [EmployeeController::class, 'approvePayrollRegister'])->name('employees.payroll-register.approve');
             Route::resource('employees', EmployeeController::class);
 
             Route::post('/employees/{employee}/documents', [EmployeeDocumentController::class, 'store'])->name('employees.documents.store');
+            Route::post('/employees/{employee}/payroll-adjustment', [EmployeeController::class, 'savePayrollAdjustment'])->name('employees.payroll-adjustment.save');
             Route::get('/employees/{employee}/documents/{document}/open', [EmployeeDocumentController::class, 'open'])->name('employees.documents.open');
             Route::get('/employees/{employee}/documents/{document}/download', [EmployeeDocumentController::class, 'download'])->name('employees.documents.download');
             Route::delete('/employees/{employee}/documents/{document}', [EmployeeDocumentController::class, 'destroy'])->name('employees.documents.destroy');

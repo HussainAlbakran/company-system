@@ -15,6 +15,12 @@ class Employee extends Model
         'address',
         'hire_date',
         'salary',
+        'housing_allowance',
+        'transportation_allowance',
+        'travel_allowance',
+        'risk_allowance',
+        'transfer_allowance',
+        'overtime_allowance',
         'status',
         'department_id',
         'factory_id',
@@ -37,6 +43,12 @@ class Employee extends Model
         'residency_expiry_date' => 'date',
         'passport_expiry_date' => 'date',
         'salary' => 'decimal:2',
+        'housing_allowance' => 'decimal:2',
+        'transportation_allowance' => 'decimal:2',
+        'travel_allowance' => 'decimal:2',
+        'risk_allowance' => 'decimal:2',
+        'transfer_allowance' => 'decimal:2',
+        'overtime_allowance' => 'decimal:2',
         'leave_balance' => 'integer',
     ];
 
@@ -85,6 +97,11 @@ class Employee extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function payrollAdjustments()
+    {
+        return $this->hasMany(EmployeePayrollAdjustment::class);
     }
 
     /**

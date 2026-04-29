@@ -146,6 +146,41 @@
             </div>
 
             <div class="detail-box summary-box">
+                <span class="summary-label">الراتب الأساسي</span>
+                <div class="summary-value">{{ number_format((float) ($employee->salary ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
+                <span class="summary-label">بدل سكن</span>
+                <div class="summary-value">{{ number_format((float) ($employee->housing_allowance ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
+                <span class="summary-label">بدل مواصلات</span>
+                <div class="summary-value">{{ number_format((float) ($employee->transportation_allowance ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
+                <span class="summary-label">بدل سفر</span>
+                <div class="summary-value">{{ number_format((float) ($employee->travel_allowance ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
+                <span class="summary-label">بدل مخاطر</span>
+                <div class="summary-value">{{ number_format((float) ($employee->risk_allowance ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
+                <span class="summary-label">بدل انتقال</span>
+                <div class="summary-value">{{ number_format((float) ($employee->transfer_allowance ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
+                <span class="summary-label">بدل إضافي</span>
+                <div class="summary-value">{{ number_format((float) ($employee->overtime_allowance ?? 0), 2) }}</div>
+            </div>
+
+            <div class="detail-box summary-box">
                 <span class="summary-label">{{ __('employees.label_passport') }}</span>
                 <div class="summary-value">{{ $employee->passport_number ?? '-' }}</div>
             </div>
@@ -212,6 +247,56 @@
 
             <div class="asset-form-actions">
                 <button class="btn btn-primary">{{ __('employees.add_custody') }}</button>
+            </div>
+        </form>
+    </div>
+
+    @php
+        $salaryBase = (float) ($employee->salary ?? 0);
+        $hourlyRate = $salaryBase / 240;
+        $overtimeHourRate = $hourlyRate * 1.5;
+        $overtimeHours = (float) ($payrollAdjustment->overtime_hours ?? 0);
+        $overtimeTotal = $overtimeHours * $overtimeHourRate;
+        $dailyRate = $salaryBase / 30;
+        $leaveDays = (float) ($payrollAdjustment->leave_deduction_days ?? 0);
+        $leaveDeductionTotal = $leaveDays * $dailyRate;
+    @endphp
+
+    <div class="page-card" style="margin-bottom:24px;">
+        <div class="page-header">
+            <h2>حسابات مسير الرواتب</h2>
+            <p style="color:#94a3b8;">الشهر الحالي: {{ sprintf('%02d/%04d', $currentMonth, $currentYear) }}</p>
+        </div>
+
+        <form action="{{ route('employees.payroll-adjustment.save', $employee) }}" method="POST">
+            @csrf
+            <div class="asset-form-grid">
+                <div class="form-group">
+                    <label>ساعات العمل الإضافي</label>
+                    <input type="number" step="0.01" min="0" name="overtime_hours" value="{{ old('overtime_hours', $payrollAdjustment->overtime_hours ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>أيام خصم الإجازات</label>
+                    <input type="number" step="0.01" min="0" name="leave_deduction_days" value="{{ old('leave_deduction_days', $payrollAdjustment->leave_deduction_days ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>خصومات أخرى</label>
+                    <input type="number" step="0.01" min="0" name="other_deduction" value="{{ old('other_deduction', $payrollAdjustment->other_deduction ?? 0) }}">
+                </div>
+
+                <div class="form-group form-group-full">
+                    <label>ملاحظات</label>
+                    <textarea name="notes">{{ old('notes', $payrollAdjustment->notes) }}</textarea>
+                </div>
+            </div>
+
+            {{-- hide formulas --}}
+            {{-- تم إخفاء المعادلات بناءً على طلب العميل --}}
+
+            <div class="asset-form-actions">
+                <button type="submit" class="btn btn-primary">حفظ حسابات المسير</button>
             </div>
         </form>
     </div>

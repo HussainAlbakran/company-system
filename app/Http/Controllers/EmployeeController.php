@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Helpers\AuditHelper;
 use App\Models\Factory;
 use App\Models\EmployeeAsset;
+use App\Models\EmployeePayrollAdjustment;
+use App\Models\PayrollRegister;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -49,6 +51,70 @@ class EmployeeController extends Controller
         return view('employees.create', compact('departments', 'factories'));
     }
 
+    public function payrollRegister()
+    {
+        $this->authorizeHR();
+
+        $employees = Employee::latest()->get();
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        $payrollRegister = PayrollRegister::firstOrCreate(
+            [
+                'month' => $currentMonth,
+                'year' => $currentYear,
+            ],
+            [
+                'status' => 'pending',
+            ]
+        );
+
+        $adjustments = EmployeePayrollAdjustment::query()
+            ->where('month', $currentMonth)
+            ->where('year', $currentYear)
+            ->get()
+            ->keyBy('employee_id');
+
+        return view('employees.payroll-register', compact('employees', 'payrollRegister', 'currentMonth', 'currentYear', 'adjustments'));
+    }
+
+    public function approvePayrollRegister()
+    {
+        $this->authorizeHR();
+
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        $payrollRegister = PayrollRegister::firstOrCreate(
+            [
+                'month' => $currentMonth,
+                'year' => $currentYear,
+            ],
+            [
+                'status' => 'pending',
+            ]
+        );
+
+        if ($payrollRegister->status !== 'approved') {
+            $payrollRegister->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+
+            AuditHelper::log(
+                'update',
+                'PayrollRegister',
+                $payrollRegister->id,
+                'تم اعتماد مسير الرواتب لشهر ' . $currentMonth . '/' . $currentYear
+            );
+        }
+
+        return redirect()
+            ->route('employees.payroll-register')
+            ->with('success', 'تم اعتماد كشف الرواتب');
+    }
+
     public function store(Request $request)
     {
         $this->authorizeHR();
@@ -74,6 +140,12 @@ class EmployeeController extends Controller
             'address' => 'nullable|string',
             'hire_date' => 'nullable|date',
             'salary' => 'nullable|numeric',
+            'housing_allowance' => 'nullable|numeric',
+            'transportation_allowance' => 'nullable|numeric',
+            'travel_allowance' => 'nullable|numeric',
+            'risk_allowance' => 'nullable|numeric',
+            'transfer_allowance' => 'nullable|numeric',
+            'overtime_allowance' => 'nullable|numeric',
             'status' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
             'factory_id' => 'nullable|exists:factories,id',
@@ -127,6 +199,21 @@ class EmployeeController extends Controller
             $validated['leave_balance'] = 26;
         }
 
+        $allowanceFields = [
+            'housing_allowance',
+            'transportation_allowance',
+            'travel_allowance',
+            'risk_allowance',
+            'transfer_allowance',
+            'overtime_allowance',
+        ];
+
+        foreach ($allowanceFields as $field) {
+            if (! isset($validated[$field]) || $validated[$field] === null || $validated[$field] === '') {
+                $validated[$field] = 0;
+            }
+        }
+
         $employee = Employee::create($validated);
 
         AuditHelper::log(
@@ -145,7 +232,50 @@ class EmployeeController extends Controller
 
         $employee->load(['documents', 'department', 'assets', 'assetAssignments.asset']);
 
-        return view('employees.show', compact('employee'));
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        $payrollAdjustment = EmployeePayrollAdjustment::firstOrNew([
+            'employee_id' => $employee->id,
+            'month' => $currentMonth,
+            'year' => $currentYear,
+        ]);
+
+        return view('employees.show', compact('employee', 'payrollAdjustment', 'currentMonth', 'currentYear'));
+    }
+
+    public function savePayrollAdjustment(Request $request, Employee $employee)
+    {
+        $this->authorizeHR();
+
+        $validated = $request->validate([
+            'overtime_hours' => 'nullable|numeric|min:0',
+            'leave_deduction_days' => 'nullable|numeric|min:0',
+            'other_deduction' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        $currentMonth = now()->month;
+        $currentYear = now()->year;
+
+        EmployeePayrollAdjustment::updateOrCreate(
+            [
+                'employee_id' => $employee->id,
+                'month' => $currentMonth,
+                'year' => $currentYear,
+            ],
+            [
+                'overtime_hours' => $validated['overtime_hours'] ?? 0,
+                'leave_deduction_days' => $validated['leave_deduction_days'] ?? 0,
+                'other_deduction' => $validated['other_deduction'] ?? 0,
+                'notes' => $validated['notes'] ?? null,
+                'created_by' => auth()->id(),
+            ]
+        );
+
+        return redirect()
+            ->route('employees.show', $employee)
+            ->with('success', 'تم حفظ حسابات مسير الرواتب للشهر الحالي');
     }
 
     public function edit(Employee $employee)
@@ -171,6 +301,12 @@ class EmployeeController extends Controller
             'address' => 'nullable|string',
             'hire_date' => 'nullable|date',
             'salary' => 'nullable|numeric',
+            'housing_allowance' => 'nullable|numeric',
+            'transportation_allowance' => 'nullable|numeric',
+            'travel_allowance' => 'nullable|numeric',
+            'risk_allowance' => 'nullable|numeric',
+            'transfer_allowance' => 'nullable|numeric',
+            'overtime_allowance' => 'nullable|numeric',
             'status' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
             'factory_id' => 'nullable|exists:factories,id',
@@ -184,6 +320,21 @@ class EmployeeController extends Controller
 
         if (!isset($validated['leave_balance']) || $validated['leave_balance'] === null) {
             $validated['leave_balance'] = $employee->leave_balance ?? 26;
+        }
+
+        $allowanceFields = [
+            'housing_allowance',
+            'transportation_allowance',
+            'travel_allowance',
+            'risk_allowance',
+            'transfer_allowance',
+            'overtime_allowance',
+        ];
+
+        foreach ($allowanceFields as $field) {
+            if (! isset($validated[$field]) || $validated[$field] === null || $validated[$field] === '') {
+                $validated[$field] = 0;
+            }
         }
 
         $employee->update($validated);

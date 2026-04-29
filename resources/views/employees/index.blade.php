@@ -12,9 +12,14 @@
             <p style="margin:8px 0 0; color:#6b7280;">{{ __('employees.heading_subtitle') }}</p>
         </div>
 
-        <a href="{{ route('employees.create') }}" class="btn btn-success">
-            ➕ {{ __('employees.add_employee') }}
-        </a>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <a href="{{ route('employees.payroll-register') }}" class="btn btn-secondary">
+                مسير رواتب
+            </a>
+            <a href="{{ route('employees.create') }}" class="btn btn-success">
+                ➕ {{ __('employees.add_employee') }}
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

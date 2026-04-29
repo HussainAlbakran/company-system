@@ -88,6 +88,36 @@
                 </div>
 
                 <div class="form-group">
+                    <label>بدل سكن</label>
+                    <input type="number" step="0.01" name="housing_allowance" value="{{ old('housing_allowance', $employee->housing_allowance ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>بدل مواصلات</label>
+                    <input type="number" step="0.01" name="transportation_allowance" value="{{ old('transportation_allowance', $employee->transportation_allowance ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>بدل سفر</label>
+                    <input type="number" step="0.01" name="travel_allowance" value="{{ old('travel_allowance', $employee->travel_allowance ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>بدل مخاطر</label>
+                    <input type="number" step="0.01" name="risk_allowance" value="{{ old('risk_allowance', $employee->risk_allowance ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>بدل انتقال</label>
+                    <input type="number" step="0.01" name="transfer_allowance" value="{{ old('transfer_allowance', $employee->transfer_allowance ?? 0) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>بدل إضافي</label>
+                    <input type="number" step="0.01" name="overtime_allowance" value="{{ old('overtime_allowance', $employee->overtime_allowance ?? 0) }}">
+                </div>
+
+                <div class="form-group">
                     <label>{{ __('employees.status') }}</label>
                     <select name="status" required>
                         <option value="active" {{ old('status', $employee->status) == 'active' ? 'selected' : '' }}>{{ __('employees.status_active') }}</option>
