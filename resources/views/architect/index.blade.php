@@ -38,17 +38,9 @@
                         </td>
 
                         <td>
-                            <div class="actions-row" style="flex-wrap:wrap; gap:8px;">
-                                <a href="{{ route('architect.project-material-requirements', $project) }}" class="btn btn-primary">
-                                    {{ __('architect.open') }}
-                                </a>
-                                <form action="{{ route('architect.complete', $project->id) }}" method="POST" style="display:inline;">
-                                    @csrf
-                                    <button type="submit" class="btn btn-success">
-                                        {{ __('architect.complete_send_purchasing') }}
-                                    </button>
-                                </form>
-                            </div>
+                            <a href="{{ route('architect.project-material-requirements', $project) }}" class="btn btn-primary">
+                                {{ __('architect.open_material_requests') }}
+                            </a>
                         </td>
                     </tr>
                 @empty

@@ -3,20 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\AuditHelper;
+use App\Services\CashFlowLedgerService;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
+use App\Models\AssetMaintenanceLog;
 use App\Models\Employee;
 use App\Models\EmployeeAsset; // 🔥 مهم
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AssetController extends Controller
 {
     private function authorizeHR(): void
     {
-        if (!auth()->check() || !auth()->user()->canManageAssets()) {
-            abort(403, 'غير مصرح لك');
+        if (! auth()->check() || ! auth()->user()->canManageAssets()) {
+            abort(403, 'هذه الصفحة متاحة لمدير النظام والإدارة وموارد البشرية فقط.');
         }
     }
 
@@ -112,6 +115,7 @@ class AssetController extends Controller
             'purchase',
             'assetAssignments.employee',
             'currentActiveAssignment.employee',
+            'maintenanceLogs.recorder',
         ]);
 
         // 🔥 الحل هنا: جلب العهدة بدل العلاقة القديمة
@@ -164,6 +168,93 @@ class AssetController extends Controller
         );
 
         return back()->with('success', 'تم تسليم الأصل للموظف بنجاح');
+    }
+
+    public function transferToMaintenance(Request $request, Asset $asset)
+    {
+        $this->authorizeHR();
+
+        $validated = $request->validate([
+            'maintenance_cost' => 'required|numeric|min:0',
+            'maintenance_date' => 'nullable|date',
+            'notes' => 'nullable|string|max:2000',
+        ]);
+
+        $maintenanceLog = null;
+
+        DB::transaction(function () use ($asset, $validated, &$maintenanceLog) {
+            $activeAssignment = $asset->assetAssignments()
+                ->where('status', 'assigned')
+                ->whereNull('returned_at')
+                ->first();
+
+            if ($activeAssignment) {
+                $activeAssignment->update([
+                    'status' => 'returned',
+                    'returned_at' => now(),
+                ]);
+            }
+
+            $maintenanceLog = AssetMaintenanceLog::create([
+                'asset_id' => $asset->id,
+                'asset_name' => $asset->name,
+                'serial_number' => $asset->serial_number,
+                'asset_type' => $asset->asset_type,
+                'plate_number' => $asset->plate_number,
+                'quantity' => (int) ($asset->quantity ?? 1),
+                'maintenance_cost' => $validated['maintenance_cost'],
+                'maintenance_date' => $validated['maintenance_date'] ?? now()->toDateString(),
+                'notes' => $validated['notes'] ?? null,
+                'recorded_by' => auth()->id(),
+            ]);
+
+            $asset->update(['status' => 'maintenance']);
+        });
+
+        if ($maintenanceLog) {
+            app(CashFlowLedgerService::class)->syncMaintenanceLog($maintenanceLog);
+        }
+
+        AuditHelper::log(
+            'maintenance',
+            'Asset',
+            $asset->id,
+            'تحويل الأصل "' . $asset->name . '" إلى الصيانة — التكلفة: ' . number_format((float) $validated['maintenance_cost'], 2)
+        );
+
+        return back()->with('success', __('assets.success_maintenance_transfer'));
+    }
+
+    public function endMaintenance(Asset $asset)
+    {
+        $this->authorizeHR();
+
+        if ($asset->status !== 'maintenance') {
+            return back()->with('error', __('assets.end_maintenance_not_in_service'));
+        }
+
+        DB::transaction(function () use ($asset) {
+            $openLog = AssetMaintenanceLog::query()
+                ->where('asset_id', $asset->id)
+                ->whereNull('ended_at')
+                ->latest('id')
+                ->first();
+
+            if ($openLog) {
+                $openLog->update(['ended_at' => now()]);
+            }
+
+            $asset->update(['status' => 'available']);
+        });
+
+        AuditHelper::log(
+            'maintenance_end',
+            'Asset',
+            $asset->id,
+            'انتهاء صيانة الأصل "'.$asset->name.'" — أصبح متاحاً'
+        );
+
+        return back()->with('success', __('assets.success_maintenance_end'));
     }
 
     public function returnAssignment(AssetAssignment $assignment)

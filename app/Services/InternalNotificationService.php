@@ -18,7 +18,7 @@ class InternalNotificationService
         }
 
         $recipients = User::query()
-            ->whereIn('role', ['admin', 'hr'])
+            ->whereIn('role', ['hr_manager', 'hr'])
             ->where('is_active', true)
             ->where('approval_status', 'approved')
             ->get(['id']);

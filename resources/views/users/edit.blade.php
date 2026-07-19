@@ -2,7 +2,7 @@
 
 @php
     $userRoleKeys = [
-        'super_admin', 'admin', 'sales_manager', 'sales', 'engineering_manager',
+        'super_admin', 'admin', 'finance', 'sales_manager', 'sales', 'engineering_manager',
         'hr', 'hr_manager', 'engineer', 'procurement_manager', 'procurement',
         'operations_manager', 'factory_manager', 'manager', 'user',
     ];

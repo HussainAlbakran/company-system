@@ -13,8 +13,14 @@
         </div>
 
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <a href="{{ route('employees.leave-register') }}" class="btn btn-secondary">
+                {{ __('employees.leave_register_btn') }}
+            </a>
             <a href="{{ route('employees.payroll-register') }}" class="btn btn-secondary">
-                مسير رواتب
+                {{ __('employees.payroll_register_btn') }}
+            </a>
+            <a href="{{ route('employees.payroll-registers.index') }}" class="btn btn-secondary">
+                {{ __('employees.payroll_registers_btn') }}
             </a>
             <a href="{{ route('employees.create') }}" class="btn btn-success">
                 ➕ {{ __('employees.add_employee') }}
@@ -92,7 +98,7 @@
                         <td>{{ $employee->passport_expiry_date ?? '-' }}</td>
                         <td>
                             @if($employee->has_custody)
-                                <span class="badge badge-green">{{ __('employees.custody_yes') }}</span>
+                                <span class="badge badge-green">{{ __('employees.custody_exists') }}</span>
                             @else
                                 <span class="badge badge-gray">{{ __('employees.custody_none') }}</span>
                             @endif

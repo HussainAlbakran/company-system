@@ -129,6 +129,122 @@
     </div>
 
     <div class="page-card" style="margin-bottom:24px;">
+        <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h2 style="margin:0; font-size:22px;">{{ __('assets.section_maintenance') }}</h2>
+                <p style="color:#6b7280; margin:8px 0 0;">{{ __('assets.section_maintenance_sub') }}</p>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                <button type="button" class="btn btn-warning" onclick="toggleMaintenanceForm()">
+                    {{ __('assets.transfer_maintenance_btn') }}
+                </button>
+                @if($asset->status === 'maintenance')
+                    <form method="POST" action="{{ route('assets.end-maintenance', $asset) }}" onsubmit="return confirm(@json(__('assets.confirm_end_maintenance')))">
+                        @csrf
+                        <button type="submit" class="btn btn-primary">{{ __('assets.end_maintenance_btn') }}</button>
+                    </form>
+                @endif
+            </div>
+        </div>
+
+        <form id="maintenanceTransferForm" method="POST" action="{{ route('assets.transfer-maintenance', $asset) }}" style="display:none; margin-bottom:20px;">
+            @csrf
+            <div class="details-grid" style="margin-bottom:16px;">
+                <div class="detail-box">
+                    <strong>{{ __('assets.field_name') }}</strong>
+                    <div>{{ $asset->name }}</div>
+                </div>
+                <div class="detail-box">
+                    <strong>{{ __('assets.th_serial') }}</strong>
+                    <div>{{ $asset->serial_number ?? '-' }}</div>
+                </div>
+                <div class="detail-box">
+                    <strong>{{ __('assets.field_asset_type') }}</strong>
+                    <div>{{ in_array($asset->asset_type, ['vehicle', 'مركبة'], true) ? __('assets.asset_type_vehicle') : __('assets.asset_type_general') }}</div>
+                </div>
+                <div class="detail-box">
+                    <strong>{{ __('assets.th_quantity') }}</strong>
+                    <div>{{ $asset->quantity }}</div>
+                </div>
+                @if(in_array($asset->asset_type, ['vehicle', 'مركبة'], true))
+                <div class="detail-box">
+                    <strong>{{ __('assets.field_plate_number') }}</strong>
+                    <div>{{ $asset->plate_number ?? '-' }}</div>
+                </div>
+                @endif
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>{{ __('assets.field_maintenance_cost') }}</label>
+                    <input type="number" step="0.01" min="0" name="maintenance_cost" value="{{ old('maintenance_cost') }}" required>
+                    @error('maintenance_cost')
+                        <small style="color:#b91c1c;">{{ $message }}</small>
+                    @enderror
+                </div>
+                <div class="form-group">
+                    <label>{{ __('assets.field_maintenance_date') }}</label>
+                    <input type="date" name="maintenance_date" value="{{ old('maintenance_date', now()->toDateString()) }}">
+                </div>
+                <div class="form-group form-group-full">
+                    <label>{{ __('assets.field_notes') }}</label>
+                    <textarea name="notes" rows="2">{{ old('notes') }}</textarea>
+                </div>
+            </div>
+
+            <div class="actions-row" style="margin-top:10px;">
+                <button type="submit" class="btn btn-warning">{{ __('assets.save_maintenance_transfer') }}</button>
+                <button type="button" class="btn btn-secondary" onclick="toggleMaintenanceForm()">{{ __('common.cancel') }}</button>
+            </div>
+        </form>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{{ __('assets.th_number') }}</th>
+                        <th>{{ __('assets.field_name') }}</th>
+                        <th>{{ __('assets.th_serial') }}</th>
+                        <th>{{ __('assets.field_maintenance_date') }}</th>
+                        <th>{{ __('assets.field_maintenance_cost') }}</th>
+                        <th>{{ __('assets.th_status') }}</th>
+                        <th>{{ __('assets.field_maintenance_ended_at') }}</th>
+                        <th>{{ __('assets.field_notes') }}</th>
+                        <th>{{ __('assets.recorded_by') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($asset->maintenanceLogs as $log)
+                        <tr>
+                            <td>{{ $log->id }}</td>
+                            <td>{{ $log->asset_name }}</td>
+                            <td>{{ $log->serial_number ?? '-' }}</td>
+                            <td>{{ $log->maintenance_date?->format('Y-m-d') ?? '-' }}</td>
+                            <td>{{ number_format((float) $log->maintenance_cost, 2) }}</td>
+                            <td>
+                                @if($log->ended_at)
+                                    <span class="badge badge-green">{{ __('assets.maintenance_status_ended') }}</span>
+                                @elseif($asset->status === 'maintenance')
+                                    <span class="badge badge-orange">{{ __('assets.maintenance_status_ongoing') }}</span>
+                                @else
+                                    <span class="badge badge-gray">{{ __('assets.maintenance_status_ended') }}</span>
+                                @endif
+                            </td>
+                            <td>{{ $log->ended_at?->format('Y-m-d H:i') ?? '-' }}</td>
+                            <td>{{ $log->notes ?? '-' }}</td>
+                            <td>{{ $log->recorder->name ?? '-' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="empty-row">{{ __('assets.maintenance_logs_empty') }}</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="page-card" style="margin-bottom:24px;">
         <div class="page-header">
             <h2 style="margin:0; font-size:22px;">تسليم لموظف</h2>
             <p style="color:#6b7280;">تسليم الأصل لموظف مع منع التكرار عند وجود عهدة نشطة</p>
@@ -181,7 +297,10 @@
             </div>
 
             <div class="actions-row" style="margin-top:10px;">
-                <button type="submit" class="btn btn-primary" {{ $asset->currentActiveAssignment ? 'disabled' : '' }}>تسليم الأصل</button>
+                <button type="submit" class="btn btn-primary" {{ ($asset->currentActiveAssignment || $asset->status === 'maintenance') ? 'disabled' : '' }}>تسليم الأصل</button>
+                @if($asset->status === 'maintenance')
+                    <span style="color:#6b7280; font-size:12px;">{{ __('assets.assign_blocked_maintenance') }}</span>
+                @endif
             </div>
         </form>
     </div>
@@ -283,5 +402,19 @@
     @endif
 
 </div>
+
+<script>
+function toggleMaintenanceForm() {
+    const form = document.getElementById('maintenanceTransferForm');
+    if (!form) return;
+    form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+}
+@if($errors->has('maintenance_cost'))
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('maintenanceTransferForm');
+    if (form) form.style.display = 'block';
+});
+@endif
+</script>
 
 @endsection

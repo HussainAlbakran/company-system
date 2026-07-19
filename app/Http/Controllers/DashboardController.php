@@ -49,6 +49,46 @@ class DashboardController extends Controller
             return view('dashboard-user');
         }
 
+        if ($user && $user->isFinance()) {
+            $incomingPayload = $incomingItemsService->buildForUser($user);
+
+            return view('dashboard', [
+                'dashboardIsAdmin' => false,
+                'financeDashboard' => true,
+                'monthlySalaryBudget' => 0,
+                'currentProjectsValue' => 0,
+                'currentProjectsExpenses' => 0,
+                'delayedProjectsCount' => 0,
+                'endingSoonProjectsCount' => 0,
+                'adminProjects' => collect(),
+                'architectProjectsCount' => 0,
+                'productionOrdersCount' => 0,
+                'installationProjectsCount' => 0,
+                'purchasesCount' => 0,
+                'employeesCount' => 0,
+                'residencyExpiringEmployees' => collect(),
+                'expiredResidencyEmployees' => collect(),
+                'passportExpiringEmployees' => collect(),
+                'expiredPassportEmployees' => collect(),
+                'internalNotifications' => InternalNotification::query()
+                    ->where('user_id', $user->id)
+                    ->latest()
+                    ->limit(12)
+                    ->get(),
+                'adminOverviewTotalProjects' => 0,
+                'adminOverviewTotalClients' => 0,
+                'adminOverviewTotalEmployees' => 0,
+                'adminOverviewStatusSummary' => collect(),
+                'adminOverviewRecentUpdates' => collect(),
+                'procurementKpi' => null,
+                'engineeringKpi' => null,
+                'operationsKpi' => null,
+                'hrKpi' => null,
+                'incomingRequestsItems' => $incomingPayload['items'],
+                'incomingRequestsCount' => $incomingPayload['count'],
+            ]);
+        }
+
         $dashboardIsAdmin = $user && $user->isAdminLike();
 
         $monthlySalaryBudget = 0;

@@ -15,6 +15,46 @@ class User extends Authenticatable implements FilamentUser
 
     public const ROLE_SUPER_ADMIN = 'super_admin';
     public const ROLE_ADMIN = 'admin';
+    public const ROLE_FINANCE = 'finance';
+
+    /**
+     * All roles assignable from user management.
+     */
+    public const MANAGEABLE_ROLES = [
+        self::ROLE_SUPER_ADMIN,
+        self::ROLE_ADMIN,
+        self::ROLE_FINANCE,
+        'sales_manager',
+        'sales',
+        'engineering_manager',
+        'engineer',
+        'procurement_manager',
+        'procurement',
+        'hr_manager',
+        'hr',
+        'operations_manager',
+        'factory_manager',
+        'manager',
+        'user',
+    ];
+
+    /**
+     * Roles that may be assigned while creating an employee account.
+     * Administrative roles are intentionally excluded.
+     */
+    public const EMPLOYEE_ACCOUNT_ROLES = [
+        'user',
+        self::ROLE_FINANCE,
+        'factory_manager',
+    ];
+
+    /** مدير النظام، الإدارة، وموارد البشرية */
+    public const HR_MODULE_ROLES = [
+        self::ROLE_SUPER_ADMIN,
+        self::ROLE_ADMIN,
+        'hr_manager',
+        'hr',
+    ];
 
     protected $fillable = [
         'name',
@@ -109,9 +149,14 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'user';
     }
 
+    public function isFinance(): bool
+    {
+        return $this->role === self::ROLE_FINANCE;
+    }
+
     public function canViewProjectFinancials(): bool
     {
-        return in_array($this->role, ['admin', 'super_admin'], true);
+        return $this->isAdminLike();
     }
 
     public function canViewProjectValueOnly(): bool
@@ -157,7 +202,10 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        return $this->canAccessHRModule() || $this->employee !== null || $this->isBasicUser();
+        return $this->canAccessHRModule()
+            || $this->employee !== null
+            || $this->isBasicUser()
+            || $this->isFinance();
     }
 
     /**
@@ -192,6 +240,24 @@ class User extends Authenticatable implements FilamentUser
             || $this->hasAnyRole(['manager']); // legacy compatibility
     }
 
+    /** مشتريات العقود وطلبات المواد المرتبطة (بدون المستودع) */
+    public function canAccessContractPurchasesModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->isFinance()
+            || $this->hasAnyRole(['procurement_manager', 'procurement'])
+            || $this->hasAnyRole(['manager']); // legacy compatibility
+    }
+
+    /** المشتريات العامة فقط (بدون مشتريات العقود أو المستودع) */
+    public function canAccessGeneralPurchasesModule(): bool
+    {
+        return $this->isAdminLike()
+            || $this->isFinance()
+            || $this->hasAnyRole(['procurement_manager', 'procurement'])
+            || $this->hasAnyRole(['manager']); // legacy compatibility
+    }
+
     public function canAccessEngineeringModule(): bool
     {
         return $this->isAdminLike()
@@ -201,6 +267,10 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessProcurementModule(): bool
     {
+        if ($this->isFinance()) {
+            return false;
+        }
+
         return $this->isAdminLike()
             || $this->hasAnyRole(['procurement_manager', 'procurement'])
             || $this->hasAnyRole(['manager']); // legacy compatibility
@@ -208,8 +278,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessHRModule(): bool
     {
-        return $this->isAdminLike()
-            || $this->hasAnyRole(['hr_manager', 'hr']);
+        return $this->hasAnyRole(self::HR_MODULE_ROLES);
     }
 
     public function canAccessOperationsModule(): bool
@@ -264,10 +333,20 @@ class User extends Authenticatable implements FilamentUser
         return $this->isAdminLike();
     }
 
+    /** المدخول والصرف — مدير النظام والإدارة والمالية */
+    public function canAccessCashFlowModule(): bool
+    {
+        return $this->isAdminLike() || $this->isFinance();
+    }
+
     public function aiAllowedModules(): array
     {
         if ($this->isAdminLike()) {
-            return ['employees', 'departments', 'assets', 'leaves', 'contracts', 'engineering', 'projects', 'factory', 'installation', 'purchases', 'warehouse'];
+            return ['employees', 'departments', 'assets', 'leaves', 'contracts', 'engineering', 'projects', 'factory', 'installation', 'purchases', 'warehouse', 'cash_flow'];
+        }
+
+        if ($this->isFinance()) {
+            return ['purchases', 'cash_flow'];
         }
 
         $modules = [];

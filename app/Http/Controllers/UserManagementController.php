@@ -6,6 +6,7 @@ use App\Helpers\AuditHelper;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class UserManagementController extends Controller
 {
@@ -40,7 +41,7 @@ class UserManagementController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', 'in:super_admin,admin,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user'],
+            'role' => ['required', Rule::in(User::MANAGEABLE_ROLES)],
         ]);
 
         User::create([
@@ -94,7 +95,7 @@ class UserManagementController extends Controller
         ];
 
         if ($canEditRole) {
-            $rules['role'] = ['required', 'in:super_admin,admin,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user'];
+            $rules['role'] = ['required', Rule::in(User::MANAGEABLE_ROLES)];
         }
 
         $validated = $request->validate($rules);

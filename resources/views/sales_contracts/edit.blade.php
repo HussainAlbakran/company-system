@@ -7,6 +7,7 @@
 @php
     $u = auth()->user();
     $showContractValueField = $u->canViewProjectFinancials() || $u->canViewProjectValueOnly();
+    $finFull = $u->canViewProjectFinancials();
 @endphp
 
 <div class="page-card">
@@ -54,7 +55,7 @@
             @if($showContractValueField)
             <div class="form-group">
                 <label>{{ __('contracts.field_project_value') }}</label>
-                <input type="number" step="0.01" name="project_value" value="{{ old('project_value', $contract->project_value) }}">
+                <input type="number" step="0.01" name="project_value" id="project_value" value="{{ old('project_value', $contract->project_value) }}">
             </div>
             @else
             <input type="hidden" name="project_value" value="{{ old('project_value', $contract->project_value) }}">
@@ -90,14 +91,18 @@
                 <input type="file" name="contract_file">
             </div>
 
-            <input type="hidden" name="payment_type" value="{{ $contract->payment_type }}">
-            @if($contract->payment_type === 'full')
-                <input type="hidden" name="full_payment_amount" value="{{ old('full_payment_amount', $contract->full_payment_amount ?? 0) }}">
+            @if($finFull)
+                @include('sales_contracts._payment-fields', [
+                    'finFull' => true,
+                    'selectedPaymentType' => $contract->payment_type,
+                    'fullPaymentAmount' => $contract->full_payment_amount,
+                    'firstPaymentTitle' => $contract->first_payment_title,
+                    'firstPaymentPercentage' => $contract->first_payment_percentage,
+                    'firstPaymentAmount' => $contract->first_payment_amount,
+                    'firstPaymentDueDate' => $contract->first_payment_due_date,
+                ])
             @else
-                <input type="hidden" name="first_payment_title" value="{{ old('first_payment_title', $contract->first_payment_title) }}">
-                <input type="hidden" name="first_payment_percentage" value="{{ old('first_payment_percentage', $contract->first_payment_percentage) }}">
-                <input type="hidden" name="first_payment_amount" value="{{ old('first_payment_amount', $contract->first_payment_amount) }}">
-                <input type="hidden" name="first_payment_due_date" value="{{ old('first_payment_due_date', $contract->first_payment_due_date) }}">
+                <input type="hidden" name="payment_type" value="{{ $contract->payment_type }}">
             @endif
 
         </div>

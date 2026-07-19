@@ -32,6 +32,6 @@ return [
     'success_submitted' => 'تم تقديم طلب الإجازة بنجاح',
     'error_already_processed' => 'تمت معالجة هذا الطلب مسبقًا',
     'error_insufficient_simple' => 'رصيد الإجازات غير كافي',
-    'success_approved' => 'تم اعتماد الإجازة، وسيتم خصم الرصيد تلقائيًا عند بداية الإجازة',
+    'success_approved' => 'تم اعتماد الإجازة وخصم الرصيد من رصيد الإجازات',
     'success_rejected' => 'تم رفض الإجازة',
 ];

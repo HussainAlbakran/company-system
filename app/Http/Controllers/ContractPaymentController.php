@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\ContractPayment;
 use App\Models\SalesContract;
+use App\Services\CashFlowLedgerService;
 use App\Services\StageNotificationService;
+use App\Support\ContractPaymentTypes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -14,6 +16,8 @@ class ContractPaymentController extends Controller
 {
     public function store(Request $request, $id, StageNotificationService $stageNotificationService)
     {
+        abort_unless(auth()->check() && auth()->user()->canAccessContractsModule(), 403);
+
         $contract = SalesContract::with(['project', 'payments'])->findOrFail($id);
 
         $validator = Validator::make($request->all(), [
@@ -47,48 +51,34 @@ class ContractPaymentController extends Controller
 
         $validated = $validator->validated();
 
-        // 🔥 إنشاء الدفعة
+        $hadPaymentsBefore = $contract->payments()->exists();
+
         $payment = ContractPayment::create([
             'sales_contract_id' => $contract->id,
-            'payment_type' => $contract->payment_type === 'full' ? 'full' : 'installment',
+            'payment_type' => $this->resolvePaymentRowType($contract),
             'amount' => $validated['amount'],
             'payment_date' => $validated['payment_date'],
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        // 🔥 إعادة الحساب بعد إضافة الدفعة
-        $totalPaid = $contract->payments()->sum('amount');
+        $contract->syncPaymentStatus();
 
-        $shouldMoveToDesigns = false;
+        app(CashFlowLedgerService::class)->syncContractPayment($payment);
 
-        if ($contract->payments()->count() >= 1) {
-            $shouldMoveToDesigns = true;
+        if (
+            $contract->requiresFirstPaymentForDesigns()
+            && ! $hadPaymentsBefore
+            && $contract->project
+            && $contract->project->current_stage !== 'architect'
+        ) {
+            $contract->project->update([
+                'current_stage' => 'architect',
+                'status' => 'ongoing',
+            ]);
+
+            $stageNotificationService->sendDesignStageNotification($contract);
         }
 
-        $contract->update([
-            'status' => $totalPaid >= (float) ($contract->project_value ?? 0) ? 'paid' : 'partial',
-        ]);
-
-        // ======================================
-        // 🔥 نقل المشروع + إرسال إيميل
-        // ======================================
-        if ($shouldMoveToDesigns && $contract->project) {
-
-            // تأكد ما يرسل مرتين
-            if ($contract->project->current_stage !== 'architect') {
-
-                $contract->project->update([
-                    'current_stage' => 'architect',
-                    'status' => 'ongoing',
-                ]);
-
-                $stageNotificationService->sendDesignStageNotification($contract);
-            }
-        }
-
-        // ======================================
-        // 🔥 تسجيل اللوق
-        // ======================================
         AuditLog::create([
             'user_id' => Auth::id(),
             'action' => 'create',
@@ -97,8 +87,25 @@ class ContractPaymentController extends Controller
             'description' => 'تم تسجيل دفعة للعقد رقم ' . $contract->contract_no . ' بمبلغ ' . $payment->amount,
         ]);
 
+        $message = $contract->isGovernmentPayment()
+            ? __('contracts.payment_recorded_government')
+            : __('contracts.payment_recorded');
+
         return redirect()
             ->route('sales-contracts.show', $contract->id)
-            ->with('success', __('contracts.payment_recorded'));
+            ->with('success', $message);
+    }
+
+    private function resolvePaymentRowType(SalesContract $contract): string
+    {
+        if ($contract->isGovernmentPayment()) {
+            return ContractPaymentTypes::GOVERNMENT;
+        }
+
+        if ($contract->isFullPaymentPlan()) {
+            return ContractPaymentTypes::FULL;
+        }
+
+        return 'installment';
     }
 }

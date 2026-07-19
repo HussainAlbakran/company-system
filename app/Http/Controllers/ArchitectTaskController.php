@@ -253,22 +253,15 @@ class ArchitectTaskController extends Controller
 
         $stageNotificationService->sendFactoryStageNotification($project);
         $stageNotificationService->sendInstallationStageNotification($project);
-        $stageNotificationService->sendPurchasesStageNotification($project);
 
-        return back()->with('success', __('architect.flash_project_sent'));
-    }
-
-    public function approve($projectId)
-    {
-        $this->authorizeArchitect();
-
-        $project = Project::findOrFail($projectId);
-
-        $project->update([
-            'current_stage' => 'production_installation',
-            'status' => 'ongoing',
+        AuditLog::create([
+            'user_id' => Auth::id(),
+            'action' => 'designs_sent_to_operations',
+            'model' => 'Project',
+            'model_id' => $project->id,
+            'description' => 'تم إرسال التصاميم والمقاسات والرسم والتخطيط إلى المصنع والتركيبات.',
         ]);
 
-        return redirect()->route('architect-tasks.index')->with('success', __('architect.flash_approved'));
+        return back()->with('success', __('architect.flash_designs_sent_factory_installation'));
     }
 }

@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'brand_title' => 'نظام إدارة موارد المؤسسة',
-    'brand_subtitle' => 'إدارة عمليات الشركة',
+    'brand_title' => 'إدارة عمليات الشركة',
+    'brand_subtitle' => '',
     'control_center' => 'مركز التحكم',
     'dashboard' => 'لوحة التحكم',
     'contracts' => 'العقود',
@@ -20,8 +20,12 @@ return [
     'leave_management' => 'إدارة الإجازات',
     'leave_request' => 'طلب إجازة',
     'administration' => 'مركز الإدارة',
+    'cash_flow' => 'المدخول والصرف',
+    'custody_settlement' => 'تصفية العهدة',
+    'custody_invoices' => 'تسجيل الفواتير',
     'users' => 'المستخدمون',
     'user_approvals' => 'اعتمادات المستخدمين',
+    'admin_emails' => 'الإيميلات',
     'audit_log' => 'سجل التدقيق',
     'ai_assistant' => 'المساعد الذكي',
     'technical_support' => 'الدعم الفني',

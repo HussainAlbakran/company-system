@@ -93,46 +93,7 @@
                 <input type="date" name="expected_end_date" class="form-control">
             </div>
 
-            <div class="col-md-6 mb-3">
-                <label>{{ __('contracts.field_payment_type') }}</label>
-                <select name="payment_type" id="payment_type" class="form-control" onchange="togglePaymentFields()" required>
-                    <option value="full">{{ __('contracts.payment_full') }}</option>
-                    <option value="installments">{{ __('contracts.payment_installments') }}</option>
-                </select>
-            </div>
-
-            @if($finFull)
-            <div class="col-md-6 mb-3 full-payment-field">
-                <label>{{ __('contracts.field_full_payment_amount') }}</label>
-                <input type="number" step="0.01" name="full_payment_amount" class="form-control" placeholder="{{ __('contracts.placeholder_amount_paid') }}">
-            </div>
-
-            <div class="col-md-6 mb-3 installment-field" style="display:none;">
-                <label>{{ __('contracts.field_first_payment_title') }}</label>
-                <input type="text" name="first_payment_title" class="form-control" placeholder="{{ __('contracts.placeholder_first_payment') }}">
-            </div>
-
-            <div class="col-md-6 mb-3 installment-field" style="display:none;">
-                <label>{{ __('contracts.field_first_payment_pct') }}</label>
-                <input type="number" step="0.01" name="first_payment_percentage" id="first_payment_percentage" class="form-control" placeholder="{{ __('contracts.placeholder_pct') }}" oninput="calculateFirstPaymentAmount()">
-            </div>
-
-            <div class="col-md-6 mb-3 installment-field" style="display:none;">
-                <label>{{ __('contracts.field_first_payment_amount') }}</label>
-                <input type="number" step="0.01" name="first_payment_amount" id="first_payment_amount" class="form-control" placeholder="{{ __('contracts.placeholder_auto_calc') }}">
-            </div>
-
-            <div class="col-md-6 mb-3 installment-field" style="display:none;">
-                <label>{{ __('contracts.field_first_payment_due') }}</label>
-                <input type="date" name="first_payment_due_date" class="form-control">
-            </div>
-            @else
-            <input type="hidden" name="full_payment_amount" value="0">
-            <input type="hidden" name="first_payment_title" value="">
-            <input type="hidden" name="first_payment_percentage" value="0">
-            <input type="hidden" name="first_payment_amount" value="0">
-            <input type="hidden" name="first_payment_due_date" value="">
-            @endif
+            @include('sales_contracts._payment-fields', ['finFull' => $finFull])
 
             <div class="col-md-12 mb-3">
                 <label>{{ __('contracts.field_project_description') }}</label>
@@ -161,39 +122,5 @@
 
     </form>
 </div>
-
-<script>
-    function togglePaymentFields() {
-        const paymentType = document.getElementById('payment_type').value;
-        const installmentFields = document.querySelectorAll('.installment-field');
-        const fullPaymentFields = document.querySelectorAll('.full-payment-field');
-
-        if (paymentType === 'installments') {
-            installmentFields.forEach(field => field.style.display = 'block');
-            fullPaymentFields.forEach(field => field.style.display = 'none');
-        } else {
-            installmentFields.forEach(field => field.style.display = 'none');
-            fullPaymentFields.forEach(field => field.style.display = 'block');
-        }
-    }
-
-    function calculateFirstPaymentAmount() {
-        const pvEl = document.getElementById('project_value');
-        const pctEl = document.getElementById('first_payment_percentage');
-        const amtEl = document.getElementById('first_payment_amount');
-        if (!pvEl || !pctEl || !amtEl) {
-            return;
-        }
-        const projectValue = parseFloat(pvEl.value) || 0;
-        const percentage = parseFloat(pctEl.value) || 0;
-        const amount = (projectValue * percentage) / 100;
-
-        amtEl.value = amount.toFixed(2);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        togglePaymentFields();
-    });
-</script>
 
 @endsection

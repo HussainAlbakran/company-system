@@ -14,6 +14,8 @@ class Employee extends Model
         'email',
         'address',
         'hire_date',
+        'contract_start_date',
+        'contract_end_date',
         'salary',
         'housing_allowance',
         'transportation_allowance',
@@ -40,6 +42,8 @@ class Employee extends Model
 
     protected $casts = [
         'hire_date' => 'date',
+        'contract_start_date' => 'date',
+        'contract_end_date' => 'date',
         'residency_expiry_date' => 'date',
         'passport_expiry_date' => 'date',
         'salary' => 'decimal:2',
@@ -94,6 +98,14 @@ class Employee extends Model
         return $this->hasMany(AssetAssignment::class);
     }
 
+    /** عهدة نشطة من وحدة الأصول (تسليم دون إرجاع). */
+    public function activeAssetAssignments()
+    {
+        return $this->hasMany(AssetAssignment::class)
+            ->where('status', 'assigned')
+            ->whereNull('returned_at');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -102,6 +114,16 @@ class Employee extends Model
     public function payrollAdjustments()
     {
         return $this->hasMany(EmployeePayrollAdjustment::class);
+    }
+
+    public function financialCustodies()
+    {
+        return $this->hasMany(FinancialCustody::class);
+    }
+
+    public function advances()
+    {
+        return $this->hasMany(EmployeeAdvance::class);
     }
 
     /**
@@ -114,10 +136,16 @@ class Employee extends Model
 
     public function getHasCustodyAttribute(): bool
     {
-        if (array_key_exists('active_assets_count', $this->attributes)) {
-            return (int) $this->attributes['active_assets_count'] > 0;
+        $hasLegacyCustody = array_key_exists('active_assets_count', $this->attributes)
+            ? (int) $this->attributes['active_assets_count'] > 0
+            : $this->activeAssets()->exists();
+
+        if ($hasLegacyCustody) {
+            return true;
         }
 
-        return $this->activeAssets()->exists();
+        return array_key_exists('active_asset_assignments_count', $this->attributes)
+            ? (int) $this->attributes['active_asset_assignments_count'] > 0
+            : $this->activeAssetAssignments()->exists();
     }
 }

@@ -4,13 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Models\Leave;
 use App\Models\Employee;
-use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LeaveController extends Controller
 {
+    protected function authorizeHrApprovals(): void
+    {
+        if (! auth()->check() || ! auth()->user()->canManageLeaveApprovals()) {
+            abort(403, 'غير مصرح لك');
+        }
+    }
+
     public function index()
     {
+        $this->authorizeHrApprovals();
+
         $leaves = Leave::with('employee')->latest()->get();
 
         return view('leaves.index', compact('leaves'));
@@ -92,29 +102,52 @@ class LeaveController extends Controller
 
     public function approve($id)
     {
+        $this->authorizeHrApprovals();
+
         $leave = Leave::findOrFail($id);
 
         if ($leave->status !== 'pending') {
             return back()->with('error', __('leaves.error_already_processed'));
         }
 
-        $employee = $leave->employee;
+        $deducted = DB::transaction(function () use ($leave) {
+            $leave = Leave::query()->whereKey($leave->id)->lockForUpdate()->firstOrFail();
+            if ($leave->status !== 'pending') {
+                return false;
+            }
 
-        if ($employee->leave_balance < $leave->days) {
-            return back()->with('error', __('leaves.error_insufficient_simple'));
+            $employee = Employee::query()->whereKey($leave->employee_id)->lockForUpdate()->first();
+            if (! $employee || $employee->leave_balance < $leave->days) {
+                return null;
+            }
+
+            $employee->decrement('leave_balance', (int) $leave->days);
+
+            $leave->update([
+                'status' => 'approved',
+                'approved_at' => now(),
+                'is_deducted' => true,
+                'deducted_at' => now(),
+            ]);
+
+            return true;
+        });
+
+        if ($deducted === false) {
+            return back()->with('error', __('leaves.error_already_processed'));
         }
 
-        $leave->status = 'approved';
-        $leave->approved_at = now();
-        $leave->is_deducted = false;
-        $leave->deducted_at = null;
-        $leave->save();
+        if ($deducted === null) {
+            return back()->with('error', __('leaves.error_insufficient_simple'));
+        }
 
         return back()->with('success', __('leaves.success_approved'));
     }
 
     public function reject($id)
     {
+        $this->authorizeHrApprovals();
+
         $leave = Leave::findOrFail($id);
 
         if ($leave->status !== 'pending') {

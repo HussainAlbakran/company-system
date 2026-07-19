@@ -8,9 +8,17 @@ use Illuminate\Http\Request;
 
 class DepartmentController extends Controller
 {
+    protected function authorizeHR(): void
+    {
+        if (! auth()->check() || ! auth()->user()->canManageDepartments()) {
+            abort(403, 'غير مصرح لك');
+        }
+    }
 
     public function index()
     {
+        $this->authorizeHR();
+
         $departments = Department::with('managerUser')->latest()->get();
 
         return view('departments.index', compact('departments'));
@@ -19,6 +27,8 @@ class DepartmentController extends Controller
 
     public function create()
     {
+        $this->authorizeHR();
+
         $managerUsers = $this->departmentManagerCandidates();
         return view('departments.create', compact('managerUsers'));
     }
@@ -26,6 +36,8 @@ class DepartmentController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeHR();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'manager_user_id' => ['nullable', 'exists:users,id'],
@@ -39,12 +51,16 @@ class DepartmentController extends Controller
 
     public function show(Department $department)
     {
+        $this->authorizeHR();
+
         return redirect()->route('departments.edit', $department->id);
     }
 
 
     public function edit(Department $department)
     {
+        $this->authorizeHR();
+
         $managerUsers = $this->departmentManagerCandidates();
         return view('departments.edit', compact('department', 'managerUsers'));
     }
@@ -52,6 +68,8 @@ class DepartmentController extends Controller
 
     public function update(Request $request, Department $department)
     {
+        $this->authorizeHR();
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'manager_user_id' => ['nullable', 'exists:users,id'],
@@ -65,6 +83,8 @@ class DepartmentController extends Controller
 
     public function destroy(Department $department)
     {
+        $this->authorizeHR();
+
         $department->delete();
 
         return redirect()->route('departments.index');

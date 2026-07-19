@@ -211,14 +211,14 @@
                         <tr>
                             <td>
                                 <div>{{ $log->created_at?->format('Y-m-d') }}</div>
-                                <div style="font-size:12px; color:#cbd5e1;">
+                                <div style="font-size:12px; color:#111827;">
                                     {{ $log->created_at?->format('h:i A') }}
                                 </div>
                             </td>
 
                             <td>
                                 <strong>{{ $log->user->name ?? '-' }}</strong>
-                                <div style="font-size:12px; color:#cbd5e1;">
+                                <div style="font-size:12px; color:#111827;">
                                     {{ $log->user->email ?? '' }}
                                 </div>
                             </td>

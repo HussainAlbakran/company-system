@@ -83,6 +83,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label>{{ __('profile.contract_start') }}</label>
+                    <input type="date" name="contract_start_date" value="{{ old('contract_start_date', $employee->contract_start_date?->format('Y-m-d')) }}">
+                </div>
+
+                <div class="form-group">
+                    <label>{{ __('profile.contract_end') }}</label>
+                    <input type="date" name="contract_end_date" value="{{ old('contract_end_date', $employee->contract_end_date?->format('Y-m-d')) }}">
+                </div>
+
+                <div class="form-group">
                     <label>{{ __('employees.salary') }}</label>
                     <input type="number" step="0.01" name="salary" value="{{ old('salary', $employee->salary) }}">
                 </div>

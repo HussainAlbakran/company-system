@@ -2,59 +2,106 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
+use App\Helpers\AuditHelper;
+use App\Http\Requests\ProfileSelfUpdateRequest;
+use App\Models\Employee;
+use App\Services\EmployeeSelfProfileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
+    public function __construct(
+        protected EmployeeSelfProfileService $profileService
+    ) {}
+
     public function edit(Request $request): View
     {
+        $user = $request->user();
+        abort_unless($user, 403);
+
+        $employee = $this->resolveOwnEmployee($user->id);
+
+        $profileData = $employee
+            ? $this->profileService->build($employee)
+            : null;
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
+            'employee' => $employee,
+            'profileData' => $profileData,
+            'canDeleteAccount' => $user->isAdminLike(),
         ]);
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(ProfileSelfUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        abort_unless($user, 403);
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $validated = $request->validated();
+
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        if (! empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
 
-        return Redirect::route('profile.show')->with('status', 'profile-updated');
+        $user->save();
+
+        $employee = $this->resolveOwnEmployee($user->id);
+
+        if ($employee !== null) {
+            $employee->name = $validated['name'];
+            $employee->phone = $validated['phone'] ?? $employee->phone;
+            $employee->save();
+        }
+
+        if (! $user->isSuperAdmin()) {
+            AuditHelper::log(
+                'profile_updated',
+                'User',
+                (int) $user->id,
+                'تم تحديث الملف الشخصي للمستخدم',
+                (int) $user->id
+            );
+        }
+
+        return Redirect::route('profile.show')->with('success', __('profile.updated_success'));
     }
 
-    /**
-     * Delete the user's account.
-     */
     public function destroy(Request $request): RedirectResponse
     {
+        $user = $request->user();
+        abort_unless($user && $user->isAdminLike(), 403, __('profile.delete_forbidden'));
+
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
-
         Auth::logout();
-
         $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    protected function resolveOwnEmployee(int $userId): ?Employee
+    {
+        return Employee::query()
+            ->with('department')
+            ->where('user_id', $userId)
+            ->first();
     }
 }

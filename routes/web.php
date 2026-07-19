@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminApprovalController;
+use App\Http\Controllers\AdminEmailController;
 use App\Http\Controllers\AdministrationController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\ArchitectController;
@@ -8,6 +9,11 @@ use App\Http\Controllers\ArchitectMaterialRequestController;
 use App\Http\Controllers\ArchitectTaskController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\CashFlowController;
+use App\Http\Controllers\EmployeeAdvanceController;
+use App\Http\Controllers\FinancialCustodyController;
+use App\Http\Controllers\FinancialCustodyInvoiceController;
+use App\Http\Controllers\FinancialCustodySettlementController;
 use App\Http\Controllers\ContractPaymentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
@@ -37,7 +43,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicHomeController::class, 'index'])->name('home');
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
-Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function () {
+Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restricted'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -45,6 +51,11 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::post('/dashboard/dismiss', [DashboardController::class, 'dismiss'])->name('dashboard.dismiss');
+
+    Route::get('/custody-invoices', [FinancialCustodyInvoiceController::class, 'index'])->name('custody-invoices.index');
+    Route::post('/custody-invoices', [FinancialCustodyInvoiceController::class, 'store'])->name('custody-invoices.store');
+    Route::put('/custody-invoices/{invoice}', [FinancialCustodyInvoiceController::class, 'update'])->name('custody-invoices.update');
+    Route::get('/custody-invoices/{invoice}/attachment', [FinancialCustodyInvoiceController::class, 'attachment'])->name('custody-invoices.attachment');
 
     Route::get('/designs', function () {
         if (! auth()->user()->canAccessDesignsModule()) {
@@ -90,6 +101,39 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
 
             Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit.index');
 
+            Route::get('/admin-emails', [AdminEmailController::class, 'index'])->name('admin-emails.index');
+            Route::post('/admin-emails/send', [AdminEmailController::class, 'send'])
+                ->middleware('throttle:5,1')
+                ->name('admin-emails.send');
+
+        });
+
+        Route::middleware('admin.finance')->group(function () {
+            Route::get('/cash-flow', [CashFlowController::class, 'index'])->name('cash-flow.index');
+            Route::get('/cash-flow/maintenance', [CashFlowController::class, 'maintenance'])->name('cash-flow.maintenance');
+            Route::post('/cash-flow', [CashFlowController::class, 'store'])->name('cash-flow.store');
+            Route::delete('/cash-flow/{entry}', [CashFlowController::class, 'destroy'])->name('cash-flow.destroy');
+
+            Route::get('/financial-custodies', [FinancialCustodyController::class, 'index'])->name('financial-custodies.index');
+            Route::get('/financial-custodies/create', [FinancialCustodyController::class, 'create'])->name('financial-custodies.create');
+            Route::post('/financial-custodies', [FinancialCustodyController::class, 'store'])->name('financial-custodies.store');
+            Route::get('/financial-custodies/{financialCustody}', [FinancialCustodyController::class, 'show'])->name('financial-custodies.show');
+            Route::post('/financial-custodies/{financialCustody}/settle-full', [FinancialCustodyController::class, 'settleFull'])->name('financial-custodies.settle-full');
+            Route::post('/financial-custodies/{financialCustody}/settle-partial', [FinancialCustodyController::class, 'settlePartial'])->name('financial-custodies.settle-partial');
+            Route::post('/financial-custodies/{financialCustody}/return-remaining', [FinancialCustodyController::class, 'returnRemaining'])->name('financial-custodies.return-remaining');
+
+            Route::get('/custody-settlements', [FinancialCustodySettlementController::class, 'index'])->name('custody-settlements.index');
+            Route::get('/custody-settlements/records', [FinancialCustodySettlementController::class, 'records'])->name('custody-settlements.records');
+            Route::get('/custody-settlements/open/{financialCustody}', [FinancialCustodySettlementController::class, 'open'])->name('custody-settlements.open');
+            Route::get('/custody-settlements/{settlement}', [FinancialCustodySettlementController::class, 'show'])->name('custody-settlements.show');
+            Route::put('/custody-settlements/{settlement}', [FinancialCustodySettlementController::class, 'update'])->name('custody-settlements.update');
+            Route::post('/custody-settlements/{settlement}/approve', [FinancialCustodySettlementController::class, 'approve'])->name('custody-settlements.approve');
+            Route::post('/custody-settlements/{settlement}/lines/{invoice}/attachment', [FinancialCustodySettlementController::class, 'uploadAttachment'])->name('custody-settlements.upload-attachment');
+            Route::get('/custody-settlement-invoices/{invoice}/attachment', [FinancialCustodySettlementController::class, 'attachment'])->name('custody-settlements.attachment');
+
+            Route::get('/employee-advances', [EmployeeAdvanceController::class, 'index'])->name('employee-advances.index');
+            Route::get('/employee-advances/create', [EmployeeAdvanceController::class, 'create'])->name('employee-advances.create');
+            Route::post('/employee-advances', [EmployeeAdvanceController::class, 'store'])->name('employee-advances.store');
         });
 
         /*
@@ -97,11 +141,21 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
         | HR
         |--------------------------------------------------------------------------
         */
-        Route::middleware('role:super_admin,admin,hr_manager,hr')->group(function () {
+        Route::middleware('hr.module')->group(function () {
 
             Route::resource('departments', DepartmentController::class);
+            Route::get('/employees/payroll-registers', [EmployeeController::class, 'payrollRegistersIndex'])
+                ->name('employees.payroll-registers.index');
+            Route::post('/employees/payroll-registers/new', [EmployeeController::class, 'createPayrollRegister'])
+                ->name('employees.payroll-registers.create');
+            Route::post('/employees/payroll-register/{payrollRegister}/adjustments', [EmployeeController::class, 'updatePayrollRegisterAdjustments'])
+                ->name('employees.payroll-register.update-adjustments');
+            Route::get('/employees/payroll-register/{payrollRegister}', [EmployeeController::class, 'showPayrollRegister'])
+                ->name('employees.payroll-register.show');
             Route::get('/employees/payroll-register', [EmployeeController::class, 'payrollRegister'])
                 ->name('employees.payroll-register');
+            Route::get('/employees/leave-register', [EmployeeController::class, 'leaveRegister'])
+                ->name('employees.leave-register');
             Route::post('/employees/payroll-register/approve', [EmployeeController::class, 'approvePayrollRegister'])->name('employees.payroll-register.approve');
             Route::resource('employees', EmployeeController::class);
 
@@ -130,6 +184,8 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
             Route::post('/assets', [AssetController::class, 'store'])->name('assets.store');
             Route::get('/assets/{asset}', [AssetController::class, 'show'])->name('assets.show');
             Route::post('/assets/{asset}/assign', [AssetController::class, 'assignToEmployee'])->name('assets.assign');
+            Route::post('/assets/{asset}/transfer-maintenance', [AssetController::class, 'transferToMaintenance'])->name('assets.transfer-maintenance');
+            Route::post('/assets/{asset}/end-maintenance', [AssetController::class, 'endMaintenance'])->name('assets.end-maintenance');
             Route::post('/assets/assignments/{assignment}/return', [AssetController::class, 'returnAssignment'])->name('assets.assignments.return');
         });
 
@@ -138,7 +194,7 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
         | Leave Request
         |--------------------------------------------------------------------------
         */
-        Route::middleware('role:super_admin,admin,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user')->group(function () {
+        Route::middleware('role:super_admin,admin,finance,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user')->group(function () {
             Route::get('/leave-request', [LeaveController::class, 'create'])->name('leaves.create');
             Route::post('/leave-request', [LeaveController::class, 'store'])->name('leaves.store');
         });
@@ -167,7 +223,6 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
         */
         Route::middleware('role:super_admin,admin,engineering_manager,engineer,operations_manager')->group(function () {
             Route::get('/architect', [ArchitectController::class, 'index'])->name('architect.index');
-            Route::post('/architect/{id}/complete', [ArchitectController::class, 'complete'])->name('architect.complete');
 
             Route::get('/architect-tasks', [ArchitectTaskController::class, 'index'])->name('architect-tasks.index');
             Route::get('/architect-tasks/{project}', [ArchitectTaskController::class, 'show'])->name('architect-tasks.show');
@@ -177,7 +232,6 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
             Route::put('/architect-measurements/{id}', [ArchitectTaskController::class, 'updateMeasurement'])->name('architect.measurements.update');
             Route::delete('/architect-measurements/{id}', [ArchitectTaskController::class, 'destroyMeasurement'])->name('architect.measurements.destroy');
 
-            Route::post('/architect-tasks/{project}/approve', [ArchitectTaskController::class, 'approve'])->name('architect-tasks.approve');
             Route::post('/architect-tasks/{project}/send-to-factory', [ArchitectTaskController::class, 'sendToFactory'])->name('architect-tasks.sendToFactory');
 
             Route::get('/architect/projects/{project}/material-requirements', [ArchitectMaterialRequestController::class, 'materialRequirements'])
@@ -198,7 +252,7 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
         | General Purchases
         |--------------------------------------------------------------------------
         */
-        Route::middleware('role:super_admin,admin,procurement_manager,procurement,manager')->group(function () {
+        Route::middleware('role:super_admin,admin,finance,procurement_manager,procurement,manager')->group(function () {
             Route::get('/general-purchases', [PurchaseController::class, 'generalIndex'])->name('general-purchases.index');
             Route::get('/general-purchases/create', [PurchaseController::class, 'generalCreate'])->name('general-purchases.create');
             Route::post('/general-purchases', [PurchaseController::class, 'generalStore'])->name('general-purchases.store');
@@ -212,7 +266,7 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted'])->group(function
         | Contract Purchases
         |--------------------------------------------------------------------------
         */
-        Route::middleware('role:super_admin,admin,procurement_manager,procurement,manager')->group(function () {
+        Route::middleware('role:super_admin,admin,finance,procurement_manager,procurement,manager')->group(function () {
             Route::get('/purchases/material-requests', [ArchitectMaterialRequestController::class, 'purchasesIndex'])
                 ->name('purchases.material-requests.index');
             Route::get('/purchases/material-requests/{materialRequest}', [ArchitectMaterialRequestController::class, 'purchasesShow'])

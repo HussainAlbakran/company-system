@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureAdminFinanceAccess;
+use App\Http\Middleware\EnsureHrModuleAccess;
+use App\Http\Middleware\RestrictFinanceUserAccess;
 use App\Http\Middleware\EnsureUserIsApproved;
 use App\Http\Middleware\RestrictBasicUserAccess;
 use App\Http\Middleware\AuditRequestActivity;
@@ -29,7 +32,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'approved' => EnsureUserIsApproved::class,
             'role' => RoleMiddleware::class,
+            'hr.module' => EnsureHrModuleAccess::class,
+            'admin.finance' => EnsureAdminFinanceAccess::class,
             'basic_user_restricted' => RestrictBasicUserAccess::class,
+            'finance.restricted' => RestrictFinanceUserAccess::class,
             'set_locale' => SetLocale::class,
         ]);
 

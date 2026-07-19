@@ -6,7 +6,7 @@
 @section('content')
 <style>
     .ai-page {
-        color: #f8fbff;
+        color: #111827;
     }
 
     .ai-title {
@@ -15,6 +15,7 @@
         font-weight: 900;
         line-height: 1.35;
         letter-spacing: 0;
+        color: #111827;
     }
 
     .ai-subtitle {
@@ -22,7 +23,7 @@
         font-size: 14px;
         line-height: 1.9;
         font-weight: 600;
-        color: #c7d8f3;
+        color: #111827;
     }
 
     .ai-quick-actions {
@@ -32,12 +33,24 @@
         margin: 16px 0 18px;
     }
 
+    .ai-quick-actions .btn {
+        color: #111827 !important;
+        background: #ffffff !important;
+        border: 1px solid #000000 !important;
+        font-weight: 700;
+    }
+
+    .ai-quick-actions .btn:hover {
+        background: #f3f4f6 !important;
+        color: #111827 !important;
+    }
+
     .ai-input-label {
         display: block;
         margin-bottom: 8px;
         font-size: 14px;
         font-weight: 800;
-        color: #e8effb;
+        color: #111827;
     }
 
     .ai-question-input {
@@ -101,11 +114,12 @@
         font-size: 20px;
         font-weight: 900;
         line-height: 1.5;
+        color: #111827;
     }
 
     .ai-history-subtitle {
         margin-top: 8px;
-        color: #b8cae6;
+        color: #111827;
         font-size: 13px;
         line-height: 1.8;
         font-weight: 600;

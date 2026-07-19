@@ -1,4 +1,4 @@
-<aside class="sidebar bg-[#020617]/80 backdrop-blur-xl border-l border-white/10">
+<aside class="sidebar">
     <div class="brand-box">
         <h2 class="brand-title">{{ __('navigation.brand_title') }}</h2>
         <p class="brand-subtitle">{{ __('navigation.brand_subtitle') }}</p>
@@ -23,7 +23,7 @@
 
         @if(auth()->user()->canAccessEngineeringModule())
             <a href="{{ route('architect.index') }}"
-               class="nav-link {{ request()->routeIs('architect.index') || request()->routeIs('architect.complete') ? 'active' : '' }}">
+               class="nav-link {{ request()->routeIs('architect.index') || request()->routeIs('architect.project-material-requirements') || request()->routeIs('architect.material-requests.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
                 <span>{{ __('navigation.architect') }}</span>
             </a>
@@ -54,19 +54,23 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessProcurementModule())
+        @if(auth()->user()->canAccessGeneralPurchasesModule())
             <a href="{{ route('general-purchases.index') }}"
                class="nav-link {{ request()->routeIs('general-purchases.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
                 <span>{{ __('navigation.general_purchases') }}</span>
             </a>
+        @endif
 
+        @if(auth()->user()->canAccessContractPurchasesModule())
             <a href="{{ route('purchases.index') }}"
-               class="nav-link {{ request()->routeIs('purchases.*') ? 'active' : '' }}">
+               class="nav-link {{ request()->routeIs('purchases.*') && !request()->routeIs('general-purchases.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
                 <span>{{ __('navigation.contract_purchases') }}</span>
             </a>
+        @endif
 
+        @if(auth()->user()->canAccessProcurementModule())
             <a href="{{ route('warehouse.index') }}"
                class="nav-link {{ request()->routeIs('warehouse.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -120,6 +124,33 @@
                 <span class="nav-link-icon"></span>
                 <span>{{ __('navigation.administration') }}</span>
             </a>
+
+        @endif
+
+        @if(auth()->user()->canAccessCashFlowModule())
+            <a href="{{ route('cash-flow.index') }}"
+               class="nav-link {{ request()->routeIs('cash-flow.*') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.cash_flow') }}</span>
+            </a>
+            <a href="{{ route('custody-settlements.index') }}"
+               class="nav-link {{ request()->routeIs('custody-settlements.*') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.custody_settlement') }}</span>
+            </a>
+        @endif
+
+        @php
+            $navUser = auth()->user();
+            $hasOpenCustody = $navUser?->employee
+                && \App\Models\FinancialCustody::hasOpenForEmployee($navUser->employee->id);
+        @endphp
+        @if($hasOpenCustody)
+            <a href="{{ route('custody-invoices.index') }}"
+               class="nav-link {{ request()->routeIs('custody-invoices.*') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.custody_invoices') }}</span>
+            </a>
         @endif
 
         @if(auth()->user()->canManageUsers())
@@ -133,6 +164,12 @@
                class="nav-link {{ request()->routeIs('users.approvals') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
                 <span>{{ __('navigation.user_approvals') }}</span>
+            </a>
+
+            <a href="{{ route('admin-emails.index') }}"
+               class="nav-link {{ request()->routeIs('admin-emails.*') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.admin_emails') }}</span>
             </a>
         @endif
 
@@ -191,9 +228,9 @@
                 width:100%;
                 padding:8px;
                 border-radius:8px;
-                background:#0f172a;
-                color:#fff;
-                border:1px solid rgba(146,166,196,.3);
+                background:#f8fafc;
+                color:#111827;
+                border:1px solid #000000;
             "
         >
             @foreach(config('locales.supported', ['ar','en','ur']) as $loc)

@@ -51,4 +51,9 @@ class Asset extends Model
             ->where('status', 'assigned')
             ->whereNull('returned_at');
     }
+
+    public function maintenanceLogs()
+    {
+        return $this->hasMany(AssetMaintenanceLog::class)->latest('maintenance_date');
+    }
 }

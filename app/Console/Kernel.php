@@ -4,7 +4,6 @@ namespace App\Console;
 
 use App\Models\DismissedRequest;
 use App\Models\Leave;
-use Carbon\Carbon;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Log;
@@ -22,23 +21,23 @@ class Kernel extends ConsoleKernel
             }
         })->daily();
 
+        // Legacy: approved before on-approval deduction (is_deducted = false).
         $schedule->call(function () {
-            $today = Carbon::today();
-            $leaves = Leave::where('status', 'approved')
-                ->whereDate('start_date', '<=', $today)
+            Leave::query()
+                ->where('status', 'approved')
                 ->where('is_deducted', false)
-                ->get();
-
-            foreach ($leaves as $leave) {
-                $employee = $leave->employee;
-                if ($employee && $employee->leave_balance >= $leave->days) {
-                    $employee->leave_balance -= $leave->days;
-                    $employee->save();
-                    $leave->is_deducted = true;
-                    $leave->deducted_at = now();
-                    $leave->save();
-                }
-            }
+                ->with('employee')
+                ->each(function (Leave $leave) {
+                    $employee = $leave->employee;
+                    if (! $employee || $employee->leave_balance < $leave->days) {
+                        return;
+                    }
+                    $employee->decrement('leave_balance', (int) $leave->days);
+                    $leave->update([
+                        'is_deducted' => true,
+                        'deducted_at' => now(),
+                    ]);
+                });
         })->daily();
 
         $schedule->call(function (): void {

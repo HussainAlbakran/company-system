@@ -2,22 +2,6 @@
 
 @section('title', __('شركة التقدم للخرسانة الجاهزة | ADVANCE PRECAST COMPANY'))
 
-@php
-    $statusLabels = [
-        'ongoing' => 'قيد التنفيذ',
-        'completed' => 'مكتمل',
-        'paused' => 'متوقف مؤقتاً',
-        'cancelled' => 'ملغى',
-    ];
-    $stageLabels = [
-        'sales' => 'مبيعات',
-        'architect' => 'هندسة',
-        'purchasing' => 'مشتريات',
-        'production_installation' => 'إنتاج وتركيب',
-        'completed' => 'مكتمل',
-    ];
-@endphp
-
 @section('content')
     <div id="top" class="relative overflow-x-hidden">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%50%_at_50%-20%,rgba(59,130,246,0.22),transparent)]" aria-hidden="true"></div>
@@ -58,10 +42,10 @@
 
                 <div class="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
                     <a
-                        href="{{ url('/') }}#projects"
+                        href="{{ url('/') }}#services"
                         class="inline-flex w-full min-w-[200px] items-center justify-center rounded-xl bg-gradient-to-l from-blue-600 to-blue-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-blue-900/40 transition hover:from-blue-500 hover:to-blue-400 sm:w-auto"
                     >
-                        {{ __('عرض المشاريع') }}
+                        {{ __('خدماتنا') }}
                     </a>
 
                     <a
@@ -98,14 +82,6 @@
                 </div>
 
                 <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    <article class="group rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-transparent p-6 text-start shadow-xl shadow-black/20 transition hover:border-blue-500/30 hover:shadow-blue-900/10">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/25">
-                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" /></svg>
-                        </div>
-                        <h3 class="mt-5 text-lg font-bold text-white">الخرسانة الجاهزة</h3>
-                        <p class="mt-2 text-sm leading-relaxed text-slate-400">توريد خرسانة جاهزة بخلطات مدروسة وزمن تسليم يضمن استمرارية الصب ومتانة المنشأ.</p>
-                    </article>
-
                     <article class="group rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.07] to-transparent p-6 text-start shadow-xl shadow-black/20 transition hover:border-blue-500/30">
                         <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/15 text-blue-300 ring-1 ring-blue-400/25">
                             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008H18V11.25Zm0 3h.008v.008H18V14.25Zm0 3h.008v.008H18V17.25Z" /></svg>
@@ -137,56 +113,6 @@
                         <h3 class="mt-5 text-lg font-bold text-white">الدعم الفني والهندسي</h3>
                         <p class="mt-2 text-sm leading-relaxed text-slate-400">متابعة فنية لمراحل التنفيذ واستشارات تساعد على اتخاذ القرار الصحيح في الأنظمة الإنشائية.</p>
                     </article>
-                </div>
-            </div>
-        </section>
-
-        {{-- Projects --}}
-        <section id="projects" class="relative border-t border-white/5 py-20 sm:py-24">
-            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex flex-col items-stretch justify-between gap-4 text-center sm:flex-row sm:items-center sm:text-start">
-                    <div class="min-w-0">
-                    <h2 class="text-3xl font-extrabold text-white sm:text-4xl">{{ __('مشاريعنا') }}</h2>
-                    <p class="mt-2 max-w-xl text-slate-400">{{ __('لمحة من أعمالنا وجاهزية التنفيذ عبر مراحل المشروع.') }}</p>
-                    </div>
-                    @if ($usingSampleProjects)
-                        <span class="inline-flex max-w-full items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-xs font-bold leading-snug text-amber-200 sm:max-w-sm sm:shrink-0 sm:py-1.5">{{ __('بيانات توضيحية — تُستبدل تلقائياً عند توفر مشاريع في النظام') }}</span>
-                    @endif
-                </div>
-
-                <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($projects as $project)
-                        @php
-                            $progress = (int) round(min(100, max(0, (float) ($project->progress_percentage ?? 0))));
-                            $statusKey = $project->status ?? 'ongoing';
-                            $statusAr = $statusLabels[$statusKey] ?? $statusKey;
-                            $stageKey = $project->current_stage ?? null;
-                            $stageAr = $stageKey ? ($stageLabels[$stageKey] ?? $stageKey) : null;
-                        @endphp
-                        <article class="flex min-w-0 flex-col rounded-2xl border border-white/10 bg-gradient-to-b from-slate-900/80 to-slate-950/90 p-6 shadow-lg shadow-black/30">
-                            <h3 class="break-words text-lg font-bold text-white">{{ $project->name }}</h3>
-                            <div class="mt-4 flex items-center justify-between gap-2 text-sm">
-                                <span class="text-slate-400">نسبة الإنجاز</span>
-                                <span class="shrink-0 font-bold text-blue-200">{{ $progress }}٪</span>
-                            </div>
-                            <div
-                                class="relative mt-2 h-2.5 overflow-hidden rounded-full bg-white/10"
-                                role="progressbar"
-                                aria-valuenow="{{ $progress }}"
-                                aria-valuemin="0"
-                                aria-valuemax="100"
-                                aria-label="نسبة إنجاز المشروع {{ $progress }}٪"
-                            >
-                                <div class="absolute end-0 top-0 h-full rounded-full bg-gradient-to-l from-blue-500 to-blue-400 transition-all" style="width: {{ $progress }}%"></div>
-                            </div>
-                            <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
-                                <span class="inline-flex rounded-lg bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-200 ring-1 ring-white/10">الحالة: {{ $statusAr }}</span>
-                                @if ($stageAr)
-                                    <span class="inline-flex rounded-lg bg-blue-500/10 px-2.5 py-1 text-xs font-semibold text-blue-200 ring-1 ring-blue-400/20">المرحلة: {{ $stageAr }}</span>
-                                @endif
-                            </div>
-                        </article>
-                    @endforeach
                 </div>
             </div>
         </section>
@@ -260,16 +186,16 @@
                 </div>
 
                 <div class="mx-auto mt-12 grid max-w-2xl gap-4 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] p-6 text-center text-sm text-slate-400">
-                    <p class="font-semibold text-slate-300">بيانات إضافية (يمكن تحديثها لاحقاً)</p>
+                    <p class="font-semibold text-slate-300">تواصل شركة التقدم للخرسانة الجاهزة - الموقع</p>
                     <div class="flex flex-wrap items-center justify-center gap-6">
                         <span class="inline-flex items-center gap-2 opacity-80">
                             <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" /></svg>
                             الهاتف: — قريباً —
                         </span>
-                        <span class="inline-flex items-center gap-2 opacity-80">
+                        <a href="https://maps.app.goo.gl/yBawF6jBwZ9zBeJL9?g_st=ic" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 opacity-80 hover:opacity-100">
                             <svg class="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
-                            الموقع: — قريباً —
-                        </span>
+                            الموقع
+                        </a>
                     </div>
                     <div class="flex justify-center gap-4 pt-2 opacity-60" aria-label="وسائل التواصل الاجتماعي (قريباً)">
                         <span class="flex h-10 w-10 items-center justify-center rounded-full border border-white/10" title="LinkedIn">in</span>

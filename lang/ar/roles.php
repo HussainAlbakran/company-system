@@ -15,4 +15,6 @@ return [
     'factory_manager' => 'مدير المصنع',
     'manager' => 'مدير',
     'user' => 'موظف (أساسي)',
+    'finance' => 'المالية',
+    'finance_route_denied' => 'لا يمكن الوصول إلى هذا القسم ضمن صلاحية المالية.',
 ];

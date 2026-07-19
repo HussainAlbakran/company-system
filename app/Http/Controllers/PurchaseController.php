@@ -6,12 +6,23 @@ use App\Models\ArchitectMaterialRequest;
 use App\Models\Asset;
 use App\Models\Purchase;
 use App\Models\Project;
+use App\Services\CashFlowLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class PurchaseController extends Controller
 {
+    protected function authorizeGeneralPurchases(): void
+    {
+        abort_unless(auth()->check() && auth()->user()->canAccessGeneralPurchasesModule(), 403);
+    }
+
+    protected function authorizeContractPurchases(): void
+    {
+        abort_unless(auth()->check() && auth()->user()->canAccessContractPurchasesModule(), 403);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | General Purchases
@@ -20,6 +31,7 @@ class PurchaseController extends Controller
 
     public function generalIndex(Request $request)
     {
+        $this->authorizeGeneralPurchases();
         $query = Purchase::with(['creator'])
             ->whereIn('type', ['asset_purchase', 'general_maintenance'])
             ->latest();
@@ -56,11 +68,13 @@ class PurchaseController extends Controller
 
     public function generalCreate()
     {
+        $this->authorizeGeneralPurchases();
         return view('general-purchases.create');
     }
 
     public function generalStore(Request $request)
     {
+        $this->authorizeGeneralPurchases();
         $rules = [
             'type' => 'required|in:asset_purchase,general_maintenance',
             'title' => 'required|string|max:255',
@@ -96,6 +110,8 @@ class PurchaseController extends Controller
             Asset::create($attrs);
         }
 
+        app(CashFlowLedgerService::class)->syncPurchase($purchase);
+
         return redirect()
             ->route('general-purchases.index')
             ->with('success', __('purchases.flash_general_saved'));
@@ -103,6 +119,7 @@ class PurchaseController extends Controller
 
     public function generalEdit($id)
     {
+        $this->authorizeGeneralPurchases();
         $purchase = Purchase::whereIn('type', ['asset_purchase', 'general_maintenance'])
             ->findOrFail($id);
 
@@ -113,6 +130,7 @@ class PurchaseController extends Controller
 
     public function generalUpdate(Request $request, $id)
     {
+        $this->authorizeGeneralPurchases();
         $purchase = Purchase::whereIn('type', ['asset_purchase', 'general_maintenance'])
             ->findOrFail($id);
 
@@ -163,6 +181,8 @@ class PurchaseController extends Controller
             $asset->delete();
         }
 
+        app(CashFlowLedgerService::class)->syncPurchase($purchase->fresh());
+
         return redirect()
             ->route('general-purchases.index')
             ->with('success', __('purchases.flash_general_updated'));
@@ -170,10 +190,13 @@ class PurchaseController extends Controller
 
     public function generalDestroy($id)
     {
+        $this->authorizeGeneralPurchases();
         $purchase = Purchase::whereIn('type', ['asset_purchase', 'general_maintenance'])
             ->findOrFail($id);
 
         Asset::where('purchase_id', $purchase->id)->delete();
+
+        app(CashFlowLedgerService::class)->removePurchase($purchase);
 
         $purchase->delete();
 
@@ -190,6 +213,8 @@ class PurchaseController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorizeContractPurchases();
+
         $query = Purchase::with(['project', 'creator'])
             ->where('type', 'contract_purchase')
             ->latest();
@@ -226,6 +251,8 @@ class PurchaseController extends Controller
 
     public function create()
     {
+        $this->authorizeContractPurchases();
+
         $projects = Project::where('current_stage', 'production_installation')
             ->latest()
             ->get();
@@ -235,6 +262,8 @@ class PurchaseController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorizeContractPurchases();
+
         $validated = $request->validate([
             'project_id' => 'required|exists:projects,id',
             'title' => 'required|string|max:255',
@@ -246,7 +275,7 @@ class PurchaseController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        Purchase::create([
+        $purchase = Purchase::create([
             'project_id' => $validated['project_id'],
             'type' => 'contract_purchase',
             'title' => $validated['title'],
@@ -259,6 +288,8 @@ class PurchaseController extends Controller
             'created_by' => Auth::id(),
         ]);
 
+        app(CashFlowLedgerService::class)->syncPurchase($purchase);
+
         return redirect()
             ->route('purchases.index')
             ->with('success', __('purchases.flash_contract_saved'));
@@ -266,6 +297,8 @@ class PurchaseController extends Controller
 
     public function show($id)
     {
+        $this->authorizeContractPurchases();
+
         $purchase = Purchase::with(['project', 'creator'])
             ->where('type', 'contract_purchase')
             ->findOrFail($id);
@@ -275,6 +308,8 @@ class PurchaseController extends Controller
 
     public function edit($id)
     {
+        $this->authorizeContractPurchases();
+
         $purchase = Purchase::where('type', 'contract_purchase')
             ->findOrFail($id);
 
@@ -287,6 +322,8 @@ class PurchaseController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorizeContractPurchases();
+
         $purchase = Purchase::where('type', 'contract_purchase')
             ->findOrFail($id);
 
@@ -313,6 +350,8 @@ class PurchaseController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
+        app(CashFlowLedgerService::class)->syncPurchase($purchase->fresh());
+
         return redirect()
             ->route('purchases.index')
             ->with('success', __('purchases.flash_contract_updated'));
@@ -320,8 +359,12 @@ class PurchaseController extends Controller
 
     public function destroy($id)
     {
+        $this->authorizeContractPurchases();
+
         $purchase = Purchase::where('type', 'contract_purchase')
             ->findOrFail($id);
+
+        app(CashFlowLedgerService::class)->removePurchase($purchase);
 
         $purchase->delete();
 

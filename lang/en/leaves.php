@@ -32,6 +32,6 @@ return [
     'success_submitted' => 'Leave request submitted successfully.',
     'error_already_processed' => 'This request has already been processed.',
     'error_insufficient_simple' => 'Insufficient leave balance.',
-    'success_approved' => 'Leave approved; balance will be deducted automatically when leave starts.',
+    'success_approved' => 'Leave approved and deducted from leave balance.',
     'success_rejected' => 'Leave rejected.',
 ];

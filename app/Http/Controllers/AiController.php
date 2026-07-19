@@ -14,6 +14,9 @@ use App\Models\Factory;
 use App\Models\ProductionOrder;
 use App\Models\ProductionEntry;
 use App\Models\ProductionSupply;
+use App\Models\CashFlowEntry;
+use App\Models\Purchase;
+use App\Models\SalesContract;
 use App\Models\User;
 use Carbon\Carbon;
 
@@ -152,6 +155,7 @@ class AiController extends Controller
             'installation' => 'التركيبات',
             'purchases' => 'المشتريات',
             'warehouse' => 'المستودع',
+            'cash_flow' => 'المدخول والصرف',
         ];
 
         $allowedAreas = [];
@@ -183,6 +187,9 @@ class AiController extends Controller
             $sections[] = $this->departmentsContext();
             $sections[] = $this->projectsContext($user);
             $sections[] = $this->factoryContext();
+            $sections[] = $this->salesContractsContext();
+            $sections[] = $this->purchasesContext($user);
+            $sections[] = $this->cashFlowContext();
         } else {
             if (in_array('employees', $modules, true)) {
                 $sections[] = $this->employeesContext();
@@ -199,9 +206,97 @@ class AiController extends Controller
             if (in_array('factory', $modules, true) || in_array('installation', $modules, true)) {
                 $sections[] = $this->factoryContext();
             }
+
+            if (in_array('contracts', $modules, true) && ! $user->isAdminLike()) {
+                $sections[] = $this->salesContractsContext();
+            }
+
+            if (in_array('purchases', $modules, true) && ! $user->isAdminLike()) {
+                $sections[] = $this->purchasesContext($user);
+            }
+
+            if (in_array('cash_flow', $modules, true)) {
+                $sections[] = $this->cashFlowContext();
+            }
         }
 
         return implode("\n\n", array_filter($sections));
+    }
+
+    protected function salesContractsContext(): string
+    {
+        $contracts = SalesContract::with('payments')
+            ->latest()
+            ->limit(80)
+            ->get();
+
+        $text = "قسم عقود المبيعات:\n";
+
+        foreach ($contracts as $contract) {
+            $paid = (float) $contract->payments->sum('amount');
+            $value = (float) ($contract->project_value ?? 0);
+            $remaining = max(0, $value - $paid);
+
+            $text .= "- رقم العقد: " . ($contract->contract_no ?? '-')
+                . " | العميل: " . ($contract->client_name ?? '-')
+                . " | المشروع: " . ($contract->project_name ?? '-')
+                . " | قيمة العقد: {$value}"
+                . " | المدفوع: {$paid}"
+                . " | المتبقي: {$remaining}"
+                . " | نوع الدفع: " . ($contract->payment_type ?? '-')
+                . " | الحالة: " . ($contract->status ?? '-') . "\n";
+        }
+
+        return $text;
+    }
+
+    protected function purchasesContext(User $user): string
+    {
+        $query = Purchase::query()->latest();
+
+        if ($user->isFinance()) {
+            $query->whereIn('type', ['asset_purchase', 'general_maintenance', 'contract_purchase']);
+        }
+
+        $purchases = $query->limit(80)->get();
+
+        $text = "قسم المشتريات:\n";
+
+        foreach ($purchases as $purchase) {
+            $text .= "- المعرف: " . ($purchase->id ?? '-')
+                . " | النوع: " . ($purchase->type ?? '-')
+                . " | التكلفة: " . ($purchase->cost ?? '-')
+                . " | التاريخ: " . ($purchase->purchase_date ?? '-')
+                . " | الوصف: " . ($purchase->description ?? '-') . "\n";
+        }
+
+        return $text;
+    }
+
+    protected function cashFlowContext(): string
+    {
+        $entries = CashFlowEntry::query()
+            ->latest('entry_date')
+            ->limit(120)
+            ->get();
+
+        $income = (float) $entries->where('type', CashFlowEntry::TYPE_INCOME)->sum('amount');
+        $expense = (float) $entries->where('type', CashFlowEntry::TYPE_EXPENSE)->sum('amount');
+
+        $text = "قسم المدخول والصرف:\n";
+        $text .= "- إجمالي المدخول (من العينة): {$income}\n";
+        $text .= "- إجمالي الصرف (من العينة): {$expense}\n";
+        $text .= "- صافي العينة: " . ($income - $expense) . "\n";
+
+        foreach ($entries->take(60) as $entry) {
+            $text .= "- " . ($entry->type === CashFlowEntry::TYPE_INCOME ? 'مدخول' : 'صرف')
+                . " | " . ($entry->title ?? '-')
+                . " | التصنيف: " . ($entry->category ?? '-')
+                . " | المبلغ: " . ($entry->amount ?? '-')
+                . " | التاريخ: " . ($entry->entry_date ?? '-') . "\n";
+        }
+
+        return $text;
     }
 
     protected function employeesContext(): string

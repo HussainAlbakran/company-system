@@ -18,7 +18,7 @@
     .employee-profile-page .summary-label {
         display: block;
         margin-bottom: 6px;
-        color: #c9d8ee;
+        color: #111827;
         font-size: 11px;
         font-weight: 700;
     }
@@ -27,8 +27,12 @@
         min-width: 0;
         overflow-wrap: anywhere;
         word-break: break-word;
-        color: #eef4ff;
+        color: #111827;
         line-height: 1.45;
+    }
+
+    .employee-profile-page .page-header h2 {
+        color: #111827;
     }
 
     .employee-profile-page .asset-form-grid {
@@ -60,19 +64,50 @@
         margin-top: 8px;
     }
 
-    .employee-profile-page table {
-        background: #0f172a;
+    .employee-profile-page .table-wrap table {
+        background: #ffffff;
     }
 
-    .employee-profile-page th,
-    .employee-profile-page td {
+    .employee-profile-page .table-wrap th,
+    .employee-profile-page .table-wrap td {
         padding: 10px 9px;
         vertical-align: middle;
+        color: #111827;
+        background: #ffffff;
+        border: 1px solid #000000;
     }
 
-    .employee-profile-page td {
+    .employee-profile-page .table-wrap th {
+        background: #f3f4f6;
+        font-weight: 700;
+    }
+
+    .employee-profile-page .table-wrap td {
         overflow-wrap: anywhere;
         word-break: break-word;
+    }
+
+    .employee-profile-page .table-wrap tbody tr {
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .employee-profile-page .table-wrap tbody tr:hover td,
+    .employee-profile-page .table-wrap tbody tr:active td {
+        background: #111827;
+        color: #ffffff;
+    }
+
+    .employee-profile-page .table-wrap tbody tr:hover td strong,
+    .employee-profile-page .table-wrap tbody tr:active td strong {
+        color: #ffffff;
+    }
+
+    .employee-profile-page .table-wrap tbody tr:hover .badge,
+    .employee-profile-page .table-wrap tbody tr:active .badge {
+        background: #ffffff;
+        color: #111827;
+        border: 1px solid #ffffff;
     }
 
     @media (max-width: 768px) {
@@ -270,25 +305,27 @@
 
         <form action="{{ route('employees.payroll-adjustment.save', $employee) }}" method="POST">
             @csrf
+            <input type="hidden" name="month" value="{{ $currentMonth }}">
+            <input type="hidden" name="year" value="{{ $currentYear }}">
             <div class="asset-form-grid">
                 <div class="form-group">
                     <label>ساعات العمل الإضافي</label>
-                    <input type="number" step="0.01" min="0" name="overtime_hours" value="{{ old('overtime_hours', $payrollAdjustment->overtime_hours ?? 0) }}">
+                    <input type="number" step="0.01" min="0" name="overtime_hours" value="{{ old('overtime_hours', $payrollAdjustment->overtime_hours ?? 0) }}" @disabled(!($canEditPayrollAdjustment ?? true))>
                 </div>
 
                 <div class="form-group">
                     <label>أيام خصم الإجازات</label>
-                    <input type="number" step="0.01" min="0" name="leave_deduction_days" value="{{ old('leave_deduction_days', $payrollAdjustment->leave_deduction_days ?? 0) }}">
+                    <input type="number" step="0.01" min="0" name="leave_deduction_days" value="{{ old('leave_deduction_days', $payrollAdjustment->leave_deduction_days ?? 0) }}" @disabled(!($canEditPayrollAdjustment ?? true))>
                 </div>
 
                 <div class="form-group">
                     <label>خصومات أخرى</label>
-                    <input type="number" step="0.01" min="0" name="other_deduction" value="{{ old('other_deduction', $payrollAdjustment->other_deduction ?? 0) }}">
+                    <input type="number" step="0.01" min="0" name="other_deduction" value="{{ old('other_deduction', $payrollAdjustment->other_deduction ?? 0) }}" @disabled(!($canEditPayrollAdjustment ?? true))>
                 </div>
 
                 <div class="form-group form-group-full">
                     <label>ملاحظات</label>
-                    <textarea name="notes">{{ old('notes', $payrollAdjustment->notes) }}</textarea>
+                    <textarea name="notes" @disabled(!($canEditPayrollAdjustment ?? true))>{{ old('notes', $payrollAdjustment->notes) }}</textarea>
                 </div>
             </div>
 
@@ -296,7 +333,11 @@
             {{-- تم إخفاء المعادلات بناءً على طلب العميل --}}
 
             <div class="asset-form-actions">
-                <button type="submit" class="btn btn-primary">حفظ حسابات المسير</button>
+                @if($canEditPayrollAdjustment ?? true)
+                    <button type="submit" class="btn btn-primary">حفظ حسابات المسير</button>
+                @else
+                    <p style="color:#6b7280; margin:0;">{{ __('employees.payroll_cannot_edit_approved') }}</p>
+                @endif
             </div>
         </form>
     </div>

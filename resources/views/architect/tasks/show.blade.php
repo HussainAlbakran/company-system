@@ -223,14 +223,10 @@
             <h2 style="margin:0; font-size:22px;">{{ __('architect.approval_section_title') }}</h2>
             <p style="margin:8px 0 0; color:#6b7280;">{{ __('architect.approval_section_sub') }}</p>
         </div>
-        <div class="form-actions" style="display:flex; gap:10px; flex-wrap:wrap;">
-            <form action="{{ route('architect-tasks.approve', $project->id) }}" method="POST">
+        <div class="form-actions">
+            <form action="{{ route('architect-tasks.sendToFactory', $project->id) }}" method="POST" onsubmit="return confirm(@json(__('architect.confirm_send_factory_installation')))">
                 @csrf
-                <button type="submit" class="btn btn-success">{{ __('architect.approve_and_advance') }}</button>
-            </form>
-            <form action="{{ route('architect-tasks.sendToFactory', $project->id) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-primary">{{ __('architect.send_measurements_factory') }}</button>
+                <button type="submit" class="btn btn-primary">{{ __('architect.send_designs_factory_installation') }}</button>
             </form>
         </div>
     </div>

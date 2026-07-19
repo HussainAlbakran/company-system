@@ -8,6 +8,26 @@
     $u = auth()->user();
 @endphp
 
+<style>
+    .dashboard-stack .dash-section-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .dashboard-stack .dash-section-sub {
+        margin-top: 6px;
+        font-size: 11px;
+        color: #111827;
+    }
+
+    .dashboard-stack .dash-section-note {
+        margin-top: 4px;
+        font-size: 10px;
+        color: #374151;
+    }
+</style>
+
 <div class="dashboard-stack">
     <section class="dashboard-panel">
         <div class="panel-head">
@@ -146,10 +166,10 @@
     <div class="details-grid" style="margin-bottom:8px;">
         <div class="detail-box">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                <strong style="font-size:11px; color:#eef5ff;">{{ __('dashboard.execution') }}</strong>
+                <strong class="dash-section-title">{{ __('dashboard.execution') }}</strong>
                 <span class="badge badge-blue">{{ __('dashboard.live') }}</span>
             </div>
-            <div style="margin-top:6px; font-size:11px; color:#9ec5ff;">
+            <div class="dash-section-sub">
                 {{ __('dashboard.factory_installations_path') }}
             </div>
             <div class="actions-row" style="margin-top:7px;">
@@ -160,10 +180,10 @@
 
         <div class="detail-box">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                <strong style="font-size:11px; color:#f2ecff;">{{ __('dashboard.commercial_procurement') }}</strong>
+                <strong class="dash-section-title">{{ __('dashboard.commercial_procurement') }}</strong>
                 <span class="badge badge-gray">{{ __('dashboard.commercial_operations') }}</span>
             </div>
-            <div style="margin-top:6px; font-size:11px; color:#ccb0ff;">
+            <div class="dash-section-sub">
                 {{ __('dashboard.contracts_and_purchases') }}
             </div>
             <div class="actions-row" style="margin-top:7px;">
@@ -176,10 +196,10 @@
 
         <div class="detail-box">
             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                <strong style="font-size:11px; color:#fff0f0;">{{ __('dashboard.compliance_resources') }}</strong>
+                <strong class="dash-section-title">{{ __('dashboard.compliance_resources') }}</strong>
                 <span class="badge badge-red">{{ __('dashboard.needs_action') }}</span>
             </div>
-            <div style="margin-top:6px; font-size:11px; color:#f9a3a3;">
+            <div class="dash-section-sub">
                 {{ __('dashboard.hr_and_governance') }}
             </div>
             <div class="actions-row" style="margin-top:7px;">
@@ -193,27 +213,27 @@
 
     <div class="details-grid" style="margin-bottom:8px;">
         <div class="detail-box">
-            <strong style="font-size:11px; color:#f7fbff;">{{ __('dashboard.workload_distribution') }}</strong>
+            <strong class="dash-section-title">{{ __('dashboard.workload_distribution') }}</strong>
             <div style="margin-top:6px;">
                 <x-ui.progress :value="min(($architectProjectsCount ?? 0) * 10, 100)" color="#3b82f6" />
             </div>
-            <div style="margin-top:4px; font-size:10px; color:#8fa3c1;">{{ __('dashboard.design_planning_load') }}</div>
+            <div class="dash-section-note">{{ __('dashboard.design_planning_load') }}</div>
         </div>
 
         <div class="detail-box">
-            <strong style="font-size:11px; color:#f7fbff;">{{ __('dashboard.delivery_readiness') }}</strong>
+            <strong class="dash-section-title">{{ __('dashboard.delivery_readiness') }}</strong>
             <div style="margin-top:6px;">
                 <x-ui.progress :value="min(($installationProjectsCount ?? 0) * 10, 100)" color="#22c55e" />
             </div>
-            <div style="margin-top:4px; font-size:10px; color:#8fa3c1;">{{ __('dashboard.installation_readiness') }}</div>
+            <div class="dash-section-note">{{ __('dashboard.installation_readiness') }}</div>
         </div>
 
         <div class="detail-box">
-            <strong style="font-size:11px; color:#f7fbff;">{{ __('dashboard.risk_pressure') }}</strong>
+            <strong class="dash-section-title">{{ __('dashboard.risk_pressure') }}</strong>
             <div style="margin-top:6px;">
                 <x-ui.progress :value="min((($delayedProjectsCount + $endingSoonProjectsCount) ?? 0) * 12, 100)" color="#ef4444" />
             </div>
-            <div style="margin-top:4px; font-size:10px; color:#8fa3c1;">{{ __('dashboard.schedule_pressure_trend') }}</div>
+            <div class="dash-section-note">{{ __('dashboard.schedule_pressure_trend') }}</div>
         </div>
     </div>
 

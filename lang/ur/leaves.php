@@ -32,6 +32,6 @@ return [
     'success_submitted' => 'درخواست کامیابی سے جمع ہو گئی',
     'error_already_processed' => 'یہ درخواست پہلے ہی زیرِ کار ہے',
     'error_insufficient_simple' => 'چھٹی کا بیلنس ناکافی',
-    'success_approved' => 'چھٹی منظور؛ شروع پر بیلنس خودکار کٹوتی',
+    'success_approved' => 'چھٹی منظور اور بیلنس سے کٹوتی ہو گئی',
     'success_rejected' => 'چھٹی مسترد',
 ];

@@ -7,7 +7,7 @@
 @php
     $u = auth()->user();
     $showContractValue = $u->canViewProjectFinancials() || $u->canViewProjectValueOnly();
-    $contractsTableColspan = 7 + ($showContractValue ? 1 : 0);
+    $contractsTableColspan = 8 + ($showContractValue ? 1 : 0);
 @endphp
 <x-ui.card :title="__('contracts.card_title')" :subtitle="__('contracts.card_subtitle')">
     <div class="actions-row" style="margin-bottom:12px;">
@@ -23,6 +23,7 @@
                     @if($showContractValue)
                     <th>{{ __('contracts.th_total_value') }}</th>
                     @endif
+                    <th>{{ __('contracts.field_payment_type') }}</th>
                     <th>{{ __('contracts.th_stage') }}</th>
                     <th>{{ __('contracts.th_status') }}</th>
                     <th>{{ __('contracts.th_actions') }}</th>
@@ -44,6 +45,8 @@
                             {{ number_format($contract->project_value ?? 0, 2) }}
                         </td>
                         @endif
+
+                        <td>{{ $contract->paymentTypeLabel() }}</td>
 
                         <td>
                             @if($contract->project)

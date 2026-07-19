@@ -15,4 +15,6 @@ return [
     'factory_manager' => 'فیکٹری منیجر',
     'manager' => 'منیجر',
     'user' => 'بنیادی ملازم',
+    'finance' => 'مالیات',
+    'finance_route_denied' => 'مالیات کے کردار کے لیے یہ سیکشن دستیاب نہیں۔',
 ];

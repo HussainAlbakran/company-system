@@ -31,10 +31,19 @@ class DashboardIncomingItemsService
 
         if ($user->isAdminLike()) {
             $items = $this->buildAdminAggregate($today);
+
+            // Admin role should not receive other employees' residency alerts.
+            // Keep only personal iqama reminder when the admin has a linked employee profile.
+            if ($user->role === User::ROLE_ADMIN) {
+                $items = $items
+                    ->reject(fn (array $row) => str_starts_with((string) ($row['key'] ?? ''), 'employee_residency_'))
+                    ->values()
+                    ->merge($this->personalEmployeeIqamaAlerts($user, $today));
+            }
         } else {
             $items = collect();
 
-            if ($user->canAccessProcurementModule()) {
+            if ($user->canAccessProcurementModule() || $user->canAccessContractPurchasesModule()) {
                 $items = $items->merge($this->procurementMaterialRequests(15));
             }
 

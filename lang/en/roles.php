@@ -15,4 +15,6 @@ return [
     'factory_manager' => 'Factory Manager',
     'manager' => 'Manager',
     'user' => 'Basic employee',
+    'finance' => 'Finance',
+    'finance_route_denied' => 'This section is not available for the Finance role.',
 ];

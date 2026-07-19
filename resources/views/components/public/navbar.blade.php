@@ -24,7 +24,6 @@
         <nav class="hidden items-center gap-1 md:flex" aria-label="{{ __('التنقل الرئيسي') }}">
             <a class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 hover:text-white" href="{{ url('/') }}#top">{{ __('الرئيسية') }}</a>
             <a class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 hover:text-white" href="{{ url('/') }}#services">{{ __('خدماتنا') }}</a>
-            <a class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 hover:text-white" href="{{ url('/') }}#projects">{{ __('مشاريعنا') }}</a>
             <a class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 hover:text-white" href="{{ url('/') }}#about">{{ __('من نحن') }}</a>
             <a class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-200 transition hover:bg-white/5 hover:text-white" href="{{ url('/') }}#contact">{{ __('تواصل معنا') }}</a>
         </nav>
@@ -62,7 +61,6 @@
         <div class="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-3">
             <a class="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-100 hover:bg-white/5" href="{{ url('/') }}#top" @click="mobileOpen = false">{{ __('الرئيسية') }}</a>
             <a class="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-100 hover:bg-white/5" href="{{ url('/') }}#services" @click="mobileOpen = false">{{ __('خدماتنا') }}</a>
-            <a class="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-100 hover:bg-white/5" href="{{ url('/') }}#projects" @click="mobileOpen = false">{{ __('مشاريعنا') }}</a>
             <a class="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-100 hover:bg-white/5" href="{{ url('/') }}#about" @click="mobileOpen = false">{{ __('من نحن') }}</a>
             <a class="rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-100 hover:bg-white/5" href="{{ url('/') }}#contact" @click="mobileOpen = false">{{ __('تواصل معنا') }}</a>
             <div class="mt-1 flex items-center gap-2">

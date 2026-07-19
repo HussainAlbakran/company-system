@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('page_title', 'مسير الرواتب')
-@section('page_subtitle', 'صفحة مسير الرواتب')
+@section('page_title', __('employees.payroll_page_title'))
+@section('page_subtitle', __('employees.payroll_page_subtitle', ['period' => $payrollRegister->month.'/'.$payrollRegister->year]))
 
 @section('content')
 <style>
@@ -42,6 +42,23 @@
         border-bottom: 1px solid #000;
         padding-bottom: 10px;
         margin-bottom: 12px;
+    }
+
+    .paper-header-logo {
+        width: 96px;
+        min-width: 96px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .company-print-logo {
+        width: 88px;
+        height: 88px;
+        max-width: 100%;
+        object-fit: contain;
+        display: block;
     }
 
     .paper-header-center {
@@ -142,6 +159,47 @@
         color: #000;
     }
 
+    .payroll-edit-input {
+        width: 72px;
+        max-width: 100%;
+        padding: 4px 6px;
+        font-size: 13px;
+        text-align: center;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .payroll-notes-input {
+        width: 100%;
+        min-width: 90px;
+        padding: 4px 6px;
+        font-size: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+    }
+
+    .payroll-edit-hint {
+        display: block;
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .print-only {
+        display: none;
+    }
+
+    @media print {
+        .payroll-edit-input,
+        .payroll-notes-input,
+        .no-print {
+            display: none !important;
+        }
+        .print-only {
+            display: inline !important;
+        }
+    }
+
 </style>
 
 @php
@@ -156,6 +214,7 @@
     $totalOvertime = 0;
     $totalLeaveDeduction = 0;
     $totalOtherDeduction = 0;
+    $totalAdvanceDeduction = 0;
     $totalPayroll = 0;
 @endphp
 
@@ -165,41 +224,73 @@
             {{ session('success') }}
         </div>
     @endif
+    @if(session('error'))
+        <div class="alert-danger no-print" style="margin-bottom: 12px;">
+            {{ session('error') }}
+        </div>
+    @endif
 
     <div class="payroll-actions no-print">
+        <a href="{{ route('employees.payroll-registers.index') }}" class="btn btn-secondary">
+            {{ __('employees.payroll_registers_link') }}
+        </a>
+
         @if($payrollRegister->status === 'approved')
-            <button type="button" class="btn btn-secondary" disabled>
-                تم اعتماد كشف الرواتب
-            </button>
+            <span class="badge badge-green" style="padding:8px 12px;">{{ __('employees.payroll_status_approved') }}</span>
+            @if(!($hasPendingRegister ?? false))
+                <form method="POST" action="{{ route('employees.payroll-registers.create') }}">
+                    @csrf
+                    <button type="submit" class="btn btn-success">{{ __('employees.payroll_new_btn') }}</button>
+                </form>
+            @endif
         @else
-            <form method="POST" action="{{ route('employees.payroll-register.approve') }}">
+            <button type="submit" form="payroll-edit-form" class="btn btn-warning">
+                {{ __('employees.payroll_save_btn') }}
+            </button>
+            <form method="POST" action="{{ route('employees.payroll-register.approve') }}" style="display:inline;">
                 @csrf
-                <button type="submit" class="btn btn-success">
-                    اعتماد كشف الرواتب
+                <input type="hidden" name="payroll_register_id" value="{{ $payrollRegister->id }}">
+                <button type="submit" class="btn btn-success" onclick="return confirm(@json(__('employees.payroll_confirm_approve')))">
+                    {{ __('employees.payroll_approve_btn') }}
                 </button>
             </form>
         @endif
 
         <button type="button" class="btn btn-primary" onclick="window.print()">
-            طباعة كشف الرواتب
+            {{ __('employees.payroll_print_btn') }}
         </button>
     </div>
 
+    @if($canEditPayroll ?? false)
+    <form method="POST" action="{{ route('employees.payroll-register.update-adjustments', $payrollRegister) }}" id="payroll-edit-form">
+        @csrf
+    @endif
+
     <div class="print-area">
         <div class="payroll-paper">
-            <div style="position:absolute; top:20px; left:20px;">
-            </div>
             <div class="paper-header">
+                <div class="paper-header-logo">
+                    <x-company-print-logo />
+                </div>
                 <div class="paper-header-center">
                     <h1>شركة التقدم للخرسانة الجاهزة</h1>
-                    <h2>مسير الرواتب</h2>
-                    <p>الشهر: {{ $month }}/{{ $year }}</p>
+                    <h2>{{ __('employees.payroll_sheet_title') }}</h2>
+                    <p>{{ __('employees.payroll_period_label', ['period' => $month.'/'.$year]) }}</p>
                 </div>
 
                 <div class="paper-header-right">
-                    <span>الحالة: {{ $status == 'approved' ? 'معتمد' : 'غير معتمد' }}</span>
+                    <span>{{ __('employees.payroll_status_label') }}: {{ $status == 'approved' ? __('employees.payroll_status_approved') : __('employees.payroll_status_pending') }}</span>
+                    @if($payrollRegister->approved_at)
+                        <div style="font-size:12px; font-weight:400; margin-top:4px;">
+                            {{ __('employees.payroll_th_approved_at') }}: {{ $payrollRegister->approved_at->format('Y-m-d') }}
+                        </div>
+                    @endif
                 </div>
             </div>
+
+            @if($canEditPayroll ?? false)
+            <p class="no-print panel-subtitle" style="margin-bottom:12px;">{{ __('employees.payroll_edit_hint') }}</p>
+            @endif
 
             <table>
                 <thead>
@@ -212,6 +303,7 @@
                         <th>الإضافي</th>
                         <th>خصم الإجازات</th>
                         <th>خصم آخر</th>
+                        <th>خصم السلفة</th>
                         <th>الإجمالي</th>
                         <th>ملاحظات</th>
                     </tr>
@@ -220,24 +312,17 @@
                     @forelse($employees as $employee)
                         @php
                             $adjustment = $adjustments[$employee->id] ?? null;
-                            $base = (float) ($employee->salary ?? 0);
-                            $housing = (float) ($employee->housing_allowance ?? 0);
-                            $transport = (float) ($employee->transportation_allowance ?? 0);
-                            $travel = (float) ($employee->travel_allowance ?? 0);
-                            $risk = (float) ($employee->risk_allowance ?? 0);
-                            $transfer = (float) ($employee->transfer_allowance ?? 0);
-                            $otherAllowances = $travel + $risk + $transfer;
-
-                            $overtimeHours = (float) ($adjustment->overtime_hours ?? 0);
-                            $leaveDeductionDays = (float) ($adjustment->leave_deduction_days ?? 0);
-                            $hourlyRate = $base / 240;
-                            $overtimeHourRate = $hourlyRate * 1.5;
-                            $overtime = $overtimeHours * $overtimeHourRate;
-                            $dailyRate = $base / 30;
-                            $leaveDeduction = $leaveDeductionDays * $dailyRate;
-                            $otherDeduction = (float) ($adjustment->other_deduction ?? 0);
-                            $gross = $base + $housing + $transport + $otherAllowances + $overtime;
-                            $rowTotal = $gross - $leaveDeduction - $otherDeduction;
+                            $payrollRow = app(\App\Services\PayrollCalculationService::class)
+                                ->calculate($employee, $adjustment, (int) $currentMonth, (int) $currentYear, (int) $payrollRegister->id);
+                            $base = $payrollRow['base_salary'];
+                            $housing = $payrollRow['housing'];
+                            $transport = $payrollRow['transport'];
+                            $otherAllowances = $payrollRow['other_allowances'];
+                            $overtime = $payrollRow['overtime_amount'];
+                            $leaveDeduction = $payrollRow['leave_deduction'];
+                            $otherDeduction = $payrollRow['other_deduction'];
+                            $advanceDeduction = $payrollRow['advance_deduction'];
+                            $rowTotal = $payrollRow['final_salary'];
 
                             $totalBase += $base;
                             $totalHousing += $housing;
@@ -246,23 +331,66 @@
                             $totalOvertime += $overtime;
                             $totalLeaveDeduction += $leaveDeduction;
                             $totalOtherDeduction += $otherDeduction;
+                            $totalAdvanceDeduction = ($totalAdvanceDeduction ?? 0) + $advanceDeduction;
                             $totalPayroll += $rowTotal;
                         @endphp
                         <tr>
-                            <td class="name-col">{{ $employee->name }}</td>
+                            <td class="name-col">
+                                <a href="{{ route('employees.show', $employee) }}" class="no-print" style="color:inherit;">{{ $employee->name }}</a>
+                                <span class="print-only">{{ $employee->name }}</span>
+                            </td>
                             <td>{{ number_format($base, 2) }}</td>
                             <td>{{ number_format($housing, 2) }}</td>
                             <td>{{ number_format($transport, 2) }}</td>
                             <td>{{ number_format($otherAllowances, 2) }}</td>
-                            <td>{{ number_format($overtime, 2) }}</td>
-                            <td>{{ number_format($leaveDeduction, 2) }}</td>
-                            <td>{{ number_format($otherDeduction, 2) }}</td>
+                            <td>
+                                @if($canEditPayroll ?? false)
+                                    <input type="number" step="0.01" min="0" class="payroll-edit-input no-print"
+                                        name="adjustments[{{ $employee->id }}][overtime_hours]"
+                                        value="{{ old('adjustments.'.$employee->id.'.overtime_hours', $adjustment->overtime_hours ?? 0) }}">
+                                    <span class="payroll-edit-hint no-print">{{ number_format($overtime, 2) }}</span>
+                                    <span class="print-only">{{ number_format($overtime, 2) }}</span>
+                                @else
+                                    {{ number_format($overtime, 2) }}
+                                @endif
+                            </td>
+                            <td>
+                                @if($canEditPayroll ?? false)
+                                    <input type="number" step="0.01" min="0" class="payroll-edit-input no-print"
+                                        name="adjustments[{{ $employee->id }}][leave_deduction_days]"
+                                        value="{{ old('adjustments.'.$employee->id.'.leave_deduction_days', $adjustment->leave_deduction_days ?? 0) }}">
+                                    <span class="payroll-edit-hint no-print">{{ number_format($leaveDeduction, 2) }}</span>
+                                    <span class="print-only">{{ number_format($leaveDeduction, 2) }}</span>
+                                @else
+                                    {{ number_format($leaveDeduction, 2) }}
+                                @endif
+                            </td>
+                            <td>
+                                @if($canEditPayroll ?? false)
+                                    <input type="number" step="0.01" min="0" class="payroll-edit-input no-print"
+                                        name="adjustments[{{ $employee->id }}][other_deduction]"
+                                        value="{{ old('adjustments.'.$employee->id.'.other_deduction', $adjustment->other_deduction ?? 0) }}">
+                                    <span class="print-only">{{ number_format($otherDeduction, 2) }}</span>
+                                @else
+                                    {{ number_format($otherDeduction, 2) }}
+                                @endif
+                            </td>
+                            <td>{{ number_format($advanceDeduction, 2) }}</td>
                             <td>{{ number_format($rowTotal, 2) }}</td>
-                            <td>{{ $adjustment->notes ?? '' }}</td>
+                            <td>
+                                @if($canEditPayroll ?? false)
+                                    <input type="text" class="payroll-notes-input no-print"
+                                        name="adjustments[{{ $employee->id }}][notes]"
+                                        value="{{ old('adjustments.'.$employee->id.'.notes', $adjustment->notes ?? '') }}">
+                                    <span class="print-only">{{ $adjustment->notes ?? '' }}</span>
+                                @else
+                                    {{ $adjustment->notes ?? '' }}
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10">لا يوجد موظفون لعرضهم</td>
+                            <td colspan="11">لا يوجد موظفون لعرضهم</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -270,7 +398,7 @@
 
             @php
                 $totalAllowances = $totalHousing + $totalTransport + $totalOtherAllowances;
-                $totalDeductions = $totalLeaveDeduction + $totalOtherDeduction;
+                $totalDeductions = $totalLeaveDeduction + $totalOtherDeduction + $totalAdvanceDeduction;
             @endphp
 
             <div class="summary-box">
@@ -295,6 +423,36 @@
                     <span>{{ number_format($totalPayroll, 2) }}</span>
                 </div>
             </div>
+
+            @if(($advancePayments ?? collect())->isNotEmpty())
+                <div style="margin-top:20px;">
+                    <h3 style="margin:0 0 10px; font-size:16px;">{{ __('employees.payroll_advance_payments_title') }}</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>{{ __('employees.payroll_advance_th_employee') }}</th>
+                                <th>{{ __('employees.payroll_advance_th_amount') }}</th>
+                                <th>{{ __('employees.payroll_advance_th_installment') }}</th>
+                                <th>{{ __('employees.payroll_advance_th_recorded_at') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($advancePayments as $payment)
+                                <tr>
+                                    <td class="name-col">{{ $payment->advance?->employee?->name ?? '-' }}</td>
+                                    <td>{{ number_format((float) $payment->amount, 2) }}</td>
+                                    <td>
+                                        {{ (int) ($payment->advance?->installments_paid ?? 0) }}
+                                        /
+                                        {{ (int) ($payment->advance?->installment_count ?? 0) }}
+                                    </td>
+                                    <td>{{ $payment->recorded_at?->format('Y-m-d H:i') ?? '-' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @endif
 
             <div style="margin-top:40px; border-top:2px solid #000; padding-top:20px;">
                 <table style="width:100%; border-collapse:collapse; text-align:center;">
@@ -321,6 +479,10 @@
             </div>
         </div>
     </div>
+
+    @if($canEditPayroll ?? false)
+    </form>
+    @endif
 </div>
 
 <style>
@@ -334,6 +496,11 @@
         margin: 0 !important;
         padding: 0 !important;
         background: #fff !important;
+    }
+
+    .company-print-logo {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 
     body * {

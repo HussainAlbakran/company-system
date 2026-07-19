@@ -293,6 +293,7 @@ class ArchitectMaterialRequestController extends Controller
 
         $canDownload = $user->hasAnyRole(['admin', 'manager'])
             || $user->canAccessProcurementModule()
+            || $user->canAccessContractPurchasesModule()
             || ($user->canAccessEngineeringModule() && ($user->isAdmin() || $materialRequest->created_by === $user->id));
 
         abort_unless($canDownload, 403);
@@ -308,7 +309,7 @@ class ArchitectMaterialRequestController extends Controller
 
     private function authorizePurchases(): void
     {
-        abort_unless(auth()->check() && auth()->user()->canAccessProcurementModule(), 403, __('architect.abort_module'));
+        abort_unless(auth()->check() && auth()->user()->canAccessContractPurchasesModule(), 403, __('architect.abort_module'));
     }
 
     private function authorizeArchitectRequestOwnership(ArchitectMaterialRequest $materialRequest): void

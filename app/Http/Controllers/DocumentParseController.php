@@ -162,7 +162,10 @@ class DocumentParseController extends Controller
         return match ($formKey) {
             'employees' => $user->canAccessHRModule(),
             'contracts' => $user->canAccessContractsModule(),
-            'purchases', 'warehouse' => $user->canAccessProcurementModule(),
+            'purchases' => $user->canAccessProcurementModule()
+                || $user->canAccessGeneralPurchasesModule()
+                || $user->canAccessContractPurchasesModule(),
+            'warehouse' => $user->canAccessProcurementModule(),
             'projects' => $user->canAccessEngineeringModule(),
             'factory' => $user->canAccessOperationsModule(),
             default => false,

@@ -42,7 +42,7 @@
     <div class="actions-row" style="margin-bottom: 20px;">
         <a href="{{ route('sales-contracts.index') }}" class="btn btn-secondary">{{ __('common.back') }}</a>
         <a href="{{ route('sales-contracts.edit', $contract->id) }}" class="btn btn-warning">{{ __('contracts.edit') }}</a>
-        @if($finFull)
+        @if($finFull && ($contract->isGovernmentPayment() || $contract->requiresFirstPaymentForDesigns()))
         <button type="button" class="btn btn-primary" onclick="togglePaymentForm()">
             ➕ {{ __('contracts.add_payment') }}
         </button>
@@ -129,15 +129,7 @@
         @if($finFull)
         <div class="detail-box">
             <strong>{{ __('contracts.payment_method') }}</strong>
-            <div>
-                @if($contract->payment_type === 'full')
-                    {{ __('contracts.payment_full') }}
-                @elseif($contract->payment_type === 'installments')
-                    {{ __('contracts.payment_installments') }}
-                @else
-                    -
-                @endif
-            </div>
+            <div>{{ $contract->paymentTypeLabel() }}</div>
         </div>
 
         <div class="detail-box">
@@ -151,7 +143,7 @@
         </div>
         @endif
 
-        @if($finFull)
+        @if($finFull && $contract->requiresFirstPaymentForDesigns())
         <div class="detail-box">
             <strong>{{ __('contracts.first_payment_recorded_q') }}</strong>
             <div>
@@ -200,7 +192,34 @@
     </div>
 </div>
 
-@if($finFull && $contract->payment_type === 'installments')
+@if($contract->isGovernmentPayment())
+<div class="page-card" style="margin-top:24px;">
+    <div class="page-header">
+        <h2>{{ __('contracts.government_payments_title') }}</h2>
+        <p class="page-subtitle">{{ __('contracts.government_payments_sub') }}</p>
+    </div>
+</div>
+@endif
+
+@if($finFull && $contract->isInstallmentPlan())
+<div class="page-card" style="margin-top:24px;">
+    <div class="page-header">
+        <h2>{{ __('contracts.installment_plan_section') }}</h2>
+    </div>
+    <div class="details-grid">
+        <div class="detail-box">
+            <strong>{{ __('contracts.installment_count_label') }}</strong>
+            <div>{{ $contract->resolvedInstallmentCount() }}</div>
+        </div>
+        <div class="detail-box">
+            <strong>{{ __('contracts.installment_share_label') }}</strong>
+            <div>{{ number_format($contract->installmentShareAmount(), 2) }}</div>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($finFull && $contract->isInstallmentPlan())
 <div class="page-card" style="margin-top:24px;">
     <div class="page-header">
         <h2>{{ __('contracts.first_payment_section') }}</h2>
@@ -230,11 +249,17 @@
 </div>
 @endif
 
-@if($finFull)
+@if($finFull && ($contract->isGovernmentPayment() || $contract->requiresFirstPaymentForDesigns()))
 <div class="page-card" style="margin-top:24px;">
     <div class="page-header">
         <h2>{{ __('contracts.add_payment_section') }}</h2>
-        <p>{{ __('contracts.add_payment_hint') }}</p>
+        <p>
+            @if($contract->isGovernmentPayment())
+                {{ __('contracts.add_payment_hint_government') }}
+            @else
+                {{ __('contracts.add_payment_hint') }}
+            @endif
+        </p>
     </div>
 
     <form id="paymentForm" action="{{ route('contract-payments.store', $contract->id) }}" method="POST" style="display:none;">
@@ -284,7 +309,9 @@
                     <tr>
                         <td>{{ $payment->id }}</td>
                         <td>
-                            @if($payment->payment_type === 'full')
+                            @if($payment->payment_type === 'government')
+                                {{ __('contracts.payment_government') }}
+                            @elseif($payment->payment_type === 'full')
                                 {{ __('contracts.payment_type_full_row') }}
                             @else
                                 {{ __('contracts.payment_type_installment_row') }}

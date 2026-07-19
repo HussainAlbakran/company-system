@@ -94,6 +94,16 @@
                 </div>
 
                 <div class="form-group">
+                    <label>{{ __('profile.contract_start') }}</label>
+                    <input type="date" name="contract_start_date" value="{{ old('contract_start_date') }}">
+                </div>
+
+                <div class="form-group">
+                    <label>{{ __('profile.contract_end') }}</label>
+                    <input type="date" name="contract_end_date" value="{{ old('contract_end_date') }}">
+                </div>
+
+                <div class="form-group">
                     <label>{{ __('employees.salary') }}</label>
                     <input type="number" step="0.01" name="salary" value="{{ old('salary') }}">
                 </div>
