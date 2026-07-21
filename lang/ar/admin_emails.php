@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'page_title' => 'الإيميلات',
+    'page_title' => 'البريد الإلكتروني',
     'page_subtitle' => 'إرسال رسائل بريد إلكتروني للمستخدمين',
     'field_type' => 'نوع الرسالة',
     'type_general' => 'رسالة عامة',
@@ -19,7 +19,7 @@ return [
     'field_recipients' => 'المستلمون',
     'attachment_hint' => 'الصيغ المسموحة: صور (JPG, PNG, GIF, WEBP) أو مقاطع (MP4, MOV, WEBM) — بحد أقصى 25 ميجابايت.',
     'recipients_title' => 'المستخدمون',
-    'search_placeholder' => 'بحث بالاسم أو الإيميل...',
+    'search_placeholder' => 'بحث بالاسم أو البريد الإلكتروني...',
     'select_all' => 'تحديد الكل',
     'selected_count' => 'المحدد: :count',
     'select_at_least_one' => 'يرجى تحديد مستخدم واحد على الأقل.',
@@ -28,7 +28,7 @@ return [
     'badge_passport' => 'الجواز',
     'badge_missing' => 'غير مسجل',
     'skip_warning' => 'بعض المستخدمين المحددين لا يملكون تاريخ انتهاء مسجلًا لهذا النوع، وسيتم تخطيهم تلقائيًا عند الإرسال.',
-    'btn_send' => 'إرسال عبر الإيميل',
+    'btn_send' => 'إرسال عبر البريد الإلكتروني',
     'sending' => 'جارٍ الإرسال...',
     'send_success' => 'تم إرسال الرسالة بنجاح إلى :count مستلم.',
     'send_partial_failed' => 'تعذر الإرسال إلى :count مستلم.',
@@ -44,4 +44,5 @@ return [
     'detail_employee_name' => 'اسم الموظف',
     'detail_residency_expiry' => 'تاريخ انتهاء الإقامة',
     'detail_passport_expiry' => 'تاريخ انتهاء الجواز',
+    'abort_unauthorized' => 'غير مصرّح لك بالوصول.',
 ];

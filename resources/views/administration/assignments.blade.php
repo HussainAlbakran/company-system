@@ -1,16 +1,16 @@
 @extends('layouts.app')
 
-@section('page_title', 'تعيينات المشاريع')
-@section('page_subtitle', 'مسؤول المشروع وحساب العميل في البوابة')
+@section('page_title', __('administration.assignments_title'))
+@section('page_subtitle', __('administration.assignments_subtitle'))
 
 @section('content')
 <div class="page-card">
     <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
-            <h1 class="page-title">تعيينات المشاريع</h1>
-            <p class="page-subtitle">للتعديل التفصيلي استخدم مشاريع الهندسة أو لوحة الإدارة المتقدمة</p>
+            <h1 class="page-title">{{ __('administration.assignments_title') }}</h1>
+            <p class="page-subtitle">{{ __('administration.assignments_intro') }}</p>
         </div>
-        <a href="{{ route('administration.index') }}" class="btn btn-secondary btn-sm">مركز الإدارة</a>
+        <a href="{{ route('administration.index') }}" class="btn btn-secondary btn-sm">{{ __('administration.back_to_center') }}</a>
     </div>
 
     <div class="table-wrap" style="margin-top:12px;">

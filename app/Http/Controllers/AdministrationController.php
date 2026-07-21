@@ -13,7 +13,7 @@ class AdministrationController extends Controller
 {
     private function assertAdmin(): void
     {
-        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403, 'غير مصرح لك.');
+        abort_unless(auth()->check() && auth()->user()->isAdmin(), 403, __('common.unauthorized'));
     }
 
     public function index(): View

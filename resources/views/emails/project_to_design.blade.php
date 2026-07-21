@@ -8,7 +8,7 @@
 
     <div style="background:#ffffff; padding:20px; border-radius:10px;">
 
-        <h2 style="color:#2563eb;">📌 تم تحويل مشروع جديد إلى قسم التصاميم</h2>
+        <h2 style="color:#2563eb;">تم تحويل مشروع جديد إلى قسم التصاميم</h2>
 
         <p>تم تسجيل دفعة للعقد، وتم تحويل المشروع إلى قسم التصاميم.</p>
 

@@ -110,6 +110,6 @@ return [
     'material_saved_draft' => 'تم حفظ طلب المواد كمسودة.',
     'material_updated_draft' => 'تم تحديث المسودة بنجاح.',
     'abort_edit_draft_only' => 'يمكن تعديل المسودات أو الطلبات المرفوضة فقط.',
-    'abort_module' => 'غير مصرح لك.',
-    'abort_request_owner' => 'غير مصرح لك.',
+    'abort_module' => 'غير مصرّح لك بالوصول إلى هذا القسم.',
+    'abort_request_owner' => 'غير مصرّح لك بإدارة هذا الطلب.',
 ];

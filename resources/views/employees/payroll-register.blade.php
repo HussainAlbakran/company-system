@@ -273,7 +273,7 @@
                     <x-company-print-logo />
                 </div>
                 <div class="paper-header-center">
-                    <h1>شركة التقدم للخرسانة الجاهزة</h1>
+                    <h1>{{ __('employees.company_legal_name') }}</h1>
                     <h2>{{ __('employees.payroll_sheet_title') }}</h2>
                     <p>{{ __('employees.payroll_period_label', ['period' => $month.'/'.$year]) }}</p>
                 </div>
@@ -295,17 +295,17 @@
             <table>
                 <thead>
                     <tr>
-                        <th>الموظف</th>
-                        <th>الراتب الأساسي</th>
-                        <th>بدل سكن</th>
-                        <th>بدل مواصلات</th>
-                        <th>بدلات أخرى</th>
-                        <th>الإضافي</th>
-                        <th>خصم الإجازات</th>
-                        <th>خصم آخر</th>
-                        <th>خصم السلفة</th>
-                        <th>الإجمالي</th>
-                        <th>ملاحظات</th>
+                        <th>{{ __('employees.payroll_advance_th_employee') }}</th>
+                        <th>{{ __('employees.field_base_salary') }}</th>
+                        <th>{{ __('employees.field_allowance_housing') }}</th>
+                        <th>{{ __('employees.field_allowance_transport') }}</th>
+                        <th>{{ __('employees.payroll_th_other_allowances') }}</th>
+                        <th>{{ __('employees.payroll_th_overtime') }}</th>
+                        <th>{{ __('employees.payroll_th_leave_deduction') }}</th>
+                        <th>{{ __('employees.payroll_th_other_deduction') }}</th>
+                        <th>{{ __('employees.payroll_th_advance_deduction') }}</th>
+                        <th>{{ __('employees.payroll_th_total') }}</th>
+                        <th>{{ __('employees.payroll_th_notes') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -390,7 +390,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11">لا يوجد موظفون لعرضهم</td>
+                            <td colspan="11">{{ __('employees.payroll_empty_employees') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -403,23 +403,23 @@
 
             <div class="summary-box">
                 <div class="totals-row">
-                    <span>إجمالي الرواتب</span>
+                    <span>{{ __('employees.payroll_summary_total_salaries') }}</span>
                     <span>{{ number_format($totalBase, 2) }}</span>
                 </div>
                 <div class="totals-row">
-                    <span>إجمالي البدلات</span>
+                    <span>{{ __('employees.payroll_summary_total_allowances') }}</span>
                     <span>{{ number_format($totalAllowances, 2) }}</span>
                 </div>
                 <div class="totals-row">
-                    <span>إجمالي الإضافي</span>
+                    <span>{{ __('employees.payroll_summary_total_overtime') }}</span>
                     <span>{{ number_format($totalOvertime, 2) }}</span>
                 </div>
                 <div class="totals-row">
-                    <span>إجمالي الخصومات</span>
+                    <span>{{ __('employees.payroll_summary_total_deductions') }}</span>
                     <span>{{ number_format($totalDeductions, 2) }}</span>
                 </div>
                 <div class="totals-row">
-                    <span>الإجمالي النهائي للمسير</span>
+                    <span>{{ __('employees.payroll_summary_grand_total') }}</span>
                     <span>{{ number_format($totalPayroll, 2) }}</span>
                 </div>
             </div>

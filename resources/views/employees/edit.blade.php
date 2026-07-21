@@ -98,32 +98,32 @@
                 </div>
 
                 <div class="form-group">
-                    <label>بدل سكن</label>
+                    <label>{{ __('employees.field_allowance_housing') }}</label>
                     <input type="number" step="0.01" name="housing_allowance" value="{{ old('housing_allowance', $employee->housing_allowance ?? 0) }}">
                 </div>
 
                 <div class="form-group">
-                    <label>بدل مواصلات</label>
+                    <label>{{ __('employees.field_allowance_transport') }}</label>
                     <input type="number" step="0.01" name="transportation_allowance" value="{{ old('transportation_allowance', $employee->transportation_allowance ?? 0) }}">
                 </div>
 
                 <div class="form-group">
-                    <label>بدل سفر</label>
+                    <label>{{ __('employees.field_allowance_travel') }}</label>
                     <input type="number" step="0.01" name="travel_allowance" value="{{ old('travel_allowance', $employee->travel_allowance ?? 0) }}">
                 </div>
 
                 <div class="form-group">
-                    <label>بدل مخاطر</label>
+                    <label>{{ __('employees.field_allowance_risk') }}</label>
                     <input type="number" step="0.01" name="risk_allowance" value="{{ old('risk_allowance', $employee->risk_allowance ?? 0) }}">
                 </div>
 
                 <div class="form-group">
-                    <label>بدل انتقال</label>
+                    <label>{{ __('employees.field_allowance_transfer') }}</label>
                     <input type="number" step="0.01" name="transfer_allowance" value="{{ old('transfer_allowance', $employee->transfer_allowance ?? 0) }}">
                 </div>
 
                 <div class="form-group">
-                    <label>بدل إضافي</label>
+                    <label>{{ __('employees.field_allowance_other') }}</label>
                     <input type="number" step="0.01" name="overtime_allowance" value="{{ old('overtime_allowance', $employee->overtime_allowance ?? 0) }}">
                 </div>
 

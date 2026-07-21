@@ -39,7 +39,7 @@
             {{-- 🔹 Purchase Fields --}}
             <div class="form-group purchase-field">
                 <label>اسم البند</label>
-                <input type="text" name="title" placeholder="إسمنت / حديد / معدات">
+                <input type="text" name="title" placeholder="{{ __('purchases.placeholder_purchase_item') }}">
             </div>
 
             <div class="form-group purchase-field">
@@ -50,7 +50,7 @@
             {{-- 🔹 Repair Field --}}
             <div class="form-group repair-field" style="display:none;">
                 <label>عنصر الإصلاح</label>
-                <input type="text" name="title" placeholder="إصلاح مضخة / إصلاح آلة">
+                <input type="text" name="title" placeholder="{{ __('purchases.placeholder_repair_item') }}">
             </div>
 
             {{-- Cost --}}

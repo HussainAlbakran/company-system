@@ -59,7 +59,7 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
 
     Route::get('/designs', function () {
         if (! auth()->user()->canAccessDesignsModule()) {
-            abort(403, 'غير مصرح لك بالدخول');
+            abort(403, __('common.forbidden'));
         }
 
         return view('designs.index');

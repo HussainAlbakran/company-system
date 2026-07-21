@@ -11,7 +11,7 @@ class AdminApprovalController extends Controller
     protected function authorizeUsers(): void
     {
         if (!auth()->check() || !auth()->user()->canManageUsers()) {
-            abort(403, 'غير مصرح لك بالوصول.');
+            abort(403, __('users.abort_unauthorized'));
         }
     }
 
@@ -51,7 +51,7 @@ class AdminApprovalController extends Controller
             'تم اعتماد المستخدم: ' . $user->name
         );
 
-        return back()->with('success', 'تم اعتماد المستخدم بنجاح.');
+        return back()->with('success', __('users.flash_approved'));
     }
 
     public function reject(Request $request, User $user)
@@ -79,7 +79,7 @@ class AdminApprovalController extends Controller
             'تم رفض المستخدم: ' . $user->name
         );
 
-        return back()->with('success', 'تم رفض المستخدم.');
+        return back()->with('success', __('users.flash_rejected'));
     }
 
     public function suspend(User $user)
@@ -87,7 +87,7 @@ class AdminApprovalController extends Controller
         $this->authorizeUsers();
 
         if (auth()->id() === $user->id) {
-            return back()->with('error', 'لا يمكنك إيقاف حسابك الحالي.');
+            return back()->with('error', __('users.error_cannot_suspend_self'));
         }
 
         $user->update([
@@ -102,7 +102,7 @@ class AdminApprovalController extends Controller
             'تم إيقاف المستخدم: ' . $user->name
         );
 
-        return back()->with('success', 'تم تعليق المستخدم.');
+        return back()->with('success', __('users.flash_suspended'));
     }
 
     public function reactivate(User $user)
@@ -124,6 +124,6 @@ class AdminApprovalController extends Controller
             'تمت إعادة تفعيل المستخدم: ' . $user->name
         );
 
-        return back()->with('success', 'تمت إعادة تفعيل المستخدم.');
+        return back()->with('success', __('users.flash_reactivated'));
     }
 }

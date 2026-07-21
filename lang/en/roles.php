@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'super_admin' => 'Administration',
+    'super_admin' => 'Executive Administration',
     'admin' => 'System Administrator',
     'sales_manager' => 'Sales Manager',
     'sales' => 'Sales',
@@ -17,4 +17,7 @@ return [
     'user' => 'Basic employee',
     'finance' => 'Finance',
     'finance_route_denied' => 'This section is not available for the Finance role.',
+    'abort_unauthorized' => 'You are not authorized to access this resource.',
+    'hr_module_only' => 'This page is available to system administrators, executive administration, and HR only.',
+    'basic_user_denied' => 'This section is not available.',
 ];

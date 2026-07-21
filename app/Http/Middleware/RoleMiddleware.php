@@ -13,7 +13,7 @@ class RoleMiddleware
         $user = $request->user();
 
         if (! $user) {
-            abort(403, 'غير مصرح لك.');
+            abort(403, __('common.unauthorized'));
         }
 
         if (method_exists($user, 'isAdminLike') && $user->isAdminLike()) {
@@ -21,7 +21,7 @@ class RoleMiddleware
         }
 
         if (! in_array($user->role, $roles, true)) {
-            abort(403, 'ليس لديك صلاحية الوصول لهذه الصفحة.');
+            abort(403, __('common.forbidden'));
         }
 
         return $next($request);

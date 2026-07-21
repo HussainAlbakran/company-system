@@ -31,7 +31,7 @@ class DocumentParseController extends Controller
         $formKey = (string) $validated['form_key'];
         if (! $this->canParseForm($formKey, $request)) {
             return response()->json([
-                'message' => 'غير مصرح لك بتحليل هذا النموذج.',
+                'message' => __('common.parse_unauthorized'),
             ], 403);
         }
 
@@ -74,7 +74,7 @@ class DocumentParseController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'تعذر تحليل الملف. تأكد من أن الملف صحيح وقابل للقراءة.',
+                'message' => __('common.parse_failed'),
             ], 422);
         } finally {
             Storage::disk('local')->delete($tempPath);

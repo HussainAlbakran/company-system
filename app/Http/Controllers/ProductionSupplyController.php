@@ -43,13 +43,13 @@ class ProductionSupplyController extends Controller
         if ($futureSupplied > (float) $order->produced_quantity) {
             if ($this->wantsJson($request)) {
                 return response()->json([
-                    'message' => 'لا يمكن توريد كمية أكبر من الكمية المنتجة',
+                    'message' => __('factory.error_supply_exceeds_produced'),
                 ], 422);
             }
 
             return back()
                 ->withInput()
-                ->with('error', 'لا يمكن توريد كمية أكبر من الكمية المنتجة');
+                ->with('error', __('factory.error_supply_exceeds_produced'));
         }
 
         $supply = ProductionSupply::create($validated);
@@ -58,14 +58,14 @@ class ProductionSupplyController extends Controller
 
         if ($this->wantsJson($request)) {
             return response()->json([
-                'message' => 'تم تسجيل التوريد بنجاح',
+                'message' => __('factory.flash_supply_saved'),
                 'data' => $supply->load('order'),
             ], 201);
         }
 
         return redirect()
             ->route('production-orders.show', $order->id)
-            ->with('success', 'تم تسجيل التوريد بنجاح');
+            ->with('success', __('factory.flash_supply_saved'));
     }
 
     public function show($id)
@@ -99,13 +99,13 @@ class ProductionSupplyController extends Controller
         if (($otherSuppliesSum + $newQuantity) > (float) $order->produced_quantity) {
             if ($this->wantsJson($request)) {
                 return response()->json([
-                    'message' => 'لا يمكن أن يصبح إجمالي التوريد أكبر من الكمية المنتجة',
+                    'message' => __('factory.error_total_supply_exceeds'),
                 ], 422);
             }
 
             return back()
                 ->withInput()
-                ->with('error', 'لا يمكن أن يصبح إجمالي التوريد أكبر من الكمية المنتجة');
+                ->with('error', __('factory.error_total_supply_exceeds'));
         }
 
         $supply->update($validated);
@@ -114,14 +114,14 @@ class ProductionSupplyController extends Controller
 
         if ($this->wantsJson($request)) {
             return response()->json([
-                'message' => 'تم تحديث التوريد بنجاح',
+                'message' => __('factory.flash_supply_updated'),
                 'data' => $supply->fresh()->load('order'),
             ]);
         }
 
         return redirect()
             ->route('production-orders.show', $order->id)
-            ->with('success', 'تم تحديث التوريد بنجاح');
+            ->with('success', __('factory.flash_supply_updated'));
     }
 
     public function destroy(Request $request, $id, ProductionOrderCalculatorService $calculator)
@@ -135,12 +135,12 @@ class ProductionSupplyController extends Controller
 
         if ($this->wantsJson($request)) {
             return response()->json([
-                'message' => 'تم حذف التوريد بنجاح',
+                'message' => __('factory.flash_supply_deleted'),
             ]);
         }
 
         return redirect()
             ->route('production-orders.show', $order->id)
-            ->with('success', 'تم حذف التوريد بنجاح');
+            ->with('success', __('factory.flash_supply_deleted'));
     }
 }

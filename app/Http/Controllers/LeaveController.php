@@ -13,7 +13,7 @@ class LeaveController extends Controller
     protected function authorizeHrApprovals(): void
     {
         if (! auth()->check() || ! auth()->user()->canManageLeaveApprovals()) {
-            abort(403, 'غير مصرح لك');
+            abort(403, __('common.unauthorized'));
         }
     }
 

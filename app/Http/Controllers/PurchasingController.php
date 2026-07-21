@@ -37,6 +37,6 @@ class PurchasingController extends Controller
 
         return redirect()
             ->back()
-            ->with('success', 'تم إنهاء المشتريات وتحويل المشروع إلى المصنع والتركيبات.');
+            ->with('success', __('purchases.flash_stage_completed'));
     }
 }

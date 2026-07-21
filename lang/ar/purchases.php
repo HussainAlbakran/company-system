@@ -100,4 +100,7 @@ return [
     'material_flash_already_converted' => 'تم تحويل هذا الطلب مسبقًا إلى مشتريات.',
     'material_flash_converted' => 'تم تحويل المواد إلى سجلات مشتريات العقود بنجاح.',
     'material_convert_requires_items' => 'لا يمكن التحويل بدون مواد.',
+    'flash_stage_completed' => 'تم إنهاء المشتريات وتحويل المشروع إلى المصنع والتركيبات بنجاح.',
+    'placeholder_purchase_item' => 'إسمنت / حديد / معدات',
+    'placeholder_repair_item' => 'إصلاح مضخة / إصلاح آلة',
 ];

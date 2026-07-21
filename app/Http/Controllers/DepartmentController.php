@@ -11,7 +11,7 @@ class DepartmentController extends Controller
     protected function authorizeHR(): void
     {
         if (! auth()->check() || ! auth()->user()->canManageDepartments()) {
-            abort(403, 'غير مصرح لك');
+            abort(403, __('common.unauthorized'));
         }
     }
 

@@ -54,7 +54,7 @@ class ProductionEntryController extends Controller
 
         return redirect()
             ->route('production-orders.show', $order->id)
-            ->with('success', 'تم تسجيل الإنتاج بنجاح');
+            ->with('success', __('factory.flash_production_entry_saved'));
     }
 
     public function show($id)
@@ -98,7 +98,7 @@ class ProductionEntryController extends Controller
 
         return redirect()
             ->route('production-orders.show', $entry->production_order_id)
-            ->with('success', 'تم تحديث سجل الإنتاج بنجاح');
+            ->with('success', __('factory.flash_production_entry_updated'));
     }
 
     public function destroy($id, ProductionOrderCalculatorService $calculator)
@@ -112,6 +112,6 @@ class ProductionEntryController extends Controller
 
         return redirect()
             ->route('production-orders.show', $order->id)
-            ->with('success', 'تم حذف سجل الإنتاج بنجاح');
+            ->with('success', __('factory.flash_production_entry_deleted'));
     }
 }

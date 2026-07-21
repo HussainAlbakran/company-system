@@ -55,6 +55,6 @@ class ResidencyExpiryNotification extends Notification
             ->line('تاريخ انتهاء الإقامة: ' . ($this->employee->residency_expiry_date ?? '-'))
             ->line($status)
             ->line($message)
-            ->line('يرجى مراجعة الادارة واتخاذ الإجراء المناسب.');
+            ->line('يرجى مراجعة الإدارة واتخاذ الإجراء المناسب.');
     }
 }

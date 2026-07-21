@@ -39,7 +39,16 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => env('MAIL_SCHEME'),
+            /*
+             | Gmail (recommended):
+             | - Port 587 + STARTTLS → MAIL_SCHEME=null (or omit) / MAIL_PORT=587
+             | - Port 465 + SSL     → MAIL_SCHEME=smtps / MAIL_PORT=465
+             | MAIL_ENCRYPTION is accepted for backward compatibility only.
+             */
+            'scheme' => env('MAIL_SCHEME') ?: match (strtolower((string) env('MAIL_ENCRYPTION', ''))) {
+                'ssl' => 'smtps',
+                default => null,
+            },
             'url' => env('MAIL_URL'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 2525),

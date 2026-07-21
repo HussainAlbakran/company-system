@@ -2,7 +2,7 @@
 
 <x-slot name="header">
 <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-إضافة منتج
+{{ __('products.create_title') }}
 </h2>
 </x-slot>
 
@@ -13,22 +13,22 @@
 @csrf
 
 <div style="margin-bottom:15px">
-<label>الاسم</label>
+<label>{{ __('products.field_name') }}</label>
 <input type="text" name="name" style="border:1px solid #ccc;padding:8px;width:100%">
 </div>
 
 <div style="margin-bottom:15px">
-<label>الوصف</label>
+<label>{{ __('products.field_description') }}</label>
 <textarea name="description" style="border:1px solid #ccc;padding:8px;width:100%"></textarea>
 </div>
 
 <div style="margin-bottom:15px">
-<label>السعر</label>
+<label>{{ __('products.field_price') }}</label>
 <input type="text" name="price" style="border:1px solid #ccc;padding:8px;width:100%">
 </div>
 
 <button type="submit" style="background:green;color:white;padding:10px;border-radius:5px">
-حفظ المنتج
+{{ __('products.save') }}
 </button>
 
 </form>

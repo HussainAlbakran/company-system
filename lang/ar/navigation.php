@@ -25,7 +25,7 @@ return [
     'custody_invoices' => 'تسجيل الفواتير',
     'users' => 'المستخدمون',
     'user_approvals' => 'اعتمادات المستخدمين',
-    'admin_emails' => 'الإيميلات',
+    'admin_emails' => 'البريد الإلكتروني',
     'audit_log' => 'سجل التدقيق',
     'ai_assistant' => 'المساعد الذكي',
     'technical_support' => 'الدعم الفني',

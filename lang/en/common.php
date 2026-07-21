@@ -37,4 +37,9 @@ return [
     'no_records' => 'No records found.',
     'select_placeholder' => '— Select —',
     'example_prefix' => 'e.g.',
+    'unauthorized' => 'You are not authorized to access this resource.',
+    'forbidden' => 'You do not have permission to access this page.',
+    'section_denied' => 'This section is not available.',
+    'parse_unauthorized' => 'You are not authorized to parse this form.',
+    'parse_failed' => 'The file could not be parsed. Please ensure the file is valid and readable.',
 ];

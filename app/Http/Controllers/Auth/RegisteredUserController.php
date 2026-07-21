@@ -38,6 +38,6 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        return redirect()->route('login')->with('status', 'تم إنشاء الحساب بنجاح. حسابك الآن بانتظار موافقة الإدارة.');
+        return redirect()->route('login')->with('status', __('auth.registration_pending'));
     }
 }

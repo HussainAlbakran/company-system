@@ -194,4 +194,10 @@ return [
     'flash_no_factory_for_manager' => 'No factory is linked to this manager.',
     'flash_production_entry_saved' => 'Production recorded successfully.',
     'flash_supply_saved' => 'Supply recorded successfully.',
+    'flash_supply_updated' => 'Supply updated successfully.',
+    'flash_supply_deleted' => 'Supply deleted successfully.',
+    'flash_production_entry_updated' => 'Production entry updated successfully.',
+    'flash_production_entry_deleted' => 'Production entry deleted successfully.',
+    'error_supply_exceeds_produced' => 'Supply quantity cannot exceed produced quantity.',
+    'error_total_supply_exceeds' => 'Total supply cannot exceed produced quantity.',
 ];

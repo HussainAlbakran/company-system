@@ -7,7 +7,7 @@
 <body style="font-family: Arial, sans-serif; direction: rtl; text-align: right; background: #f5f5f5; padding: 20px;">
 
     <div style="background: #ffffff; padding: 24px; border-radius: 10px; border: 1px solid #e5e7eb;">
-        <h2 style="margin-top: 0; color: #1d4ed8;">📌 مشروع جديد وصل من التصاميم إلى المصنع</h2>
+        <h2 style="margin-top: 0; color: #1d4ed8;">مشروع جديد وصل من التصاميم إلى المصنع</h2>
 
         <p>تم تحويل مشروع جديد من قسم التصاميم إلى المصنع، والرجاء البدء في الإجراءات اللازمة.</p>
 

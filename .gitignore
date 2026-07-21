@@ -48,3 +48,11 @@ Thumbs.db
 .cache/
 .local/
 project.zip
+
+# Laravel environment & secrets (never commit passwords / API keys)
+.env
+.env.backup
+.env.production
+.env.*.local
+/auth.json
+/storage/*.key

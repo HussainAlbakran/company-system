@@ -13,7 +13,7 @@ class UserManagementController extends Controller
     protected function authorizeUsers(): void
     {
         if (! auth()->check() || ! auth()->user()->canManageUsers()) {
-            abort(403, 'غير مصرح لك بالوصول لإدارة المستخدمين.');
+            abort(403, __('users.abort_unauthorized'));
         }
     }
 
@@ -55,7 +55,7 @@ class UserManagementController extends Controller
             'approved_by' => auth()->id(),
         ]);
 
-        return redirect()->route('users.index')->with('success', 'تم إنشاء المستخدم بنجاح.');
+        return redirect()->route('users.index')->with('success', __('users.flash_created'));
     }
 
     public function show(User $user)
@@ -137,7 +137,7 @@ class UserManagementController extends Controller
             );
         }
 
-        return redirect()->route('users.index')->with('success', 'تم تحديث المستخدم بنجاح.');
+        return redirect()->route('users.index')->with('success', __('users.flash_updated'));
     }
 
     public function destroy(User $user)
@@ -145,12 +145,12 @@ class UserManagementController extends Controller
         $this->authorizeUsers();
 
         if (auth()->id() === $user->id) {
-            return redirect()->route('users.index')->with('error', 'لا يمكنك حذف حسابك الحالي.');
+            return redirect()->route('users.index')->with('error', __('users.error_cannot_delete_self'));
         }
 
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'تم حذف المستخدم بنجاح.');
+        return redirect()->route('users.index')->with('success', __('users.flash_deleted'));
     }
 
     public function suspend($id)
@@ -163,7 +163,7 @@ class UserManagementController extends Controller
         $user->approval_status = 'suspended';
         $user->save();
 
-        return redirect()->back()->with('success', 'تم إيقاف المستخدم بنجاح');
+        return redirect()->back()->with('success', __('users.flash_suspended'));
     }
 
     public function reactivate($id)
@@ -178,6 +178,6 @@ class UserManagementController extends Controller
         $user->approved_by = auth()->id();
         $user->save();
 
-        return redirect()->back()->with('success', 'تمت إعادة تفعيل المستخدم بنجاح');
+        return redirect()->back()->with('success', __('users.flash_reactivated'));
     }
 }

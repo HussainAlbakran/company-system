@@ -21,7 +21,7 @@ class EmployeeController extends Controller
     protected function authorizeHR()
     {
         if (! auth()->check() || ! auth()->user()->canManageEmployees()) {
-            abort(403, 'هذه الصفحة متاحة لمدير النظام والإدارة وموارد البشرية فقط.');
+            abort(403, __('roles.hr_module_only'));
         }
     }
 
@@ -400,7 +400,7 @@ class EmployeeController extends Controller
 
         if (($validated['create_system_account'] ?? false) && in_array(($validated['account_role'] ?? null), ['super_admin', 'admin'], true)) {
             return back()
-                ->withErrors(['account_role' => 'هذه الصلاحية لا يمكن إنشاؤها من الموظفين'])
+                ->withErrors(['account_role' => __('employees.account_role_forbidden')])
                 ->withInput();
         }
 
@@ -455,7 +455,7 @@ class EmployeeController extends Controller
             'تمت إضافة موظف: ' . $employee->name
         );
 
-        return redirect()->route('employees.index')->with('success', 'تم إضافة الموظف بنجاح');
+        return redirect()->route('employees.index')->with('success', __('employees.flash_created'));
     }
 
     public function show(Employee $employee)
@@ -606,7 +606,7 @@ class EmployeeController extends Controller
             'تم تحديث بيانات الموظف: ' . $employee->name
         );
 
-        return redirect()->route('employees.show', $employee)->with('success', 'تم تحديث بيانات الموظف');
+        return redirect()->route('employees.show', $employee)->with('success', __('employees.flash_updated'));
     }
 
     public function destroy(Employee $employee)
@@ -622,7 +622,7 @@ class EmployeeController extends Controller
 
         $employee->delete();
 
-        return redirect()->route('employees.index')->with('success', 'تم حذف الموظف');
+        return redirect()->route('employees.index')->with('success', __('employees.flash_deleted'));
     }
 
     public function storeAsset(Request $request, $employeeId)
@@ -658,7 +658,7 @@ class EmployeeController extends Controller
             'تم إضافة عهدة للموظف: ' . $employee->name . ' - ' . $validated['asset_name'] . ' - ' . $serialNumber
         );
 
-        return back()->with('success', 'تمت إضافة العهدة بنجاح');
+        return back()->with('success', __('employees.flash_custody_added'));
     }
 
     public function destroyAsset($id)
@@ -676,7 +676,7 @@ class EmployeeController extends Controller
 
         $asset->delete();
 
-        return back()->with('success', 'تم حذف العهدة');
+        return back()->with('success', __('employees.flash_custody_deleted'));
     }
 
     private function generateEmployeeAssetSerialNumber(): string

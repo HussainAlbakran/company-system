@@ -28,4 +28,7 @@ return [
     'pending_body' => 'Your account was created successfully, but you cannot access the system until an administrator approves it.',
     'pending_back_login' => 'Back to log in',
     'logout' => 'Log out',
+    'failed' => 'These credentials do not match our records.',
+    'pending_or_inactive' => 'Your account is inactive or pending approval from administration.',
+    'registration_pending' => 'Your account was created successfully and is pending administration approval.',
 ];

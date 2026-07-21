@@ -181,37 +181,37 @@
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">الراتب الأساسي</span>
+                <span class="summary-label">{{ __('employees.field_base_salary') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->salary ?? 0), 2) }}</div>
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">بدل سكن</span>
+                <span class="summary-label">{{ __('employees.field_allowance_housing') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->housing_allowance ?? 0), 2) }}</div>
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">بدل مواصلات</span>
+                <span class="summary-label">{{ __('employees.field_allowance_transport') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->transportation_allowance ?? 0), 2) }}</div>
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">بدل سفر</span>
+                <span class="summary-label">{{ __('employees.field_allowance_travel') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->travel_allowance ?? 0), 2) }}</div>
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">بدل مخاطر</span>
+                <span class="summary-label">{{ __('employees.field_allowance_risk') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->risk_allowance ?? 0), 2) }}</div>
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">بدل انتقال</span>
+                <span class="summary-label">{{ __('employees.field_allowance_transfer') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->transfer_allowance ?? 0), 2) }}</div>
             </div>
 
             <div class="detail-box summary-box">
-                <span class="summary-label">بدل إضافي</span>
+                <span class="summary-label">{{ __('employees.field_allowance_other') }}</span>
                 <div class="summary-value">{{ number_format((float) ($employee->overtime_allowance ?? 0), 2) }}</div>
             </div>
 
@@ -299,8 +299,8 @@
 
     <div class="page-card" style="margin-bottom:24px;">
         <div class="page-header">
-            <h2>حسابات مسير الرواتب</h2>
-            <p style="color:#94a3b8;">الشهر الحالي: {{ sprintf('%02d/%04d', $currentMonth, $currentYear) }}</p>
+            <h2>{{ __('employees.section_payroll_adjustments') }}</h2>
+            <p style="color:#94a3b8;">{{ __('employees.payroll_current_month', ['period' => sprintf('%02d/%04d', $currentMonth, $currentYear)]) }}</p>
         </div>
 
         <form action="{{ route('employees.payroll-adjustment.save', $employee) }}" method="POST">
@@ -309,22 +309,22 @@
             <input type="hidden" name="year" value="{{ $currentYear }}">
             <div class="asset-form-grid">
                 <div class="form-group">
-                    <label>ساعات العمل الإضافي</label>
+                    <label>{{ __('employees.field_overtime_hours') }}</label>
                     <input type="number" step="0.01" min="0" name="overtime_hours" value="{{ old('overtime_hours', $payrollAdjustment->overtime_hours ?? 0) }}" @disabled(!($canEditPayrollAdjustment ?? true))>
                 </div>
 
                 <div class="form-group">
-                    <label>أيام خصم الإجازات</label>
+                    <label>{{ __('employees.field_leave_deduction_days') }}</label>
                     <input type="number" step="0.01" min="0" name="leave_deduction_days" value="{{ old('leave_deduction_days', $payrollAdjustment->leave_deduction_days ?? 0) }}" @disabled(!($canEditPayrollAdjustment ?? true))>
                 </div>
 
                 <div class="form-group">
-                    <label>خصومات أخرى</label>
+                    <label>{{ __('employees.field_other_deductions') }}</label>
                     <input type="number" step="0.01" min="0" name="other_deduction" value="{{ old('other_deduction', $payrollAdjustment->other_deduction ?? 0) }}" @disabled(!($canEditPayrollAdjustment ?? true))>
                 </div>
 
                 <div class="form-group form-group-full">
-                    <label>ملاحظات</label>
+                    <label>{{ __('employees.notes') }}</label>
                     <textarea name="notes" @disabled(!($canEditPayrollAdjustment ?? true))>{{ old('notes', $payrollAdjustment->notes) }}</textarea>
                 </div>
             </div>
@@ -334,7 +334,7 @@
 
             <div class="asset-form-actions">
                 @if($canEditPayrollAdjustment ?? true)
-                    <button type="submit" class="btn btn-primary">حفظ حسابات المسير</button>
+                    <button type="submit" class="btn btn-primary">{{ __('employees.payroll_save_adjustment_btn') }}</button>
                 @else
                     <p style="color:#6b7280; margin:0;">{{ __('employees.payroll_cannot_edit_approved') }}</p>
                 @endif
@@ -384,8 +384,8 @@
 
     <div class="page-card" style="margin-top:16px;">
         <div class="page-header">
-            <h2>العهدة (الأصول)</h2>
-            <p style="color:#6b7280;">سجل الأصول الحالية والمرجعة لهذا الموظف</p>
+            <h2>{{ __('employees.section_asset_custody') }}</h2>
+            <p style="color:#6b7280;">{{ __('employees.section_asset_custody_sub') }}</p>
         </div>
 
         @php
@@ -399,9 +399,9 @@
                     <tr>
                         <th>{{ __('employees.th_asset') }}</th>
                         <th>{{ __('employees.th_serial') }}</th>
-                        <th>نوع الأصل</th>
-                        <th>تاريخ التسليم</th>
-                        <th>تاريخ الإرجاع</th>
+                        <th>{{ __('employees.th_asset_type') }}</th>
+                        <th>{{ __('employees.th_handover_date') }}</th>
+                        <th>{{ __('employees.th_return_date') }}</th>
                         <th>{{ __('employees.assign_status') }}</th>
                         <th>{{ __('employees.notes') }}</th>
                     </tr>
@@ -424,16 +424,16 @@
                             <td>{{ optional($assignment->returned_at)->format('Y-m-d H:i') ?? '-' }}</td>
                             <td>
                                 @if($assignment->status === 'assigned' && $assignment->returned_at === null)
-                                    <span class="badge badge-green">مع الموظف</span>
+                                    <span class="badge badge-green">{{ __('employees.badge_with_employee') }}</span>
                                 @else
-                                    <span class="badge badge-gray">تم الإرجاع</span>
+                                    <span class="badge badge-gray">{{ __('employees.badge_returned') }}</span>
                                 @endif
                             </td>
                             <td>{{ $assignment->notes ?? '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="empty-row">لا توجد سجلات عهدة أصول لهذا الموظف</td>
+                            <td colspan="7" class="empty-row">{{ __('employees.asset_custody_empty') }}</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -442,7 +442,7 @@
 
         @if($activeAssignments->isNotEmpty())
             <div style="margin-top:10px;">
-                <span class="badge badge-blue">العهدة الحالية: {{ $activeAssignments->count() }}</span>
+                <span class="badge badge-blue">{{ __('employees.badge_current_custody', ['count' => $activeAssignments->count()]) }}</span>
             </div>
         @endif
     </div>

@@ -19,7 +19,7 @@ class AssetController extends Controller
     private function authorizeHR(): void
     {
         if (! auth()->check() || ! auth()->user()->canManageAssets()) {
-            abort(403, 'هذه الصفحة متاحة لمدير النظام والإدارة وموارد البشرية فقط.');
+            abort(403, __('roles.hr_module_only'));
         }
     }
 
@@ -146,7 +146,7 @@ class AssetController extends Controller
             ->exists();
 
         if ($hasActiveAssignment) {
-            return back()->with('error', 'هذا الأصل بعهدة موظف حاليًا ولا يمكن تسليمه حتى يتم إرجاعه');
+            return back()->with('error', __('assets.error_already_assigned'));
         }
 
         $assignment = AssetAssignment::create([
@@ -167,7 +167,7 @@ class AssetController extends Controller
             'تم تسليم الأصل "' . $asset->name . '" إلى الموظف رقم ' . $assignment->employee_id
         );
 
-        return back()->with('success', 'تم تسليم الأصل للموظف بنجاح');
+        return back()->with('success', __('assets.flash_assigned'));
     }
 
     public function transferToMaintenance(Request $request, Asset $asset)
@@ -262,7 +262,7 @@ class AssetController extends Controller
         $this->authorizeHR();
 
         if ($assignment->status === 'returned' || $assignment->returned_at !== null) {
-            return back()->with('error', 'تم إرجاع هذا الأصل مسبقًا');
+            return back()->with('error', __('assets.error_already_returned'));
         }
 
         $assignment->update([
@@ -288,7 +288,7 @@ class AssetController extends Controller
             'تم إرجاع الأصل "' . $asset->name . '" من الموظف رقم ' . $assignment->employee_id
         );
 
-        return back()->with('success', 'تم إرجاع الأصل بنجاح');
+        return back()->with('success', __('assets.flash_returned'));
     }
 
     public function assignedWithEmployees()

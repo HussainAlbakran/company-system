@@ -1,12 +1,12 @@
 @extends('layouts.app')
 
-@section('page_title', 'التصاميم')
-@section('page_subtitle', 'وصول سريع إلى لوحة التصاميم')
+@section('page_title', __('designs.page_title'))
+@section('page_subtitle', __('designs.page_subtitle'))
 
 @section('content')
 <div class="page-card">
     <div class="page-header">
-        <h1 class="page-title">التصاميم</h1>
+        <h1 class="page-title">{{ __('designs.page_title') }}</h1>
     </div>
 
     <p style="color:#cbd5e1; margin-bottom: 12px;">

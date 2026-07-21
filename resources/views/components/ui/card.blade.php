@@ -8,10 +8,10 @@
         <div class="page-header">
             <div>
                 @if($title)
-                    <h3 style="margin:0; font-size:14px; font-weight:800; color:#f8fbff;">{{ $title }}</h3>
+                    <h3 style="margin:0; font-size:14px; font-weight:800; color:#000000;">{{ $title }}</h3>
                 @endif
                 @if($subtitle)
-                    <p class="page-subtitle" style="margin:3px 0 0;">{{ $subtitle }}</p>
+                    <p class="page-subtitle" style="margin:3px 0 0; color:#000000; line-height:1.55;">{{ $subtitle }}</p>
                 @endif
             </div>
         </div>

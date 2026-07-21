@@ -14,7 +14,7 @@ class EmployeeDocumentController extends Controller
     protected function authorizeHR(): void
     {
         if (!auth()->check() || !auth()->user()->canManageEmployees()) {
-            abort(403, 'غير مصرح لك.');
+            abort(403, __('employees.abort_unauthorized'));
         }
     }
 
@@ -99,7 +99,7 @@ class EmployeeDocumentController extends Controller
 
         return redirect()
             ->route('employees.show', $employee)
-            ->with('success', 'تم رفع الملف ومعالجته بنجاح');
+            ->with('success', __('employees.flash_file_uploaded'));
     }
 
     public function open(Employee $employee, EmployeeDocument $document)
@@ -113,7 +113,7 @@ class EmployeeDocumentController extends Controller
         if (!Storage::disk('public')->exists($document->file_path)) {
             return redirect()
                 ->route('employees.show', $employee)
-                ->with('error', 'الملف غير موجود.');
+                ->with('error', __('employees.error_file_not_found'));
         }
 
         return response()->file(storage_path('app/public/' . $document->file_path));
@@ -130,7 +130,7 @@ class EmployeeDocumentController extends Controller
         if (!Storage::disk('public')->exists($document->file_path)) {
             return redirect()
                 ->route('employees.show', $employee)
-                ->with('error', 'الملف غير موجود.');
+                ->with('error', __('employees.error_file_not_found'));
         }
 
         return Storage::disk('public')->download(
@@ -162,6 +162,6 @@ class EmployeeDocumentController extends Controller
 
         return redirect()
             ->route('employees.show', $employee)
-            ->with('success', 'تم حذف الملف بنجاح');
+            ->with('success', __('employees.flash_file_deleted'));
     }
 }

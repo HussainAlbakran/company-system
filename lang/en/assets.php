@@ -85,4 +85,10 @@ return [
     'field_maintenance_ended_at' => 'Ended at',
     'maintenance_status_ongoing' => 'Ongoing',
     'maintenance_status_ended' => 'Ended',
+    'error_already_assigned' => 'This asset is already assigned to an employee and cannot be reassigned until returned.',
+    'flash_assigned' => 'Asset assigned to employee successfully.',
+    'error_already_returned' => 'This asset has already been returned.',
+    'flash_returned' => 'Asset returned successfully.',
+    'with_employees_title' => 'Assets with employees',
+    'with_employees_subtitle' => 'Assets with active custody assignments',
 ];

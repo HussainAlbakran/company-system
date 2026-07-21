@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'abort_unauthorized' => 'غير مصرح لك بالوصول إلى المشاريع.',
-    'updates_abort_unauthorized' => 'غير مصرح لك بالوصول إلى تحديثات المشاريع.',
+    'abort_unauthorized' => 'غير مصرّح لك بالوصول إلى المشاريع.',
+    'updates_abort_unauthorized' => 'غير مصرّح لك بالوصول إلى تحديثات المشاريع.',
     'flash_no_department' => 'لا يوجد قسم مرتبط بالمشروع. تأكد من وجود قسم الهندسة أو اختيار موظف مرتبط بقسم.',
     'flash_created' => 'تمت إضافة المشروع بنجاح.',
     'flash_updated' => 'تم تعديل المشروع بنجاح.',
@@ -59,7 +59,7 @@ return [
     'open_attachment' => 'فتح المرفق',
     'confirm_delete_update' => 'هل أنت متأكد من حذف هذا التحديث؟',
     'updates_empty' => 'لا توجد تحديثات لهذا المشروع حتى الآن',
-    'flash_update_added' => 'تم إضافة التحديث ومعالجة المرفق بنجاح',
+    'flash_update_added' => 'تمت إضافة التحديث ومعالجة المرفق بنجاح.',
     'flash_update_error' => 'حدث خطأ أثناء إضافة التحديث: :message',
     'flash_update_deleted' => 'تم حذف التحديث بنجاح.',
     'flash_update_delete_error' => 'حدث خطأ أثناء حذف التحديث: :message',

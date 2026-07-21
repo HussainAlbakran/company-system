@@ -1,28 +1,28 @@
 @extends('layouts.app')
 
-@section('page_title', 'تحديثات التقدم')
-@section('page_subtitle', 'سجل تحديثات التقدم من الموظفين والفرق')
+@section('page_title', __('administration.updates_title'))
+@section('page_subtitle', __('administration.updates_subtitle'))
 
 @section('content')
 <div class="page-card">
     <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
         <div>
-            <h1 class="page-title">مراجعة تحديثات التقدم</h1>
-            <p class="page-subtitle">عرض شامل — الحذف/التعديل المتقدم من مسار الهندسة عند الحاجة</p>
+            <h1 class="page-title">{{ __('administration.updates_review_title') }}</h1>
+            <p class="page-subtitle">{{ __('administration.updates_review_subtitle') }}</p>
         </div>
-        <a href="{{ route('administration.index') }}" class="btn btn-secondary btn-sm">مركز الإدارة</a>
+        <a href="{{ route('administration.index') }}" class="btn btn-secondary btn-sm">{{ __('administration.back_to_center') }}</a>
     </div>
 
     <div class="table-wrap" style="margin-top:12px;">
         <table>
             <thead>
                 <tr>
-                    <th>التاريخ</th>
-                    <th>المشروع</th>
-                    <th>العنوان</th>
-                    <th>الوصف</th>
-                    <th>التقدم</th>
-                    <th>المسجل</th>
+                    <th>{{ __('administration.th_date') }}</th>
+                    <th>{{ __('administration.th_project') }}</th>
+                    <th>{{ __('administration.th_title') }}</th>
+                    <th>{{ __('common.description') }}</th>
+                    <th>{{ __('administration.th_progress') }}</th>
+                    <th>{{ __('administration.th_recorded_by') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -36,7 +36,7 @@
                         <td>{{ $u->creator?->name ?? '—' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="empty-row">لا توجد تحديثات</td></tr>
+                    <tr><td colspan="6" class="empty-row">{{ __('administration.no_updates') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

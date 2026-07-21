@@ -10,10 +10,12 @@
     $finFull = $u->canViewProjectFinancials();
 @endphp
 
-<div class="page-card">
+<div class="page-card" id="contracts-edit-page">
     <div class="page-header">
-        <h2>{{ __('contracts.edit_title') }}</h2>
-        <p>{{ __('contracts.edit_subtitle') }}</p>
+        <div>
+            <h2 class="page-title">{{ __('contracts.edit_title') }}</h2>
+            <p class="page-subtitle">{{ __('contracts.edit_subtitle') }}</p>
+        </div>
     </div>
 
     <form action="{{ route('sales-contracts.update', $contract->id) }}" method="POST" enctype="multipart/form-data">

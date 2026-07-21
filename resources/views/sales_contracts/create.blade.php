@@ -5,12 +5,17 @@
 
 @section('content')
 
-<div class="container">
-    <h2 class="mb-4">{{ __('contracts.create_title') }}</h2>
+<div class="page-card" id="contracts-create-page">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">{{ __('contracts.create_title') }}</h2>
+            <p class="page-subtitle">{{ __('contracts.page_subtitle') }}</p>
+        </div>
+    </div>
 
     @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul>
+        <div class="alert-danger">
+            <ul style="margin:0; padding-right:18px;">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -21,11 +26,11 @@
     <form action="{{ route('sales-contracts.store') }}" method="POST" enctype="multipart/form-data" data-autofill-form-key="contracts" data-autofill-endpoint="{{ route('documents.parse') }}">
         @csrf
 
-        <div class="row">
-            <div class="col-md-12 mb-3">
+        <div class="row" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;">
+            <div class="col-md-12 mb-3" style="grid-column:1/-1;">
                 <label>{{ __('contracts.smart_import_label') }}</label>
                 <input type="file" name="document" class="form-control" accept=".pdf,.xlsx,.csv,.jpg,.jpeg,.png,.webp" data-autofill-document-input>
-                <small data-autofill-status style="display:block; margin-top:6px; color:#94a3b8;">{{ __('contracts.smart_import_hint') }}</small>
+                <small data-autofill-status style="display:block; margin-top:6px; color:#000000; line-height:1.55;">{{ __('contracts.smart_import_hint') }}</small>
             </div>
 
             <div class="col-md-6 mb-3">
@@ -93,33 +98,35 @@
                 <input type="date" name="expected_end_date" class="form-control">
             </div>
 
-            @include('sales_contracts._payment-fields', ['finFull' => $finFull])
+            <div style="grid-column:1/-1; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px;">
+                @include('sales_contracts._payment-fields', ['finFull' => $finFull])
+            </div>
 
-            <div class="col-md-12 mb-3">
+            <div class="col-md-12 mb-3" style="grid-column:1/-1;">
                 <label>{{ __('contracts.field_project_description') }}</label>
                 <textarea name="description" class="form-control" rows="3"></textarea>
             </div>
 
-            <div class="col-md-12 mb-3">
+            <div class="col-md-12 mb-3" style="grid-column:1/-1;">
                 <label>{{ __('contracts.field_notes') }}</label>
                 <textarea name="notes" class="form-control" rows="3"></textarea>
             </div>
 
-            <div class="col-md-12 mb-3">
+            <div class="col-md-12 mb-3" style="grid-column:1/-1;">
                 <label>{{ __('contracts.field_contract_file') }}</label>
                 <input type="file" name="contract_file" class="form-control">
             </div>
-
         </div>
 
-        <button type="submit" class="btn btn-primary">
-            {{ __('contracts.save_contract') }}
-        </button>
+        <div class="actions-row" style="margin-top: 20px;">
+            <button type="submit" class="btn btn-primary">
+                {{ __('contracts.save_contract') }}
+            </button>
 
-        <a href="{{ route('sales-contracts.index') }}" class="btn btn-secondary">
-            {{ __('common.back') }}
-        </a>
-
+            <a href="{{ route('sales-contracts.index') }}" class="btn btn-secondary">
+                {{ __('common.back') }}
+            </a>
+        </div>
     </form>
 </div>
 

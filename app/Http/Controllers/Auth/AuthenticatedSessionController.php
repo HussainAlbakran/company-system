@@ -34,7 +34,7 @@ class AuthenticatedSessionController extends Controller
 
         if (! $user) {
             return back()->withErrors([
-                'email' => 'بيانات الدخول غير صحيحة.',
+                'email' => __('auth.failed'),
             ])->onlyInput('email');
         }
 
@@ -43,7 +43,7 @@ class AuthenticatedSessionController extends Controller
             'password' => $credentials['password'],
         ])) {
             return back()->withErrors([
-                'email' => 'بيانات الدخول غير صحيحة.',
+                'email' => __('auth.failed'),
             ])->onlyInput('email');
         }
 
@@ -51,7 +51,7 @@ class AuthenticatedSessionController extends Controller
             Auth::logout();
 
             return back()->withErrors([
-                'email' => 'حسابك غير مفعل أو بانتظار الموافقة من الإدارة.',
+                'email' => __('auth.pending_or_inactive'),
             ])->onlyInput('email');
         }
 

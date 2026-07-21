@@ -21,7 +21,7 @@ return [
     'history_subtitle' => 'استعراض آخر الأسئلة والإجابات الخاصة بحسابك.',
     'chat_question_label' => 'السؤال:',
     'chat_answer_label' => 'الإجابة:',
-    'forbidden' => 'غير مصرح لك بالوصول.',
+    'forbidden' => 'غير مصرّح لك بالوصول.',
     'no_allowed_data' => 'لا توجد بيانات مسموح لك بالوصول إليها.',
     'cleared_success' => 'تم مسح المحادثات بنجاح.',
     'service_unavailable' => 'تعذر الوصول إلى خدمة الذكاء حاليًا.',

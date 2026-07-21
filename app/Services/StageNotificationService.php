@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Mail\ProjectMovedToDesignMail;
+use App\Mail\ProjectStageNotificationMail;
 use App\Models\Department;
 use App\Models\Project;
 use App\Models\SalesContract;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class StageNotificationService
 {
@@ -24,15 +27,18 @@ class StageNotificationService
                 'contract_id' => $contract->id,
                 'project_id' => $contract->project_id,
             ]);
-            return;
+        } else {
+            try {
+                Mail::to($recipientEmail)->send(new ProjectMovedToDesignMail($contract));
+            } catch (Throwable $exception) {
+                Log::error('Design stage email failed.', [
+                    'contract_id' => $contract->id,
+                    'project_id' => $contract->project_id,
+                    'recipient' => $recipientEmail,
+                    'error' => $exception->getMessage(),
+                ]);
+            }
         }
-
-        Mail::send('emails.project_to_design', [
-            'contract' => $contract,
-        ], function ($message) use ($recipientEmail): void {
-            $message->to($recipientEmail)
-                ->subject('📌 مشروع جديد وصل إلى قسم التصاميم');
-        });
 
         if ($contract->project) {
             $this->internalNotificationService->notifyDepartmentStageArrival(
@@ -46,21 +52,36 @@ class StageNotificationService
     public function sendFactoryStageNotification(Project $project): void
     {
         [$recipientEmail, $managerUserId] = $this->destinationDepartmentManagerContact('production_installation');
-        $this->sendOperationalProjectMail($recipientEmail, 'emails.project_to_factory', '📌 مشروع جديد وصل من التصاميم', $project);
+        $this->sendOperationalProjectMail(
+            $recipientEmail,
+            'emails.project_to_factory',
+            'مشروع جديد وصل من التصاميم',
+            $project
+        );
         $this->internalNotificationService->notifyDepartmentStageArrival($project, 'production_installation', $managerUserId);
     }
 
     public function sendInstallationStageNotification(Project $project): void
     {
         [$recipientEmail, $managerUserId] = $this->destinationDepartmentManagerContact('installation');
-        $this->sendOperationalProjectMail($recipientEmail, 'emails.project_to_installation', '📌 مشروع جاهز للتركيب', $project);
+        $this->sendOperationalProjectMail(
+            $recipientEmail,
+            'emails.project_to_installation',
+            'مشروع جاهز للتركيب',
+            $project
+        );
         $this->internalNotificationService->notifyDepartmentStageArrival($project, 'installation', $managerUserId);
     }
 
     public function sendPurchasesStageNotification(Project $project): void
     {
         [$recipientEmail, $managerUserId] = $this->destinationDepartmentManagerContact('purchasing');
-        $this->sendOperationalProjectMail($recipientEmail, 'emails.project_to_purchases', '📌 مشروع يحتاج مشتريات', $project);
+        $this->sendOperationalProjectMail(
+            $recipientEmail,
+            'emails.project_to_purchases',
+            'مشروع يحتاج مشتريات',
+            $project
+        );
         $this->internalNotificationService->notifyDepartmentStageArrival($project, 'purchasing', $managerUserId);
     }
 
@@ -68,6 +89,7 @@ class StageNotificationService
     {
         if ($toStage === 'purchasing') {
             $this->sendPurchasesStageNotification($project);
+
             return;
         }
 
@@ -83,14 +105,20 @@ class StageNotificationService
                 'project_id' => $project->id,
                 'view' => $view,
             ]);
+
             return;
         }
 
-        Mail::send($view, [
-            'project' => $project,
-        ], function ($message) use ($email, $subject): void {
-            $message->to($email)->subject($subject);
-        });
+        try {
+            Mail::to($email)->send(new ProjectStageNotificationMail($project, $view, $subject));
+        } catch (Throwable $exception) {
+            Log::error('Operational stage email failed.', [
+                'project_id' => $project->id,
+                'view' => $view,
+                'recipient' => $email,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     private function destinationDepartmentManagerContact(string $stage): array

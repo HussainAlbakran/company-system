@@ -5,22 +5,32 @@ namespace App\Mail;
 use App\Models\SalesContract;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class ProjectMovedToDesignMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $contract;
-
-    public function __construct(SalesContract $contract)
+    public function __construct(public SalesContract $contract)
     {
-        $this->contract = $contract;
     }
 
-    public function build()
+    public function envelope(): Envelope
     {
-        return $this->subject('مشروع جديد للتصاميم')
-            ->view('emails.project_to_design');
+        return new Envelope(
+            subject: 'مشروع جديد وصل إلى قسم التصاميم',
+        );
+    }
+
+    public function content(): Content
+    {
+        return new Content(
+            view: 'emails.project_to_design',
+            with: [
+                'contract' => $this->contract,
+            ],
+        );
     }
 }

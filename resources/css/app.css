@@ -2,112 +2,139 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Internal dark premium consistency pass */
-body {
-    color: #f8fafc;
+/* =========================================================
+   System UI — light professional theme (white cards / black text)
+   Scoped to .main-layout so the public marketing site is unaffected.
+   Brand accent: purple (#7c3aed)
+   ========================================================= */
+
+.main-layout {
+    --ui-bg: #f5f3ff;
+    --ui-card: #ffffff;
+    --ui-text: #000000;
+    --ui-muted: #374151;
+    --ui-border: #e5e7eb;
+    --ui-border-strong: #d1d5db;
+    --ui-hover: #f3f4f6;
+    --ui-purple: #7c3aed;
+    --ui-purple-soft: rgba(124, 58, 237, 0.18);
+    --ui-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    color: var(--ui-text);
 }
 
-h1, h2, h3, h4, h5, h6 {
-    color: #ffffff;
+.main-layout h1,
+.main-layout h2,
+.main-layout h3,
+.main-layout h4,
+.main-layout h5,
+.main-layout h6 {
+    color: var(--ui-text);
+    font-weight: 800;
+}
+
+.main-layout p,
+.main-layout span,
+.main-layout li,
+.main-layout small,
+.main-layout label,
+.main-layout .form-label {
+    color: var(--ui-text);
+}
+
+.main-layout .page-card,
+.main-layout .card,
+.main-layout .card-body,
+.main-layout .card-header,
+.main-layout .kpi-card,
+.main-layout .stat-card,
+.main-layout .detail-box,
+.main-layout .dashboard-panel,
+.main-layout .brand-box,
+.main-layout .language-card,
+.main-layout .modal-content,
+.main-layout .offcanvas,
+.main-layout .dropdown-menu {
+    background-color: var(--ui-card);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
+    box-shadow: var(--ui-shadow);
+}
+
+.main-layout .table-wrap,
+.main-layout .table-responsive {
+    background-color: var(--ui-card);
+    border: 1px solid var(--ui-border);
+    box-shadow: var(--ui-shadow);
+}
+
+.main-layout .table,
+.main-layout .table > :not(caption) > * > *,
+.main-layout table {
+    background-color: var(--ui-card);
+    color: var(--ui-text);
+    border-color: var(--ui-border);
+}
+
+.main-layout .table thead,
+.main-layout .table thead tr,
+.main-layout .table thead th,
+.main-layout .table-light,
+.main-layout .table-light th,
+.main-layout th {
+    background-color: #ffffff;
+    color: var(--ui-text);
     font-weight: 700;
+    border-color: var(--ui-border);
 }
 
-.card,
-.card-body,
-.card-header,
-.modal-content,
-.offcanvas,
-.dropdown-menu {
-    background-color: #0f172a !important;
-    color: #ffffff !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+.main-layout .table tbody tr:hover td,
+.main-layout tr:hover td {
+    background-color: var(--ui-hover);
 }
 
-.table-wrap,
-.table-responsive {
-    background-color: #0b1220 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+.main-layout input,
+.main-layout select,
+.main-layout textarea,
+.main-layout .form-control,
+.main-layout .form-select {
+    color: var(--ui-text);
+    background-color: #ffffff;
+    border: 1px solid var(--ui-border-strong);
+    border-radius: 8px;
 }
 
-.table,
-.table > :not(caption) > * > * {
-    background-color: #0f172a !important;
-    color: #ffffff !important;
-    border-color: rgba(148, 163, 184, 0.25) !important;
+.main-layout select option {
+    color: var(--ui-text);
+    background-color: #ffffff;
 }
 
-.table thead,
-.table thead tr,
-.table thead th,
-.table-light,
-.table-light th {
-    background-color: #111827 !important;
-    color: #ffffff !important;
-    font-weight: 700 !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+.main-layout input::placeholder,
+.main-layout textarea::placeholder,
+.main-layout .form-control::placeholder {
+    color: #6b7280;
+    opacity: 1;
 }
 
-.table tbody tr:hover td {
-    background-color: #1e293b !important;
+.main-layout input:focus,
+.main-layout select:focus,
+.main-layout textarea:focus,
+.main-layout .form-control:focus,
+.main-layout .form-select:focus {
+    outline: none;
+    border-color: var(--ui-purple);
+    box-shadow: 0 0 0 3px var(--ui-purple-soft);
 }
 
-input,
-select,
-textarea,
-.form-control,
-.form-select {
-    color: #ffffff !important;
-    background-color: #0f172a !important;
-    border-color: rgba(148, 163, 184, 0.4) !important;
+.main-layout .bg-light,
+.main-layout .bg-white {
+    background-color: #ffffff;
+    color: var(--ui-text);
 }
 
-select option {
-    color: #ffffff;
-    background-color: #0f172a;
-}
-
-input::placeholder,
-textarea::placeholder,
-.form-control::placeholder {
-    color: #94a3b8 !important;
-}
-
-label,
-.form-label {
-    color: #e2e8f0 !important;
-}
-
-.text-white,
-.fw-semibold,
-.fw-bold,
-.font-semibold,
-.font-bold {
-    color: #ffffff !important;
-}
-
-.text-slate-100,
-.text-slate-200,
-.text-slate-300 {
-    color: #e2e8f0 !important;
-}
-
-.text-muted,
-.text-gray-300,
-.text-gray-400,
-.text-gray-500 {
-    color: #cbd5e1 !important;
-}
-
-.bg-light,
-.bg-white,
-.bg-warning-subtle,
-.bg-success-subtle,
-.bg-danger-subtle,
-.bg-secondary-subtle {
-    background-color: #111827 !important;
-    color: #e2e8f0 !important;
-}
-
-[style*="opacity"] {
-    opacity: 1 !important;
+/* Modal panels rendered outside layout still need a light surface */
+.modal-content {
+    background-color: #ffffff;
+    color: #000000;
+    border-color: #e5e7eb;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
 }

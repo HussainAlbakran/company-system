@@ -13,7 +13,7 @@ class EnsureHrModuleAccess
         $user = $request->user();
 
         if (! $user || ! $user->canAccessHRModule()) {
-            abort(403, 'هذه الصفحة متاحة لمدير النظام والإدارة وموارد البشرية فقط.');
+            abort(403, __('roles.hr_module_only'));
         }
 
         return $next($request);

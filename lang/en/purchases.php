@@ -100,4 +100,7 @@ return [
     'material_flash_already_converted' => 'This request was already converted to purchases.',
     'material_flash_converted' => 'Materials converted to contract purchase records successfully.',
     'material_convert_requires_items' => 'Cannot convert without line items.',
+    'flash_stage_completed' => 'Purchasing completed and the project was moved to factory and installations.',
+    'placeholder_purchase_item' => 'Cement / steel / equipment',
+    'placeholder_repair_item' => 'Pump repair / machine repair',
 ];

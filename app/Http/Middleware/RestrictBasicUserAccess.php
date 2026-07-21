@@ -39,6 +39,6 @@ class RestrictBasicUserAccess
 
         return redirect()
             ->route('dashboard')
-            ->with('error', 'لا يمكن الوصول إلى هذا القسم.');
+            ->with('error', __('roles.basic_user_denied'));
     }
 }

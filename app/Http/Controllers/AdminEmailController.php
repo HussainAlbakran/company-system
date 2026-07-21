@@ -213,7 +213,7 @@ class AdminEmailController extends Controller
         $user = $request->user();
 
         if (! $user || ! $user->isAdminLike() || ! $user->isApprovedAndActive()) {
-            abort(403, 'غير مصرح لك بالدخول');
+            abort(403, __('admin_emails.abort_unauthorized'));
         }
     }
 }
