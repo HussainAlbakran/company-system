@@ -29,28 +29,37 @@ class LeaveController extends Controller
     public function create()
     {
         $user = auth()->user();
-        $isPrivileged = $user && $user->canAccessHRModule();
+
+        if (! $user || ! $user->canCreateLeaveRequest()) {
+            abort(403, __('common.unauthorized'));
+        }
+
+        $isPrivileged = $user->canAccessHRModule();
+        $linkedEmployee = $user->employee;
+        $canSubmit = $isPrivileged || $linkedEmployee !== null;
 
         if ($isPrivileged) {
             $employees = Employee::query()->orderBy('name')->get();
         } else {
-            $employee = $user?->employee;
-            if (! $employee) {
-                return back()->withErrors(['error' => __('leaves.error_employee_required')]);
-            }
-            $employees = collect([$employee]);
+            $employees = $linkedEmployee ? collect([$linkedEmployee]) : collect();
         }
 
         return view('leaves.create', [
             'employees' => $employees,
             'canChooseEmployee' => $isPrivileged,
+            'canSubmit' => $canSubmit,
         ]);
     }
 
     public function store(Request $request)
     {
         $user = auth()->user();
-        $isPrivileged = $user && $user->canAccessHRModule();
+
+        if (! $user || ! $user->canCreateLeaveRequest()) {
+            abort(403, __('common.unauthorized'));
+        }
+
+        $isPrivileged = $user->canAccessHRModule();
 
         $rules = [
             'start_date' => 'required|date',
@@ -64,11 +73,15 @@ class LeaveController extends Controller
 
         $validated = $request->validate($rules);
 
+        // Non-HR users may only request leave for their own linked employee profile.
+        // Never trust a client-submitted employee_id for them.
         if ($isPrivileged) {
             $employee = Employee::findOrFail($validated['employee_id']);
         } else {
-            if (! $user?->employee) {
-                return back()->withErrors(['error' => __('leaves.error_employee_required')]);
+            if (! $user->employee) {
+                return back()
+                    ->withInput()
+                    ->withErrors(['error' => __('leaves.error_employee_required')]);
             }
             $employee = $user->employee;
         }
@@ -80,7 +93,8 @@ class LeaveController extends Controller
             return back()->with('error', __('leaves.error_insufficient_balance', ['balance' => $employee->leave_balance]));
         }
 
-        $payload = [
+        Leave::create([
+            'employee_id' => $employee->id,
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
             'days' => $days,
@@ -89,13 +103,7 @@ class LeaveController extends Controller
             'approved_at' => null,
             'is_deducted' => false,
             'deducted_at' => null,
-        ];
-
-        $payload['employee_id'] = $isPrivileged
-            ? $employee->id
-            : $user->employee->id;
-
-        Leave::create($payload);
+        ]);
 
         return back()->with('success', __('leaves.success_submitted'));
     }

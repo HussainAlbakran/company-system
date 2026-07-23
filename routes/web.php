@@ -191,13 +191,12 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
 
         /*
         |--------------------------------------------------------------------------
-        | Leave Request
+        | Leave Request — available to every approved authenticated user
+        | (approve/reject remain under hr.module above)
         |--------------------------------------------------------------------------
         */
-        Route::middleware('role:super_admin,admin,finance,sales_manager,sales,engineering_manager,engineer,procurement_manager,procurement,hr_manager,hr,operations_manager,factory_manager,manager,user')->group(function () {
-            Route::get('/leave-request', [LeaveController::class, 'create'])->name('leaves.create');
-            Route::post('/leave-request', [LeaveController::class, 'store'])->name('leaves.store');
-        });
+        Route::get('/leave-request', [LeaveController::class, 'create'])->name('leaves.create');
+        Route::post('/leave-request', [LeaveController::class, 'store'])->name('leaves.store');
 
         Route::middleware('role:super_admin,admin,hr_manager,hr,engineering_manager,engineer,operations_manager,factory_manager,manager,procurement_manager,procurement')->group(function () {
             Route::post('/parse-document', [DocumentParseController::class, 'parse'])->name('documents.parse');

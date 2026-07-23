@@ -194,18 +194,11 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * «طلب إجازة» navigation: HR may always open the form; others need a linked employee profile.
+     * «طلب إجازة» navigation: every approved active user may open the request page.
      */
     public function canAccessLeaveRequestNavigation(): bool
     {
-        if (! $this->isApprovedAndActive()) {
-            return false;
-        }
-
-        return $this->canAccessHRModule()
-            || $this->employee !== null
-            || $this->isBasicUser()
-            || $this->isFinance();
+        return $this->canCreateLeaveRequest();
     }
 
     /**

@@ -22,6 +22,12 @@
         </div>
     @endif
 
+    @if(!($canSubmit ?? true))
+        <div class="alert-danger" style="margin-bottom:16px;">
+            {{ __('leaves.error_employee_required') }}
+        </div>
+    @endif
+
     @if(session('success'))
         <div class="alert-success" style="margin-bottom:16px;">
             {{ session('success') }}
@@ -42,7 +48,7 @@
             <div class="form-group">
                 <label>{{ __('leaves.field_employee') }}</label>
                 @if($canChooseEmployee)
-                    <select name="employee_id" required>
+                    <select name="employee_id" required @disabled(!($canSubmit ?? true))>
                         <option value="">{{ __('leaves.select_employee') }}</option>
                         @foreach($employees as $employee)
                             <option value="{{ $employee->id }}" {{ old('employee_id') == $employee->id ? 'selected' : '' }}>
@@ -52,31 +58,35 @@
                     </select>
                 @else
                     <input type="text" value="{{ optional($employees->first())->name }}" readonly>
-                    <input type="hidden" name="employee_id" value="{{ optional($employees->first())->id }}">
+                    @if(($canSubmit ?? true) && $employees->isNotEmpty())
+                        <input type="hidden" name="employee_id" value="{{ $employees->first()->id }}">
+                    @endif
                 @endif
             </div>
 
             <div class="form-group">
                 <label>{{ __('leaves.field_start') }}</label>
-                <input type="date" name="start_date" value="{{ old('start_date') }}" required>
+                <input type="date" name="start_date" value="{{ old('start_date') }}" required @disabled(!($canSubmit ?? true))>
             </div>
 
             <div class="form-group">
                 <label>{{ __('leaves.field_end') }}</label>
-                <input type="date" name="end_date" value="{{ old('end_date') }}" required>
+                <input type="date" name="end_date" value="{{ old('end_date') }}" required @disabled(!($canSubmit ?? true))>
             </div>
 
             <div class="form-group form-group-full">
                 <label>{{ __('leaves.field_reason') }}</label>
-                <textarea name="reason" rows="4">{{ old('reason') }}</textarea>
+                <textarea name="reason" rows="4" @disabled(!($canSubmit ?? true))>{{ old('reason') }}</textarea>
             </div>
 
         </div>
 
         <div class="actions-row" style="margin-top: 20px;">
-            <button type="submit" class="btn btn-primary">
-                {{ __('leaves.submit_request') }}
-            </button>
+            @if($canSubmit ?? true)
+                <button type="submit" class="btn btn-primary">
+                    {{ __('leaves.submit_request') }}
+                </button>
+            @endif
 
             <a href="{{ route('dashboard') }}" class="btn btn-secondary">
                 {{ __('common.back') }}
