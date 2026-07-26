@@ -1,12 +1,5 @@
 @extends('layouts.app')
 
-@php
-    $accountRoleKeys = [
-        'sales_manager', 'sales', 'engineering_manager', 'engineer',
-        'procurement_manager', 'procurement', 'hr_manager', 'hr', 'operations_manager',
-    ];
-@endphp
-
 @section('page_title', __('employees.create_title'))
 @section('page_subtitle', __('employees.create_subtitle'))
 
@@ -195,7 +188,7 @@
                             <label>{{ __('employees.account_role') }}</label>
                             <select name="account_role">
                                 <option value="">{{ __('employees.select_role') }}</option>
-                                @foreach($accountRoleKeys as $roleKey)
+                                @foreach(($accountRoleKeys ?? \App\Models\User::EMPLOYEE_ACCOUNT_ROLES) as $roleKey)
                                 <option value="{{ $roleKey }}" {{ old('account_role') == $roleKey ? 'selected' : '' }}>{{ __('roles.'.$roleKey) }}</option>
                                 @endforeach
                             </select>

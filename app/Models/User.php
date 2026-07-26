@@ -39,14 +39,10 @@ class User extends Authenticatable implements FilamentUser
     ];
 
     /**
-     * Roles that may be assigned while creating an employee account.
-     * Administrative roles are intentionally excluded.
+     * Roles assignable when creating a system account from the employee screen.
+     * Kept identical to user-management roles (single source of truth).
      */
-    public const EMPLOYEE_ACCOUNT_ROLES = [
-        'user',
-        self::ROLE_FINANCE,
-        'factory_manager',
-    ];
+    public const EMPLOYEE_ACCOUNT_ROLES = self::MANAGEABLE_ROLES;
 
     /** مدير النظام، الإدارة، وموارد البشرية */
     public const HR_MODULE_ROLES = [

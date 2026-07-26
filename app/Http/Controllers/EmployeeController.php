@@ -398,7 +398,9 @@ class EmployeeController extends Controller
             ],
         ]);
 
-        if (($validated['create_system_account'] ?? false) && in_array(($validated['account_role'] ?? null), ['super_admin', 'admin'], true)) {
+        if (($validated['create_system_account'] ?? false)
+            && ! in_array(($validated['account_role'] ?? null), User::EMPLOYEE_ACCOUNT_ROLES, true)
+        ) {
             return back()
                 ->withErrors(['account_role' => __('employees.account_role_forbidden')])
                 ->withInput();

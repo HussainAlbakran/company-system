@@ -66,7 +66,7 @@ return [
     'account_password' => 'Account password',
     'account_role' => 'Account role',
     'select_role' => '— Select role —',
-    'account_role_restriction_note' => 'Executive administration and system administrator roles cannot be created from the employees screen.',
+    'account_role_restriction_note' => 'Same roles as user management. Account creation is limited to the authorized employees screen.',
     'save' => 'Save',
     'cancel' => 'Cancel',
     'back' => 'Back',
