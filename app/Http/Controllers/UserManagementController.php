@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\AuditHelper;
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserManagementController extends Controller
 {
@@ -69,9 +72,21 @@ class UserManagementController extends Controller
     {
         $this->authorizeUsers();
 
+        $user->load('employee.department');
+
+        $linkableEmployees = Employee::query()
+            ->with('department:id,name')
+            ->orderBy('name')
+            ->where(function ($query) use ($user) {
+                $query->whereNull('user_id')
+                    ->orWhere('user_id', $user->id);
+            })
+            ->get(['id', 'name', 'employee_number', 'user_id', 'department_id']);
+
         return view('users.edit', [
             'user' => $user,
             'canEditRole' => auth()->user()->isAdminLike(),
+            'linkableEmployees' => $linkableEmployees,
         ]);
     }
 
@@ -86,6 +101,10 @@ class UserManagementController extends Controller
             $request->request->remove('role');
         }
 
+        if ($request->input('employee_id') === '' || $request->input('employee_id') === '0') {
+            $request->merge(['employee_id' => null]);
+        }
+
         $rules = [
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$user->id],
@@ -97,6 +116,8 @@ class UserManagementController extends Controller
         if ($canEditRole) {
             $rules['role'] = ['required', Rule::in(User::MANAGEABLE_ROLES)];
         }
+
+        $rules['employee_id'] = ['nullable', 'integer', 'exists:employees,id'];
 
         $validated = $request->validate($rules);
 
@@ -121,21 +142,68 @@ class UserManagementController extends Controller
             $data['password'] = Hash::make($validated['password']);
         }
 
-        $user->update($data);
+        $requestedEmployeeId = isset($validated['employee_id']) && $validated['employee_id'] !== ''
+            ? (int) $validated['employee_id']
+            : null;
 
-        if ($canEditRole && array_key_exists('role', $data) && $oldRole !== (string) $data['role']) {
-            AuditHelper::log(
-                'role_changed',
-                'User',
-                $user->id,
-                sprintf(
-                    'old_role=%s | new_role=%s | changed_by=%s',
-                    $oldRole,
-                    (string) $data['role'],
-                    (string) auth()->id()
-                )
-            );
-        }
+        $previousEmployeeId = Employee::query()
+            ->where('user_id', $user->id)
+            ->value('id');
+
+        DB::transaction(function () use ($user, $data, $requestedEmployeeId, $previousEmployeeId, $canEditRole, $oldRole) {
+            if ($requestedEmployeeId) {
+                $employee = Employee::query()
+                    ->whereKey($requestedEmployeeId)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if ($employee->user_id !== null && (int) $employee->user_id !== (int) $user->id) {
+                    throw ValidationException::withMessages([
+                        'employee_id' => [__('users.error_employee_already_linked')],
+                    ]);
+                }
+            }
+
+            $user->update($data);
+
+            Employee::query()
+                ->where('user_id', $user->id)
+                ->update(['user_id' => null]);
+
+            if ($requestedEmployeeId) {
+                Employee::query()
+                    ->whereKey($requestedEmployeeId)
+                    ->update(['user_id' => $user->id]);
+            }
+
+            if ($canEditRole && array_key_exists('role', $data) && $oldRole !== (string) $data['role']) {
+                AuditHelper::log(
+                    'role_changed',
+                    'User',
+                    $user->id,
+                    sprintf(
+                        'old_role=%s | new_role=%s | changed_by=%s',
+                        $oldRole,
+                        (string) $data['role'],
+                        (string) auth()->id()
+                    )
+                );
+            }
+
+            if ((int) ($previousEmployeeId ?? 0) !== (int) ($requestedEmployeeId ?? 0)) {
+                AuditHelper::log(
+                    'user_employee_link_updated',
+                    'User',
+                    $user->id,
+                    sprintf(
+                        'previous_employee_id=%s | new_employee_id=%s | changed_by=%s',
+                        $previousEmployeeId ?? '-',
+                        $requestedEmployeeId ?? '-',
+                        (string) auth()->id()
+                    )
+                );
+            }
+        });
 
         return redirect()->route('users.index')->with('success', __('users.flash_updated'));
     }

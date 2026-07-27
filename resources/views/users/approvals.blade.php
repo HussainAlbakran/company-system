@@ -52,7 +52,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('users.table_name') }}</th>
-                                        <th>{{ __('common.email') }}</th>
+                                        <th>{{ __('users.table_email') }}</th>
                                         <th>{{ __('users.table_role') }}</th>
                                         <th>{{ __('users.registered_at') }}</th>
                                         <th class="text-center">{{ __('users.table_actions') }}</th>
@@ -61,8 +61,8 @@
                                 <tbody>
                                     @foreach($pendingUsers as $user)
                                         <tr>
-                                            <td class="fw-semibold">{{ $user->name }}</td>
-                                            <td>{{ $user->email }}</td>
+                                            <td class="fw-bold" style="color:#000000;">{{ $user->name }}</td>
+                                            <td class="fw-semibold" dir="ltr" style="color:#000000; text-align:start; word-break:break-all;">{{ $user->email }}</td>
                                             <td>{{ $user->getRoleLabel() }}</td>
                                             <td>{{ $user->created_at?->format('Y-m-d h:i A') }}</td>
                                             <td>
@@ -115,7 +115,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('users.table_name') }}</th>
-                                        <th>{{ __('common.email') }}</th>
+                                        <th>{{ __('users.table_email') }}</th>
                                         <th>{{ __('users.table_role') }}</th>
                                         <th>{{ __('users.approved_at') }}</th>
                                         <th class="text-center">{{ __('users.table_actions') }}</th>
@@ -124,8 +124,8 @@
                                 <tbody>
                                     @foreach($approvedUsers as $user)
                                         <tr>
-                                            <td class="fw-semibold">{{ $user->name }}</td>
-                                            <td>{{ $user->email }}</td>
+                                            <td class="fw-bold" style="color:#000000;">{{ $user->name }}</td>
+                                            <td class="fw-semibold" dir="ltr" style="color:#000000; text-align:start; word-break:break-all;">{{ $user->email }}</td>
                                             <td>{{ $user->getRoleLabel() }}</td>
                                             <td>{{ $user->approved_at ? \Carbon\Carbon::parse($user->approved_at)->format('Y-m-d h:i A') : '-' }}</td>
                                             <td>
@@ -165,7 +165,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('users.table_name') }}</th>
-                                        <th>{{ __('common.email') }}</th>
+                                        <th>{{ __('users.table_email') }}</th>
                                         <th>{{ __('users.table_role') }}</th>
                                         <th class="text-center">{{ __('users.table_actions') }}</th>
                                     </tr>
@@ -173,8 +173,8 @@
                                 <tbody>
                                     @foreach($suspendedUsers as $user)
                                         <tr>
-                                            <td class="fw-semibold">{{ $user->name }}</td>
-                                            <td>{{ $user->email }}</td>
+                                            <td class="fw-bold" style="color:#000000;">{{ $user->name }}</td>
+                                            <td class="fw-semibold" dir="ltr" style="color:#000000; text-align:start; word-break:break-all;">{{ $user->email }}</td>
                                             <td>{{ $user->getRoleLabel() }}</td>
                                             <td>
                                                 <div class="d-flex flex-wrap gap-2 justify-content-center">
@@ -213,7 +213,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>{{ __('users.table_name') }}</th>
-                                        <th>{{ __('common.email') }}</th>
+                                        <th>{{ __('users.table_email') }}</th>
                                         <th>{{ __('users.table_role') }}</th>
                                         <th>{{ __('users.rejection_reason') }}</th>
                                         <th class="text-center">{{ __('users.table_actions') }}</th>
@@ -222,8 +222,8 @@
                                 <tbody>
                                     @foreach($rejectedUsers as $user)
                                         <tr>
-                                            <td class="fw-semibold">{{ $user->name }}</td>
-                                            <td>{{ $user->email }}</td>
+                                            <td class="fw-bold" style="color:#000000;">{{ $user->name }}</td>
+                                            <td class="fw-semibold" dir="ltr" style="color:#000000; text-align:start; word-break:break-all;">{{ $user->email }}</td>
                                             <td>{{ $user->getRoleLabel() }}</td>
                                             <td>{{ $user->rejection_reason ?: '-' }}</td>
                                             <td>

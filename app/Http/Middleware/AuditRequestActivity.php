@@ -62,7 +62,7 @@ class AuditRequestActivity
             $method,
             $request->ip() ?? '-',
             (string) $request->userAgent(),
-            now()->toDateTimeString()
+            now()->timezone(config('app.timezone'))->toDateTimeString()
         );
 
         if ($user && ! $this->shouldSkipGenericHttpAudit($user, $routeName)) {
@@ -136,7 +136,7 @@ class AuditRequestActivity
                 strtoupper($request->method()),
                 $request->ip() ?? '-',
                 (string) $request->userAgent(),
-                now()->toDateTimeString()
+                now()->timezone(config('app.timezone'))->toDateTimeString()
             ),
             $user ? (int) $user->id : null
         );

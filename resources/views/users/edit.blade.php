@@ -36,13 +36,32 @@
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">{{ __('common.name') }}</label>
-                        <input type="text" name="name" class="form-control" value="{{ old('name', $user->name) }}" required>
+                        <label class="form-label fw-semibold" for="user_name">{{ __('users.label_name') }}</label>
+                        <input
+                            type="text"
+                            id="user_name"
+                            name="name"
+                            class="form-control"
+                            value="{{ old('name', $user->name) }}"
+                            placeholder="{{ __('users.placeholder_name') }}"
+                            autocomplete="name"
+                            required
+                        >
                     </div>
 
                     <div class="col-md-6 mb-3">
-                        <label class="form-label">{{ __('common.email') }}</label>
-                        <input type="email" name="email" class="form-control" value="{{ old('email', $user->email) }}" required>
+                        <label class="form-label fw-semibold" for="user_email">{{ __('users.label_email') }}</label>
+                        <input
+                            type="email"
+                            id="user_email"
+                            name="email"
+                            class="form-control"
+                            value="{{ old('email', $user->email) }}"
+                            placeholder="{{ __('users.placeholder_email') }}"
+                            autocomplete="email"
+                            dir="ltr"
+                            required
+                        >
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -61,6 +80,30 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">{{ __('users.new_password_optional') }}</label>
                         <input type="password" name="password" class="form-control">
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">{{ __('users.field_link_employee') }}</label>
+                        <select name="employee_id" class="form-select">
+                            <option value="">{{ __('users.no_employee_link') }}</option>
+                            @foreach($linkableEmployees ?? [] as $employee)
+                                <option value="{{ $employee->id }}" {{ (string) old('employee_id', optional($user->employee)->id) === (string) $employee->id ? 'selected' : '' }}>
+                                    {{ $employee->name }}
+                                    @if($employee->employee_number)
+                                        ({{ $employee->employee_number }})
+                                    @endif
+                                    @if($employee->department)
+                                        — {{ $employee->department->name }}
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted d-block mt-1">{{ __('users.employee_link_hint') }}</small>
+                        @if(($user->employee ?? null) && ! $linkableEmployees->contains('id', $user->employee->id))
+                            <small class="text-warning d-block mt-1">
+                                {{ __('users.current_employee_link', ['name' => $user->employee->name]) }}
+                            </small>
+                        @endif
                     </div>
                 </div>
 

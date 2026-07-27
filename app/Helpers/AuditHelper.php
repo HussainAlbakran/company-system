@@ -8,16 +8,16 @@ use App\Models\User;
 class AuditHelper
 {
     /**
-     * Actions stored when the actor is super_admin (own actions only — see shouldStoreForActor).
+     * Noisy actions skipped only for super_admin (own actions).
+     * All other roles keep full logging. CRUD + view always stored.
+     *
+     * @var list<string>
      */
-    private const SUPER_ADMIN_STORED_ACTIONS = [
-        'login',
-        'logout',
-        'create',
-        'update',
-        'delete',
-        'file_uploaded',
-        'password_changed',
+    private const SUPER_ADMIN_SKIPPED_ACTIONS = [
+        'ai_request',
+        'ai_response',
+        'ai_opened',
+        'system_action',
     ];
 
     public static function log($action, $model, $model_id = null, $description = null, ?int $userId = null): void
@@ -25,7 +25,7 @@ class AuditHelper
         try {
             $uid = $userId ?? auth()->id();
 
-            if (! self::shouldStoreForActor($action, $uid)) {
+            if (! self::shouldStoreForActor((string) $action, $uid)) {
                 return;
             }
 
@@ -42,7 +42,7 @@ class AuditHelper
     }
 
     /**
-     * super_admin: only a narrow set of actions is persisted; all other roles keep full logging.
+     * super_admin: skip noisy AI/system noise only; other roles keep full logging.
      */
     private static function shouldStoreForActor(string $action, ?int $userId): bool
     {
@@ -56,7 +56,7 @@ class AuditHelper
             return true;
         }
 
-        return in_array($action, self::SUPER_ADMIN_STORED_ACTIONS, true);
+        return ! in_array($action, self::SUPER_ADMIN_SKIPPED_ACTIONS, true);
     }
 
     private static function redactSensitiveDescription(?string $description): ?string

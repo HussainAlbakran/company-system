@@ -27,13 +27,30 @@
 
                 <div class="form-grid">
                     <div>
-                        <label>{{ __('common.name') }}</label>
-                        <input type="text" name="name" value="{{ old('name') }}" required>
+                        <label for="user_name">{{ __('users.label_name') }}</label>
+                        <input
+                            type="text"
+                            id="user_name"
+                            name="name"
+                            value="{{ old('name') }}"
+                            placeholder="{{ __('users.placeholder_name') }}"
+                            autocomplete="name"
+                            required
+                        >
                     </div>
 
                     <div>
-                        <label>{{ __('common.email') }}</label>
-                        <input type="email" name="email" value="{{ old('email') }}" required>
+                        <label for="user_email">{{ __('users.label_email') }}</label>
+                        <input
+                            type="email"
+                            id="user_email"
+                            name="email"
+                            value="{{ old('email') }}"
+                            placeholder="{{ __('users.placeholder_email') }}"
+                            autocomplete="email"
+                            dir="ltr"
+                            required
+                        >
                     </div>
 
                     <div>

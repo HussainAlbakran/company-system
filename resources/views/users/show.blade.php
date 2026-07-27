@@ -9,8 +9,14 @@
 
     <div class="card">
         <div class="card-body">
-            <p><strong>{{ __('users.label_name') }}:</strong> {{ $user->name }}</p>
-            <p><strong>{{ __('users.label_email') }}:</strong> {{ $user->email }}</p>
+            <p>
+                <strong>{{ __('users.label_name') }}:</strong>
+                <span style="font-weight:700; color:#000000;">{{ $user->name }}</span>
+            </p>
+            <p>
+                <strong>{{ __('users.label_email') }}:</strong>
+                <span style="font-weight:600; color:#000000; direction:ltr; display:inline-block;">{{ $user->email }}</span>
+            </p>
             <p><strong>{{ __('users.label_role') }}:</strong> {{ $user->getRoleLabel() ?? '-' }}</p>
             <p><strong>{{ __('users.label_approval') }}:</strong>
                 @if($user->approval_status)

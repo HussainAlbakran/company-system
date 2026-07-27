@@ -34,11 +34,13 @@ class AuditLogController extends Controller
         }
 
         if ($request->filled('date_from')) {
-            $logsQuery->whereDate('created_at', '>=', $request->date_from);
+            $from = \Carbon\Carbon::parse($request->date_from, config('app.timezone'))->startOfDay();
+            $logsQuery->where('created_at', '>=', $from);
         }
 
         if ($request->filled('date_to')) {
-            $logsQuery->whereDate('created_at', '<=', $request->date_to);
+            $to = \Carbon\Carbon::parse($request->date_to, config('app.timezone'))->endOfDay();
+            $logsQuery->where('created_at', '<=', $to);
         }
 
         $logs = $logsQuery->paginate(20)->withQueryString();

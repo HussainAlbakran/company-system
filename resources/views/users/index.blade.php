@@ -36,11 +36,13 @@
 
                 <tr>
 
-                    <td style="font-weight:700; color:#f3f8ff;">
+                    <td style="font-weight:700; color:#000000; font-size:0.98rem;">
                         {{ $user->name }}
                     </td>
 
-                    <td style="color:#b7c9e4;">{{ $user->email }}</td>
+                    <td style="font-weight:600; color:#000000; font-size:0.95rem; direction:ltr; text-align:start; word-break:break-all;">
+                        {{ $user->email }}
+                    </td>
 
                     <td>
                         <span class="badge badge-blue">
