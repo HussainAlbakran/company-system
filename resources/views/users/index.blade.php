@@ -136,6 +136,12 @@
 
             </tbody>
         </table>
+
+        @if($users->hasPages())
+            <div style="margin-top: 18px;">
+                {{ $users->links() }}
+            </div>
+        @endif
     </div>
 </section>
 </div>

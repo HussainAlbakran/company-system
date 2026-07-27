@@ -24,7 +24,8 @@ class UserManagementController extends Controller
     {
         $this->authorizeUsers();
 
-        $users = User::latest()->paginate(15);
+        // Show more accounts to avoid "missing" results due to pagination.
+        $users = User::latest()->paginate(60);
 
         return view('users.index', compact('users'));
     }
