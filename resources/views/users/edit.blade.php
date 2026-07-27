@@ -84,7 +84,12 @@
 
                     <div class="col-md-12 mb-3">
                         <label class="form-label">{{ __('users.field_link_employee') }}</label>
-                        <select name="employee_id" class="form-select">
+                        <select
+                            name="employee_id"
+                            class="form-select"
+                            size="12"
+                            style="max-height: 360px; overflow-y: auto;"
+                        >
                             <option value="">{{ __('users.no_employee_link') }}</option>
                             @foreach($linkableEmployees ?? [] as $employee)
                                 <option value="{{ $employee->id }}" {{ (string) old('employee_id', optional($user->employee)->id) === (string) $employee->id ? 'selected' : '' }}>
