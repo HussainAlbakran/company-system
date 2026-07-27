@@ -14,6 +14,7 @@ use App\Models\EmployeePayrollAdjustment;
 use App\Models\EmployeeAdvancePayment;
 use App\Models\PayrollRegister;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -326,6 +327,44 @@ class EmployeeController extends Controller
             ->withQueryString();
 
         return view('employees.leave-register', compact('employees'));
+    }
+
+    /**
+     * Employees whose residency expires within 70 days (including already expired).
+     */
+    public function residencyExpiring()
+    {
+        $this->authorizeHR();
+
+        $today = Carbon::today(config('app.timezone'));
+        $windowDays = 70;
+        $limitDate = $today->copy()->addDays($windowDays);
+
+        $employees = Employee::query()
+            ->with('department:id,name')
+            ->whereNotNull('residency_expiry_date')
+            ->whereDate('residency_expiry_date', '<=', $limitDate->toDateString())
+            ->orderBy('residency_expiry_date')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Employee $employee) use ($today) {
+                $expiry = Carbon::parse($employee->residency_expiry_date)->startOfDay();
+                $daysRemaining = (int) $today->diffInDays($expiry, false);
+
+                $employee->residency_days_remaining = $daysRemaining;
+                $employee->residency_is_expired = $daysRemaining < 0;
+                $employee->residency_is_urgent = $daysRemaining <= 7;
+
+                return $employee;
+            })
+            ->filter(fn (Employee $employee) => (int) $employee->residency_days_remaining <= $windowDays)
+            ->values();
+
+        return view('employees.residency-expiring', [
+            'employees' => $employees,
+            'windowDays' => $windowDays,
+            'today' => $today,
+        ]);
     }
 
     public function approvePayrollRegister(Request $request)

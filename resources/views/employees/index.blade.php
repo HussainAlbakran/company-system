@@ -13,6 +13,9 @@
         </div>
 
         <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <a href="{{ route('employees.residency-expiring') }}" class="btn btn-danger">
+                {{ __('employees.residency_expiring_btn') }}
+            </a>
             <a href="{{ route('employees.leave-register') }}" class="btn btn-secondary">
                 {{ __('employees.leave_register_btn') }}
             </a>

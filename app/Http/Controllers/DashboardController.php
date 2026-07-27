@@ -205,8 +205,8 @@ class DashboardController extends Controller
             if ($user->canAccessHRModule()) {
                 $employeesCount = Employee::count();
                 $today = Carbon::today();
-                $after30 = Carbon::today()->addDays(30);
-                $residencyExpiringEmployees = Employee::whereBetween('residency_expiry_date', [$today, $after30])->get();
+                $after70 = Carbon::today()->addDays(70);
+                $residencyExpiringEmployees = Employee::whereBetween('residency_expiry_date', [$today, $after70])->get();
                 $expiredResidencyEmployees = Employee::where('residency_expiry_date', '<', $today)->get();
                 $hrKpi = [
                     'employees' => $employeesCount,
@@ -236,9 +236,9 @@ class DashboardController extends Controller
         if ($dashboardIsAdmin && $user && $user->canAccessHRModule()) {
 
             $today = Carbon::today();
-            $after30 = Carbon::today()->addDays(30);
+            $after70 = Carbon::today()->addDays(70);
 
-            $residencyExpiringEmployees = Employee::whereBetween('residency_expiry_date', [$today, $after30])->get();
+            $residencyExpiringEmployees = Employee::whereBetween('residency_expiry_date', [$today, $after70])->get();
             $expiredResidencyEmployees = Employee::where('residency_expiry_date', '<', $today)->get();
         }
 

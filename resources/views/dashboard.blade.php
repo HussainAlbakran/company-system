@@ -153,13 +153,13 @@
             </div>
         @endif
 
-        @if(auth()->user()->role == 'hr')
-            <div class="stat-card">
+        @if((auth()->user()->role == 'hr' || auth()->user()->canAccessHRModule()) && isset($expiredResidencyEmployees, $residencyExpiringEmployees))
+            <a href="{{ route('employees.residency-expiring') }}" class="stat-card" style="text-decoration:none; display:block;">
                 <div class="stat-label">{{ __('dashboard.residency_alerts') }}</div>
                 <div class="stat-value" style="color:#ccb0ff;">
                     {{ $expiredResidencyEmployees->count() + $residencyExpiringEmployees->count() }}
                 </div>
-            </div>
+            </a>
         @endif
     </div>
 
