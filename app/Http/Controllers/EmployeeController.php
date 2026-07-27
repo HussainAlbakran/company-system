@@ -367,6 +367,44 @@ class EmployeeController extends Controller
         ]);
     }
 
+    /**
+     * Employees whose contract ends within 70 days (including already expired).
+     */
+    public function contractsExpiring()
+    {
+        $this->authorizeHR();
+
+        $today = Carbon::today(config('app.timezone'));
+        $windowDays = 70;
+        $limitDate = $today->copy()->addDays($windowDays);
+
+        $employees = Employee::query()
+            ->with('department:id,name')
+            ->whereNotNull('contract_end_date')
+            ->whereDate('contract_end_date', '<=', $limitDate->toDateString())
+            ->orderBy('contract_end_date')
+            ->orderBy('name')
+            ->get()
+            ->map(function (Employee $employee) use ($today) {
+                $expiry = Carbon::parse($employee->contract_end_date)->startOfDay();
+                $daysRemaining = (int) $today->diffInDays($expiry, false);
+
+                $employee->contract_days_remaining = $daysRemaining;
+                $employee->contract_is_expired = $daysRemaining < 0;
+                $employee->contract_is_urgent = $daysRemaining <= 7;
+
+                return $employee;
+            })
+            ->filter(fn (Employee $employee) => (int) $employee->contract_days_remaining <= $windowDays)
+            ->values();
+
+        return view('employees.contracts-expiring', [
+            'employees' => $employees,
+            'windowDays' => $windowDays,
+            'today' => $today,
+        ]);
+    }
+
     public function approvePayrollRegister(Request $request)
     {
         $this->authorizeHR();

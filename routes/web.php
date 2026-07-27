@@ -158,6 +158,8 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
                 ->name('employees.leave-register');
             Route::get('/employees/residency-expiring', [EmployeeController::class, 'residencyExpiring'])
                 ->name('employees.residency-expiring');
+            Route::get('/employees/contracts-expiring', [EmployeeController::class, 'contractsExpiring'])
+                ->name('employees.contracts-expiring');
             Route::post('/employees/payroll-register/approve', [EmployeeController::class, 'approvePayrollRegister'])->name('employees.payroll-register.approve');
             Route::resource('employees', EmployeeController::class);
 

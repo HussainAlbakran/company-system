@@ -16,6 +16,9 @@
             <a href="{{ route('employees.residency-expiring') }}" class="btn btn-danger">
                 {{ __('employees.residency_expiring_btn') }}
             </a>
+            <a href="{{ route('employees.contracts-expiring') }}" class="btn btn-warning">
+                {{ __('employees.contracts_expiring_btn') }}
+            </a>
             <a href="{{ route('employees.leave-register') }}" class="btn btn-secondary">
                 {{ __('employees.leave_register_btn') }}
             </a>
