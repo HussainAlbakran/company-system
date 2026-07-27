@@ -7,6 +7,7 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use App\Helpers\AuditHelper;
 use App\Services\CashFlowLedgerService;
+use App\Services\PayrollCalculationService;
 use App\Models\Factory;
 use App\Models\EmployeeAsset;
 use App\Models\EmployeePayrollAdjustment;
@@ -41,7 +42,8 @@ class EmployeeController extends Controller
                     ->orWhere('email', 'like', '%' . $request->search . '%');
             })
             ->latest()
-            ->paginate(10);
+            ->paginate(60)
+            ->withQueryString();
 
         return view('employees.index', compact('employees'));
     }
@@ -248,7 +250,12 @@ class EmployeeController extends Controller
      */
     private function payrollRegisterViewData(PayrollRegister $payrollRegister): array
     {
-        $employees = Employee::latest()->get();
+        // Load every employee (no pagination) so payroll shows the full roster.
+        $employees = Employee::query()
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
+
         $currentMonth = (int) $payrollRegister->month;
         $currentYear = (int) $payrollRegister->year;
 
@@ -257,6 +264,18 @@ class EmployeeController extends Controller
             ->where('year', $currentYear)
             ->get()
             ->keyBy('employee_id');
+
+        $calculator = app(PayrollCalculationService::class);
+        $payrollRows = [];
+        foreach ($employees as $employee) {
+            $payrollRows[$employee->id] = $calculator->calculate(
+                $employee,
+                $adjustments->get($employee->id),
+                $currentMonth,
+                $currentYear,
+                (int) $payrollRegister->id
+            );
+        }
 
         $hasPendingRegister = PayrollRegister::query()->where('status', 'pending')->exists();
 
@@ -280,9 +299,11 @@ class EmployeeController extends Controller
             'currentYear',
             'adjustments',
             'hasPendingRegister',
-            'advancePayments'
+            'advancePayments',
+            'payrollRows'
         ), [
             'canEditPayroll' => $payrollRegister->isPending(),
+            'employeesCount' => $employees->count(),
         ]);
     }
 
@@ -301,7 +322,7 @@ class EmployeeController extends Controller
                 });
             })
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(60)
             ->withQueryString();
 
         return view('employees.leave-register', compact('employees'));

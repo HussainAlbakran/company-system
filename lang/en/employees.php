@@ -166,6 +166,8 @@ return [
     'payroll_adjustment_saved' => 'Employee payroll adjustment saved.',
     'payroll_cannot_edit_approved' => 'Cannot edit — register is already approved.',
     'payroll_edit_hint' => 'Edit overtime (hours), leave deduction (days), and other deductions, then click Save changes.',
+    'payroll_employees_count' => 'Employees on this payroll: :count',
+    'payroll_th_number' => '#',
     'abort_hr_only' => 'This page is available to system administrators, executive administration, and HR only.',
     'abort_unauthorized' => 'You are not authorized to access this page.',
     'account_role_forbidden' => 'This role cannot be created from the employees screen.',

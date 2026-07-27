@@ -166,6 +166,8 @@ return [
     'payroll_adjustment_saved' => 'تم حفظ حسابات المسير للموظف.',
     'payroll_cannot_edit_approved' => 'لا يمكن التعديل — المسير معتمد.',
     'payroll_edit_hint' => 'عدّل الإضافي (ساعات) وخصم الإجازات (أيام) والخصومات الأخرى ثم اضغط «حفظ التعديلات».',
+    'payroll_employees_count' => 'عدد الموظفين في المسير: :count',
+    'payroll_th_number' => 'م',
     'abort_hr_only' => 'هذه الصفحة متاحة لمدير النظام والإدارة العليا وموارد البشرية فقط.',
     'abort_unauthorized' => 'غير مصرّح لك بالوصول.',
     'account_role_forbidden' => 'لا يمكن إنشاء هذه الصلاحية من شاشة الموظفين.',
