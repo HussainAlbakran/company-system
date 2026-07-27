@@ -16,18 +16,6 @@
             <div class="absolute inset-0 bg-gradient-to-b from-[#020617]/70 via-[#0a1628]/60 to-[#050a14]/70"></div>
 
             <div class="relative z-10 mx-auto max-w-2xl text-center flex flex-col items-center space-y-6">
-                <div class="mx-auto mb-6 flex justify-center">
-                    @if ($logoUrl)
-                        <div class="flex h-[4.5rem] w-[4.5rem] sm:h-[5.25rem] sm:w-[5.25rem] items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/5 p-2 shadow-lg">
-                            <img src="{{ $logoUrl }}" class="h-full w-full object-contain scale-95" />
-                        </div>
-                    @else
-                        <div class="flex h-[4.5rem] w-[4.5rem] sm:h-[5.25rem] sm:w-[5.25rem] items-center justify-center rounded-[1.75rem] border border-white/15 bg-gradient-to-br from-blue-600/30 to-slate-900/90 shadow-2xl">
-                            <span class="text-2xl font-black text-blue-100">APC</span>
-                        </div>
-                    @endif
-                </div>
-
                 <p class="font-['Figtree',sans-serif] text-xs font-bold uppercase tracking-[0.35em] text-blue-300/90 sm:text-sm">
                     ADVANCE PRECAST COMPANY
                 </p>

@@ -24,7 +24,11 @@
         <div class="relative z-10 w-full max-w-sm">
             <div class="rounded-2xl border border-white/10 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-xl sm:p-7">
                 <div class="mb-8 flex justify-center">
-                    <img src="{{ asset('images/public/logo.png') }}" class="h-10 w-auto object-contain" alt="{{ __('auth.company_logo_alt') }}" />
+                    <img
+                        src="{{ asset('images/public/logo.png') }}"
+                        class="h-16 w-auto max-w-[240px] object-contain sm:h-[4.5rem]"
+                        alt="{{ __('auth.company_logo_alt') }}"
+                    />
                 </div>
 
                 <h1 class="mb-5 text-center text-lg font-bold text-white">{{ __('auth.login') }}</h1>
