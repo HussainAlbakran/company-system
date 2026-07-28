@@ -8,7 +8,7 @@
 >
     <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <a href="{{ url('/') }}" class="group flex min-w-0 flex-1 items-center gap-3 no-underline">
-            <span class="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-blue-600/25 to-slate-900 ring-1 ring-white/5">
+            <span class="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-blue-600/25 to-slate-900 ring-1 ring-white/5">
                 @if ($logoUrl)
                     <img src="{{ $logoUrl }}" alt="{{ __('شعار شركة التقدم للخرسانة الجاهزة') }}" class="h-full w-full object-contain p-1.5" />
                 @else
