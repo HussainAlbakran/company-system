@@ -169,7 +169,7 @@
                 <div class="mx-auto mt-12 grid max-w-2xl gap-3">
                     <x-public.contact-email-row label=" المبيعات" email="emad@atpc-sa.com" />
                     <x-public.contact-email-row label="المبيعات 1" email="Akram@atpc-sa.com" />
-                    <x-public.contact-email-row label="المبيعات 2" email="m-qqzzaz@atpc-sa.com" />
+                    <x-public.contact-email-row label="المبيعات 2" email="m.qazzaz@atpc-sa.com" />
                     <x-public.contact-email-row label="المبيعات 3" email="mishary@atpc-sa.com" />
                 </div>
 
