@@ -22,6 +22,9 @@
             <a href="{{ route('employees.leave-register') }}" class="btn btn-secondary">
                 {{ __('employees.leave_register_btn') }}
             </a>
+            <a href="{{ route('employees.salary-slip') }}" class="btn btn-primary">
+                {{ __('employees.salary_slip_btn') }}
+            </a>
             <a href="{{ route('employees.payroll-register') }}" class="btn btn-secondary">
                 {{ __('employees.payroll_register_btn') }}
             </a>

@@ -31,6 +31,7 @@ use App\Http\Controllers\ProductionEntryController;
 use App\Http\Controllers\ProductionOrderController;
 use App\Http\Controllers\ProductionSupplyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectReportController;
 use App\Http\Controllers\ProjectUpdateController;
 use App\Http\Controllers\PublicHomeController;
 use App\Http\Controllers\PurchaseController;
@@ -154,6 +155,8 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
                 ->name('employees.payroll-register.show');
             Route::get('/employees/payroll-register', [EmployeeController::class, 'payrollRegister'])
                 ->name('employees.payroll-register');
+            Route::get('/employees/salary-slip', [EmployeeController::class, 'salarySlip'])
+                ->name('employees.salary-slip');
             Route::get('/employees/leave-register', [EmployeeController::class, 'leaveRegister'])
                 ->name('employees.leave-register');
             Route::get('/employees/residency-expiring', [EmployeeController::class, 'residencyExpiring'])
@@ -350,6 +353,35 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
                 ->name('engineering-projects.updates.store');
             Route::delete('engineering-projects/{project}/updates/{update}', [ProjectUpdateController::class, 'destroy'])
                 ->name('engineering-projects.updates.destroy');
+        });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Project Reports
+        |--------------------------------------------------------------------------
+        */
+        Route::middleware('role:super_admin,admin')->group(function () {
+            Route::get('/project-reports/board', [ProjectReportController::class, 'board'])
+                ->name('project-reports.board');
+            Route::get('/project-reports/archive', [ProjectReportController::class, 'archive'])
+                ->name('project-reports.archive');
+            Route::get('/project-reports/project/{project}', [ProjectReportController::class, 'show'])
+                ->name('project-reports.show');
+            Route::get('/project-reports/project/{project}/material-requests/{materialRequest}/attachment', [ProjectReportController::class, 'downloadMaterialRequestAttachment'])
+                ->name('project-reports.material-attachment');
+            Route::post('/project-reports/project/{project}/complete', [ProjectReportController::class, 'complete'])
+                ->name('project-reports.complete');
+            Route::delete('/project-reports/{projectReport}', [ProjectReportController::class, 'destroy'])
+                ->name('project-reports.destroy');
+        });
+
+        Route::middleware('role:super_admin,admin,operations_manager,engineering_manager,engineer')->group(function () {
+            Route::get('/project-reports/create', [ProjectReportController::class, 'create'])
+                ->name('project-reports.create');
+            Route::post('/project-reports', [ProjectReportController::class, 'store'])
+                ->name('project-reports.store');
+            Route::get('/project-reports/{projectReport}/download', [ProjectReportController::class, 'download'])
+                ->name('project-reports.download');
         });
 
         /*

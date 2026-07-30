@@ -94,8 +94,6 @@ class SalesContractController extends Controller
             $contractFilePath = $request->file('contract_file')->store('contracts', 'public');
         }
 
-        $projectCode = 'PRJ-' . date('Y') . '-' . str_pad((Project::count() + 1), 4, '0', STR_PAD_LEFT);
-
         $startDate = $request->actual_start_date ?: $request->expected_start_date ?: now()->toDateString();
 
         $endDate = $request->expected_end_date
@@ -103,7 +101,6 @@ class SalesContractController extends Controller
 
         try {
             [$project, $contract] = DB::transaction(function () use (
-                $projectCode,
                 $request,
                 $startDate,
                 $endDate,
@@ -120,7 +117,7 @@ class SalesContractController extends Controller
                 $isGovernment
             ) {
                 $project = Project::create([
-                    'project_code' => $projectCode,
+                    'project_code' => Project::generateNextCode(),
                     'name' => $request->project_name,
                     'client_name' => $request->client_name,
                     'main_contractor' => $request->main_contractor,

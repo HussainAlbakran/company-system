@@ -63,6 +63,7 @@ class InstallationController extends Controller
         $project->update([
             'current_stage' => 'completed',
             'status' => 'completed',
+            'completed_at' => now(),
         ]);
 
         AuditLog::create([
@@ -70,7 +71,7 @@ class InstallationController extends Controller
             'action' => 'installation_completed',
             'model' => 'Project',
             'model_id' => $project->id,
-            'description' => 'تم إنهاء التركيبات وإغلاق المشروع',
+            'description' => 'تم إنهاء التركيبات وإغلاق المشروع وأرشفته ضمن المشاريع السابقة',
         ]);
 
         return redirect()->route('installations.index')->with('success', __('factory.flash_installations_project_completed'));

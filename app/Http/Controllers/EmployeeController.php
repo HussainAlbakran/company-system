@@ -106,6 +106,178 @@ class EmployeeController extends Controller
         return view('employees.payroll-registers.index', compact('registers'));
     }
 
+    /**
+     * Salary slip (كشف راتب): by year or last 12 paid periods from today, filterable by employee.
+     */
+    public function salarySlip(Request $request)
+    {
+        $this->authorizeHR();
+
+        $mode = $request->get('mode');
+        $today = now(config('app.timezone'));
+
+        $availableYears = PayrollRegister::query()
+            ->where('status', 'approved')
+            ->select('year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->map(fn ($y) => (int) $y)
+            ->values();
+
+        if ($availableYears->isEmpty()) {
+            $availableYears = collect([(int) $today->year]);
+        }
+
+        $selectedYear = $request->filled('year')
+            ? (int) $request->year
+            : (int) $availableYears->first();
+
+        $employeeList = Employee::query()
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get(['id', 'name', 'employee_number']);
+
+        $selectedEmployeeId = $request->filled('employee_id') ? (int) $request->employee_id : null;
+        $employeeQuery = trim((string) $request->get('employee_query', ''));
+
+        if (! $selectedEmployeeId && $employeeQuery !== '') {
+            $matched = $employeeList->first(function ($employee) use ($employeeQuery) {
+                return strcasecmp((string) $employee->name, $employeeQuery) === 0
+                    || stripos((string) $employee->name, $employeeQuery) !== false
+                    || (string) $employee->employee_number === $employeeQuery;
+            });
+            $selectedEmployeeId = $matched?->id;
+        }
+
+        $selectedEmployee = $selectedEmployeeId
+            ? $employeeList->firstWhere('id', $selectedEmployeeId)
+            : null;
+
+        $rows = [];
+        $yearLabel = (string) $selectedYear;
+        $fromDate = null;
+        $toDate = null;
+
+        if (in_array($mode, ['year', 'last_12'], true)) {
+            $registersQuery = PayrollRegister::query()
+                ->where('status', 'approved');
+
+            if ($mode === 'year') {
+                $registersQuery
+                    ->where('year', $selectedYear)
+                    ->orderBy('month')
+                    ->orderBy('id');
+                $registers = $registersQuery->get();
+                $yearLabel = (string) $selectedYear;
+            } else {
+                // Last 12 paid payrolls counting back from today.
+                $toDate = $today->copy()->startOfDay();
+                $fromDate = $today->copy()->subMonthsNoOverflow(11)->startOfMonth();
+
+                $registers = PayrollRegister::query()
+                    ->where('status', 'approved')
+                    ->where(function ($query) use ($today) {
+                        $query->where('year', '<', (int) $today->year)
+                            ->orWhere(function ($inner) use ($today) {
+                                $inner->where('year', (int) $today->year)
+                                    ->where('month', '<=', (int) $today->month);
+                            });
+                    })
+                    ->orderByDesc('year')
+                    ->orderByDesc('month')
+                    ->orderByDesc('id')
+                    ->limit(12)
+                    ->get()
+                    ->sortBy([
+                        ['year', 'asc'],
+                        ['month', 'asc'],
+                        ['id', 'asc'],
+                    ])
+                    ->values();
+
+                $yearsInScope = $registers->pluck('year')->unique()->sort()->values();
+                if ($yearsInScope->count() >= 2) {
+                    $yearLabel = $yearsInScope->first().'-'.$yearsInScope->last();
+                } elseif ($yearsInScope->count() === 1) {
+                    $yearLabel = (string) $yearsInScope->first();
+                } else {
+                    $startYear = (int) $fromDate->year;
+                    $endYear = (int) $toDate->year;
+                    $yearLabel = $startYear === $endYear
+                        ? (string) $startYear
+                        : $startYear.'-'.$endYear;
+                }
+            }
+
+            $employeesQuery = Employee::query()->orderBy('name')->orderBy('id');
+            if ($selectedEmployeeId) {
+                $employeesQuery->where('id', $selectedEmployeeId);
+            }
+            $employees = $employeesQuery->get();
+
+            $calculator = app(PayrollCalculationService::class);
+
+            foreach ($registers as $register) {
+                $month = (int) $register->month;
+                $year = (int) $register->year;
+                $paidAt = $register->approved_at
+                    ? $register->approved_at->timezone(config('app.timezone'))
+                    : null;
+
+                $adjustments = EmployeePayrollAdjustment::query()
+                    ->where('month', $month)
+                    ->where('year', $year)
+                    ->when($selectedEmployeeId, fn ($q) => $q->where('employee_id', $selectedEmployeeId))
+                    ->get()
+                    ->keyBy('employee_id');
+
+                foreach ($employees as $employee) {
+                    $calc = $calculator->calculate(
+                        $employee,
+                        $adjustments->get($employee->id),
+                        $month,
+                        $year,
+                        (int) $register->id
+                    );
+
+                    $deductions = (float) ($calc['leave_deduction'] ?? 0)
+                        + (float) ($calc['other_deduction'] ?? 0);
+
+                    $rows[] = [
+                        'employee' => $employee,
+                        'register' => $register,
+                        'period_label' => $register->periodLabel(),
+                        'period_date' => sprintf('%04d-%02d', $year, $month),
+                        'paid_at' => $paidAt ? $paidAt->format('Y-m-d') : '-',
+                        'base_salary' => (float) ($calc['base_salary'] ?? 0),
+                        'housing' => (float) ($calc['housing'] ?? 0),
+                        'transport' => (float) ($calc['transport'] ?? 0),
+                        'other_allowances' => (float) ($calc['other_allowances'] ?? 0),
+                        'deductions' => round($deductions, 2),
+                        'advance' => (float) ($calc['advance_deduction'] ?? 0),
+                        'total' => (float) ($calc['final_salary'] ?? 0),
+                    ];
+                }
+            }
+        }
+
+        return view('employees.salary-slip', [
+            'mode' => $mode,
+            'selectedYear' => $selectedYear,
+            'availableYears' => $availableYears,
+            'printDate' => $today,
+            'yearLabel' => $yearLabel,
+            'rows' => $rows,
+            'employeeList' => $employeeList,
+            'selectedEmployee' => $selectedEmployee,
+            'selectedEmployeeId' => $selectedEmployeeId,
+            'employeeQuery' => $employeeQuery,
+            'fromDate' => $fromDate,
+            'toDate' => $toDate,
+        ]);
+    }
+
     public function showPayrollRegister(PayrollRegister $payrollRegister)
     {
         $this->authorizeHR();

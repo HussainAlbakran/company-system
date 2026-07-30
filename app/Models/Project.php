@@ -24,6 +24,7 @@ class Project extends Model
         'project_value',
         'expenses',
         'status',
+        'completed_at',
         'project_pdf',
         'current_stage',
         'notes',
@@ -36,6 +37,7 @@ class Project extends Model
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
+        'completed_at' => 'datetime',
         'progress_percentage' => 'decimal:2',
         'project_value' => 'decimal:2',
         'expenses' => 'decimal:2',
@@ -81,6 +83,62 @@ class Project extends Model
     public function updates()
     {
         return $this->hasMany(ProjectUpdate::class);
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(ProjectReport::class);
+    }
+
+    /**
+     * Next project code for the given year: APC-2026-0001 (resets each year).
+     */
+    public static function generateNextCode(?int $year = null): string
+    {
+        $year = $year ?? (int) date('Y');
+        $prefix = 'APC-'.$year.'-';
+
+        $lastCode = static::query()
+            ->where('project_code', 'like', $prefix.'%')
+            ->orderByDesc('project_code')
+            ->lockForUpdate()
+            ->value('project_code');
+
+        $next = 1;
+        if (is_string($lastCode) && preg_match('/^APC-\d{4}-(\d+)$/', $lastCode, $matches)) {
+            $next = ((int) $matches[1]) + 1;
+        }
+
+        return $prefix.str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->completed_at !== null
+            || $this->status === 'completed'
+            || $this->current_stage === 'completed';
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where(function ($inner) {
+            $inner->whereNull('completed_at')
+                ->where(function ($status) {
+                    $status->whereNull('status')->orWhere('status', '!=', 'completed');
+                })
+                ->where(function ($stage) {
+                    $stage->whereNull('current_stage')->orWhere('current_stage', '!=', 'completed');
+                });
+        });
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->where(function ($inner) {
+            $inner->whereNotNull('completed_at')
+                ->orWhere('status', 'completed')
+                ->orWhere('current_stage', 'completed');
+        });
     }
 
     /*

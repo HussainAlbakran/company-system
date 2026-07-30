@@ -35,6 +35,28 @@
             </a>
         @endif
 
+        @if(auth()->user()->canViewProjectReportsBoard())
+            <a href="{{ route('project-reports.board') }}"
+               class="nav-link {{ request()->routeIs('project-reports.board') || request()->routeIs('project-reports.show') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.project_reports') }}</span>
+            </a>
+
+            <a href="{{ route('project-reports.archive') }}"
+               class="nav-link {{ request()->routeIs('project-reports.archive') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.project_reports_archive') }}</span>
+            </a>
+        @endif
+
+        @if(auth()->user()->canSubmitProjectReports())
+            <a href="{{ route('project-reports.create') }}"
+               class="nav-link {{ request()->routeIs('project-reports.create') || request()->routeIs('project-reports.store') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.project_reports_register') }}</span>
+            </a>
+        @endif
+
         @if(auth()->user()->canManageProduction())
             <a href="{{ route('factory.index') }}"
                class="nav-link {{ request()->routeIs('factory.*') || request()->routeIs('factory.installation-requests.*') || request()->routeIs('production-orders.*') || request()->routeIs('production-entries.*') || request()->routeIs('production-supplies.*') ? 'active' : '' }}">

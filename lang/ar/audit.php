@@ -418,6 +418,7 @@ return [
         'InstallationFactoryRequest' => 'طلب تركيب للمصنع',
         'ArchitectMaterialRequest' => 'طلب مواد معماري',
         'ProjectUpdate' => 'تحديث مشروع',
+        'ProjectReport' => 'تقرير مشروع',
         'WarehouseItem' => 'صنف مستودع',
         'http_request' => 'طلب صفحة / عملية',
     ],

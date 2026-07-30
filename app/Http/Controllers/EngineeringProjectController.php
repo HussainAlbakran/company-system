@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class EngineeringProjectController extends Controller
@@ -168,23 +169,26 @@ class EngineeringProjectController extends Controller
             );
         }
 
-        $project = Project::create([
-            'department_id' => $departmentId,
-            'responsible_employee_id' => $request->responsible_employee_id,
-            'name' => $request->name,
-            'description' => $request->description,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'progress_percentage' => $request->progress_percentage,
-            'project_value' => $financials['project_value'],
-            'expenses' => $financials['expenses'],
-            'status' => $request->status ?: 'ongoing',
-            'project_pdf' => $pdfPath,
-            'notes' => $request->notes,
-            'client_user_id' => null,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
-        ]);
+        $project = DB::transaction(function () use ($request, $departmentId, $financials, $pdfPath) {
+            return Project::create([
+                'project_code' => Project::generateNextCode(),
+                'department_id' => $departmentId,
+                'responsible_employee_id' => $request->responsible_employee_id,
+                'name' => $request->name,
+                'description' => $request->description,
+                'start_date' => $request->start_date,
+                'end_date' => $request->end_date,
+                'progress_percentage' => $request->progress_percentage,
+                'project_value' => $financials['project_value'],
+                'expenses' => $financials['expenses'],
+                'status' => $request->status ?: 'ongoing',
+                'project_pdf' => $pdfPath,
+                'notes' => $request->notes,
+                'client_user_id' => null,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
+        });
 
         AuditHelper::log(
             'create',

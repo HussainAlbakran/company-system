@@ -254,6 +254,33 @@ class User extends Authenticatable implements FilamentUser
             || $this->hasAnyRole(['engineer']); // legacy compatibility
     }
 
+    /**
+     * تقارير المشاريع + المشاريع السابقة: الإدارة العليا ومدير النظام فقط.
+     */
+    public function canViewProjectReportsBoard(): bool
+    {
+        return $this->hasAnyRole([self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN]);
+    }
+
+    /**
+     * تسجيل تقارير المشاريع: الإدارة العليا، مدير النظام، مدير الهندسة، المهندس، مدير العمليات.
+     */
+    public function canSubmitProjectReports(): bool
+    {
+        return $this->hasAnyRole([
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ADMIN,
+            'operations_manager',
+            'engineering_manager',
+            'engineer',
+        ]);
+    }
+
+    public function canAccessProjectReportsModule(): bool
+    {
+        return $this->canViewProjectReportsBoard() || $this->canSubmitProjectReports();
+    }
+
     public function canAccessProcurementModule(): bool
     {
         if ($this->isFinance()) {

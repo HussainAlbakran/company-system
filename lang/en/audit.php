@@ -241,6 +241,7 @@ return [
         'InstallationFactoryRequest' => 'Installation factory request',
         'ArchitectMaterialRequest' => 'Architect material request',
         'ProjectUpdate' => 'Project update',
+        'ProjectReport' => 'Project report',
         'WarehouseItem' => 'Warehouse item',
         'http_request' => 'Page / request',
     ],
