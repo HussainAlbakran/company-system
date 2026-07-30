@@ -9,6 +9,8 @@ class ProjectReport extends Model
 {
     public const TYPE_PROJECT = 'project';
 
+    public const TYPE_WEEKLY = 'weekly';
+
     public const TYPE_FINANCIAL_DISTRESS = 'financial_distress';
 
     public const TYPE_SITE_ACCIDENT = 'site_accident';
@@ -16,6 +18,7 @@ class ProjectReport extends Model
     public const TYPE_DELAY = 'delay';
 
     public const TYPES = [
+        self::TYPE_WEEKLY,
         self::TYPE_PROJECT,
         self::TYPE_FINANCIAL_DISTRESS,
         self::TYPE_SITE_ACCIDENT,

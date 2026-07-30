@@ -41,6 +41,7 @@ return [
     'delete' => 'حذف',
     'confirm_delete' => 'حذف هذا التقرير؟',
     'section_project' => 'تقارير المشاريع',
+    'section_weekly' => 'التقارير الأسبوعية',
     'section_financial' => 'تقارير تعثر مالي',
     'section_accident' => 'تقارير حادث في الموقع',
     'section_delay' => 'تقارير تأخير',
@@ -100,6 +101,7 @@ return [
     'error_upload_failed' => 'فشل رفع الملف. أعد المحاولة بملف أصغر أو نوع مدعوم.',
     'error_store_failed' => 'تعذّر حفظ الملف على الخادم. أعد المحاولة.',
     'types' => [
+        'weekly' => 'تقرير أسبوعي',
         'project' => 'تقرير مشروع',
         'financial_distress' => 'تقرير تعثر مالي',
         'site_accident' => 'تقرير حادث في الموقع',

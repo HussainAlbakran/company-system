@@ -100,17 +100,52 @@
         @if(isset($internalNotifications) && $internalNotifications->isNotEmpty())
             <div class="panel-grid-2">
                 @foreach($internalNotifications as $notification)
-                    <article class="detail-box">
-                        <div style="font-weight:700;">{{ $notification->title }}</div>
+                    <article class="detail-box" @if(($notification->type ?? '') === 'weekly_project_report_missing') style="border-color: rgba(220, 38, 38, 0.65); background: #fef2f2;" @endif>
+                        <div style="font-weight:700; color:#000;">{{ $notification->title }}</div>
                         @if(filled($notification->message ?? null))
-                            <div style="margin-top:6px;">{{ $notification->message }}</div>
+                            <div style="margin-top:6px; color:#000;">{{ $notification->message }}</div>
                         @endif
                         <div class="panel-subtitle" style="margin-top:6px;">{{ $notification->created_at?->diffForHumans() }}</div>
+                        @if(($notification->type ?? '') === 'weekly_project_report_missing' && !empty($notification->reference_id) && auth()->user()->canViewProjectReportsBoard())
+                            <div class="actions-row" style="margin-top:8px;">
+                                <a href="{{ route('project-reports.show', $notification->reference_id) }}" class="btn btn-danger btn-sm">
+                                    {{ __('dashboard.weekly_report_open') }}
+                                </a>
+                            </div>
+                        @endif
                     </article>
                 @endforeach
             </div>
         @endif
     </section>
+
+    @if(!empty($dashboardIsAdmin) && isset($weeklyMissingProjects) && $weeklyMissingProjects->isNotEmpty())
+        <section class="dashboard-panel" style="border-color: rgba(220, 38, 38, 0.70); background: #fff5f5;">
+            <div class="panel-head">
+                <div>
+                    <h3 class="panel-title" style="color:#991b1b;">{{ __('dashboard.weekly_report_alerts_title') }}</h3>
+                    <p class="panel-subtitle" style="color:#7f1d1d;">{{ __('dashboard.weekly_report_alerts_sub') }}</p>
+                </div>
+                <span class="badge badge-red">{{ __('dashboard.weekly_report_alerts_badge') }}</span>
+            </div>
+            <div class="stats-grid" style="margin-top:12px;">
+                @foreach($weeklyMissingProjects as $missingProject)
+                    <div class="stat-card" style="border-color: rgba(220, 38, 38, 0.75); background:#fef2f2;">
+                        <div class="stat-label" style="color:#991b1b;">{{ $missingProject->project_code ?: __('dashboard.weekly_report_project') }}</div>
+                        <div class="stat-value" style="font-size:16px; color:#7f1d1d;">{{ $missingProject->name }}</div>
+                        <div class="stat-note" style="color:#991b1b; font-weight:600;">
+                            {{ __('dashboard.weekly_report_missing_msg', ['project' => $missingProject->name]) }}
+                        </div>
+                        <div style="margin-top:10px;">
+                            <a href="{{ route('project-reports.show', $missingProject) }}" class="btn btn-danger btn-sm">
+                                {{ __('dashboard.weekly_report_open') }}
+                            </a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     <div class="stats-grid" style="margin-bottom:8px;">
         <div class="stat-card" style="border-color: rgba(59,130,246,.48);">

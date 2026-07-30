@@ -41,6 +41,7 @@ return [
     'delete' => 'Delete',
     'confirm_delete' => 'Delete this report?',
     'section_project' => 'Project reports',
+    'section_weekly' => 'Weekly reports',
     'section_financial' => 'Financial distress reports',
     'section_accident' => 'Site accident reports',
     'section_delay' => 'Delay reports',
@@ -100,6 +101,7 @@ return [
     'error_upload_failed' => 'File upload failed. Try again with a smaller or supported file.',
     'error_store_failed' => 'Could not save the file on the server. Please try again.',
     'types' => [
+        'weekly' => 'Weekly report',
         'project' => 'Project report',
         'financial_distress' => 'Financial distress report',
         'site_accident' => 'Site accident report',

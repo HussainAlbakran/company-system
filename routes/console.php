@@ -15,3 +15,8 @@ Schedule::command('alerts:send-residency-now')
 Schedule::command('alerts:send-passport-now')
     ->dailyAt('08:05')
     ->withoutOverlapping();
+
+// Thursday 12:00 (Asia/Riyadh): weekly project report missing alerts.
+Schedule::command('alerts:weekly-project-reports')
+    ->weeklyOn(4, '12:00')
+    ->withoutOverlapping();

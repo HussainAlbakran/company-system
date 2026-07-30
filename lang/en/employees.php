@@ -269,5 +269,8 @@ return [
     'salary_slip_th_total' => 'Total',
     'salary_slip_th_paid_at' => 'Payment date',
     'salary_slip_empty' => 'No approved salaries for this option.',
+    'salary_slip_sign_hr' => 'Prepared by HR',
+    'salary_slip_sign_mgmt' => 'Management approval',
+    'salary_slip_sign_stamp' => 'Company stamp',
     'company_legal_name' => 'Advance Precast Company',
 ];

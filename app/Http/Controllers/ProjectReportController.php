@@ -415,6 +415,7 @@ class ProjectReportController extends Controller
         return view('project-reports.show', [
             'project' => $project,
             'projectReports' => $reports->get(ProjectReport::TYPE_PROJECT, collect()),
+            'weeklyReports' => $reports->get(ProjectReport::TYPE_WEEKLY, collect()),
             'financialReports' => $reports->get(ProjectReport::TYPE_FINANCIAL_DISTRESS, collect()),
             'accidentReports' => $reports->get(ProjectReport::TYPE_SITE_ACCIDENT, collect()),
             'delayReports' => $reports->get(ProjectReport::TYPE_DELAY, collect()),

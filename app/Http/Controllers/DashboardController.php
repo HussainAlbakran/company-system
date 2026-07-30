@@ -86,6 +86,7 @@ class DashboardController extends Controller
                 'hrKpi' => null,
                 'incomingRequestsItems' => $incomingPayload['items'],
                 'incomingRequestsCount' => $incomingPayload['count'],
+                'weeklyMissingProjects' => collect(),
             ]);
         }
 
@@ -109,6 +110,7 @@ class DashboardController extends Controller
         $passportExpiringEmployees = collect();
         $expiredPassportEmployees = collect();
         $internalNotifications = collect();
+        $weeklyMissingProjects = collect();
 
         $adminOverviewTotalProjects = 0;
         $adminOverviewTotalClients = 0;
@@ -164,6 +166,9 @@ class DashboardController extends Controller
 
             $delayedProjectsCount = $adminProjects->where('is_delayed', true)->count();
             $endingSoonProjectsCount = $adminProjects->where('is_ending_soon', true)->count();
+
+            $weeklyMissingProjects = app(\App\Services\WeeklyProjectReportAlertService::class)
+                ->missingProjects();
 
             $architectProjectsCount = Project::where('current_stage', 'architect')->count();
             $productionOrdersCount = ProductionOrder::count();
@@ -268,6 +273,7 @@ class DashboardController extends Controller
             'currentProjectsExpenses',
             'delayedProjectsCount',
             'endingSoonProjectsCount',
+            'weeklyMissingProjects',
             'adminProjects',
 
             'architectProjectsCount',

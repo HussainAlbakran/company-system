@@ -269,6 +269,9 @@ return [
     'salary_slip_th_total' => 'الإجمالي',
     'salary_slip_th_paid_at' => 'تاريخ الصرف',
     'salary_slip_empty' => 'لا توجد رواتب معتمدة ضمن هذا الخيار.',
+    'salary_slip_sign_hr' => 'إعداد الموارد البشرية',
+    'salary_slip_sign_mgmt' => 'اعتماد الإدارة',
+    'salary_slip_sign_stamp' => 'ختم الشركة',
     'company_legal_name' => 'شركة التقدم للخرسانة الجاهزة',
 ];
 

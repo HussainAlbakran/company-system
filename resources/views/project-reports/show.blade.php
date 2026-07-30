@@ -14,6 +14,7 @@
     };
 
     $reportSections = [
+        ['title' => __('project_reports.section_weekly'), 'rows' => $weeklyReports ?? collect()],
         ['title' => __('project_reports.section_project'), 'rows' => $projectReports],
         ['title' => __('project_reports.section_financial'), 'rows' => $financialReports],
         ['title' => __('project_reports.section_accident'), 'rows' => $accidentReports],
