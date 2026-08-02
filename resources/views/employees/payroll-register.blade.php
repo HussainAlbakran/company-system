@@ -236,6 +236,7 @@
     $totalOvertime = 0;
     $totalLeaveDeduction = 0;
     $totalOtherDeduction = 0;
+    $totalInsuranceDeduction = 0;
     $totalAdvanceDeduction = 0;
     $totalPayroll = 0;
 @endphp
@@ -338,6 +339,7 @@
                                     <th>{{ __('employees.payroll_th_overtime') }}</th>
                                     <th>{{ __('employees.payroll_th_leave_deduction') }}</th>
                                     <th>{{ __('employees.payroll_th_other_deduction') }}</th>
+                                    <th>{{ __('employees.payroll_th_insurance_deduction') }}</th>
                                     <th>{{ __('employees.payroll_th_advance_deduction') }}</th>
                                     <th>{{ __('employees.payroll_th_total') }}</th>
                                     <th>{{ __('employees.payroll_th_notes') }}</th>
@@ -356,6 +358,7 @@
                                             'overtime_amount' => 0,
                                             'leave_deduction' => 0,
                                             'other_deduction' => 0,
+                                            'insurance_deduction' => 0,
                                             'advance_deduction' => 0,
                                             'final_salary' => 0,
                                         ];
@@ -366,6 +369,7 @@
                                         $overtime = $payrollRow['overtime_amount'];
                                         $leaveDeduction = $payrollRow['leave_deduction'];
                                         $otherDeduction = $payrollRow['other_deduction'];
+                                        $insuranceDeduction = $payrollRow['insurance_deduction'] ?? 0;
                                         $advanceDeduction = $payrollRow['advance_deduction'];
                                         $rowTotal = $payrollRow['final_salary'];
 
@@ -376,6 +380,7 @@
                                         $totalOvertime += $overtime;
                                         $totalLeaveDeduction += $leaveDeduction;
                                         $totalOtherDeduction += $otherDeduction;
+                                        $totalInsuranceDeduction = ($totalInsuranceDeduction ?? 0) + $insuranceDeduction;
                                         $totalAdvanceDeduction = ($totalAdvanceDeduction ?? 0) + $advanceDeduction;
                                         $totalPayroll += $rowTotal;
                                     @endphp
@@ -421,6 +426,7 @@
                                                 {{ number_format($otherDeduction, 2) }}
                                             @endif
                                         </td>
+                                        <td>{{ number_format($insuranceDeduction, 2) }}</td>
                                         <td>{{ number_format($advanceDeduction, 2) }}</td>
                                         <td>{{ number_format($rowTotal, 2) }}</td>
                                         <td>
@@ -451,6 +457,7 @@
                                 <th>{{ __('employees.payroll_th_overtime') }}</th>
                                 <th>{{ __('employees.payroll_th_leave_deduction') }}</th>
                                 <th>{{ __('employees.payroll_th_other_deduction') }}</th>
+                                <th>{{ __('employees.payroll_th_insurance_deduction') }}</th>
                                 <th>{{ __('employees.payroll_th_advance_deduction') }}</th>
                                 <th>{{ __('employees.payroll_th_total') }}</th>
                                 <th>{{ __('employees.payroll_th_notes') }}</th>
@@ -458,7 +465,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="12">{{ __('employees.payroll_empty_employees') }}</td>
+                                <td colspan="13">{{ __('employees.payroll_empty_employees') }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -467,7 +474,7 @@
 
             @php
                 $totalAllowances = $totalHousing + $totalTransport + $totalOtherAllowances;
-                $totalDeductions = $totalLeaveDeduction + $totalOtherDeduction + $totalAdvanceDeduction;
+                $totalDeductions = $totalLeaveDeduction + $totalOtherDeduction + $totalInsuranceDeduction + $totalAdvanceDeduction;
             @endphp
 
             <div class="summary-box">

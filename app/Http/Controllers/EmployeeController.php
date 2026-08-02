@@ -74,10 +74,12 @@ class EmployeeController extends Controller
             return redirect()->route('employees.payroll-register.show', $pending);
         }
 
+        $period = $this->resolvePayrollStartPeriod();
+
         $register = PayrollRegister::firstOrCreate(
             [
-                'month' => now()->month,
-                'year' => now()->year,
+                'month' => $period['month'],
+                'year' => $period['year'],
             ],
             [
                 'status' => 'pending',
@@ -242,7 +244,8 @@ class EmployeeController extends Controller
                     );
 
                     $deductions = (float) ($calc['leave_deduction'] ?? 0)
-                        + (float) ($calc['other_deduction'] ?? 0);
+                        + (float) ($calc['other_deduction'] ?? 0)
+                        + (float) ($calc['insurance_deduction'] ?? 0);
 
                     $rows[] = [
                         'employee' => $employee,
@@ -256,6 +259,7 @@ class EmployeeController extends Controller
                         'other_allowances' => (float) ($calc['other_allowances'] ?? 0),
                         'deductions' => round($deductions, 2),
                         'advance' => (float) ($calc['advance_deduction'] ?? 0),
+                        'insurance' => (float) ($calc['insurance_deduction'] ?? 0),
                         'total' => (float) ($calc['final_salary'] ?? 0),
                     ];
                 }
@@ -308,11 +312,7 @@ class EmployeeController extends Controller
             ->orderByDesc('month')
             ->first();
 
-        if ($latest) {
-            $period = PayrollRegister::nextPeriodAfter((int) $latest->month, (int) $latest->year);
-        } else {
-            $period = ['month' => now()->month, 'year' => now()->year];
-        }
+        $period = $this->resolvePayrollStartPeriod($latest);
 
         $register = PayrollRegister::firstOrCreate(
             [
@@ -338,6 +338,43 @@ class EmployeeController extends Controller
     }
 
     /**
+     * Payroll cycle starts from August 2026.
+     *
+     * @return array{month: int, year: int}
+     */
+    private function resolvePayrollStartPeriod(?PayrollRegister $latest = null): array
+    {
+        $cycleStart = ['month' => 8, 'year' => 2026];
+
+        if (! $latest) {
+            $latest = PayrollRegister::query()
+                ->orderByDesc('year')
+                ->orderByDesc('month')
+                ->first();
+        }
+
+        if (! $latest) {
+            return $cycleStart;
+        }
+
+        $latestBeforeCycle = ((int) $latest->year < 2026)
+            || ((int) $latest->year === 2026 && (int) $latest->month < 8);
+
+        if ($latestBeforeCycle) {
+            return $cycleStart;
+        }
+
+        if ($latest->isPending()) {
+            return [
+                'month' => (int) $latest->month,
+                'year' => (int) $latest->year,
+            ];
+        }
+
+        return PayrollRegister::nextPeriodAfter((int) $latest->month, (int) $latest->year);
+    }
+
+    /**
      * @return array{month: int, year: int}
      */
     private function payrollEditPeriod(): array
@@ -355,10 +392,7 @@ class EmployeeController extends Controller
             ];
         }
 
-        return [
-            'month' => (int) now()->month,
-            'year' => (int) now()->year,
-        ];
+        return $this->resolvePayrollStartPeriod();
     }
 
     public function updatePayrollRegisterAdjustments(Request $request, PayrollRegister $payrollRegister)
@@ -648,6 +682,7 @@ class EmployeeController extends Controller
             'risk_allowance' => 'nullable|numeric',
             'transfer_allowance' => 'nullable|numeric',
             'overtime_allowance' => 'nullable|numeric',
+            'insurance_deduction_percent' => 'nullable|numeric|min:0|max:100',
             'status' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
             'factory_id' => 'nullable|exists:factories,id',
@@ -710,6 +745,7 @@ class EmployeeController extends Controller
             'risk_allowance',
             'transfer_allowance',
             'overtime_allowance',
+            'insurance_deduction_percent',
         ];
 
         foreach ($allowanceFields as $field) {
@@ -839,6 +875,7 @@ class EmployeeController extends Controller
             'risk_allowance' => 'nullable|numeric',
             'transfer_allowance' => 'nullable|numeric',
             'overtime_allowance' => 'nullable|numeric',
+            'insurance_deduction_percent' => 'nullable|numeric|min:0|max:100',
             'status' => 'required|string|max:255',
             'department_id' => 'nullable|exists:departments,id',
             'factory_id' => 'nullable|exists:factories,id',
@@ -861,6 +898,7 @@ class EmployeeController extends Controller
             'risk_allowance',
             'transfer_allowance',
             'overtime_allowance',
+            'insurance_deduction_percent',
         ];
 
         foreach ($allowanceFields as $field) {

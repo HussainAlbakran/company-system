@@ -132,6 +132,12 @@
                 </div>
 
                 <div class="form-group">
+                    <label>{{ __('employees.field_insurance_deduction_percent') }}</label>
+                    <input type="number" step="0.01" min="0" max="100" name="insurance_deduction_percent" value="{{ old('insurance_deduction_percent', 0) }}">
+                    <small class="text-muted">{{ __('employees.field_insurance_deduction_hint') }}</small>
+                </div>
+
+                <div class="form-group">
                     <label>{{ __('employees.status') }}</label>
                     <select name="status" required>
                         <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>{{ __('employees.status_active') }}</option>

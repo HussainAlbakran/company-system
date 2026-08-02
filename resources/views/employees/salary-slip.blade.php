@@ -628,6 +628,7 @@
                                     <th>{{ __('employees.salary_slip_th_transport') }}</th>
                                     <th>{{ __('employees.salary_slip_th_other_allowances') }}</th>
                                     <th>{{ __('employees.salary_slip_th_deductions') }}</th>
+                                    <th>{{ __('employees.payroll_th_insurance_deduction') }}</th>
                                     <th>{{ __('employees.salary_slip_th_advance') }}</th>
                                     <th>{{ __('employees.salary_slip_th_total') }}</th>
                                     <th>{{ __('employees.salary_slip_th_paid_at') }}</th>
@@ -645,7 +646,8 @@
                                         <td>{{ number_format($row['housing'], 2) }}</td>
                                         <td>{{ number_format($row['transport'], 2) }}</td>
                                         <td>{{ number_format($row['other_allowances'], 2) }}</td>
-                                        <td>{{ number_format($row['deductions'], 2) }}</td>
+                                        <td>{{ number_format(max(0, $row['deductions'] - ($row['insurance'] ?? 0)), 2) }}</td>
+                                        <td>{{ number_format($row['insurance'] ?? 0, 2) }}</td>
                                         <td>{{ number_format($row['advance'], 2) }}</td>
                                         <td class="total-cell">{{ number_format($row['total'], 2) }}</td>
                                         <td>{{ $row['paid_at'] }}</td>
@@ -665,6 +667,7 @@
                                 <th>{{ __('employees.salary_slip_th_transport') }}</th>
                                 <th>{{ __('employees.salary_slip_th_other_allowances') }}</th>
                                 <th>{{ __('employees.salary_slip_th_deductions') }}</th>
+                                <th>{{ __('employees.payroll_th_insurance_deduction') }}</th>
                                 <th>{{ __('employees.salary_slip_th_advance') }}</th>
                                 <th>{{ __('employees.salary_slip_th_total') }}</th>
                                 <th>{{ __('employees.salary_slip_th_paid_at') }}</th>
@@ -672,7 +675,7 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td colspan="10">{{ __('employees.salary_slip_empty') }}</td>
+                                <td colspan="11">{{ __('employees.salary_slip_empty') }}</td>
                             </tr>
                         </tbody>
                     </table>

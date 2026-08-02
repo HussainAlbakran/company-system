@@ -216,6 +216,11 @@
             </div>
 
             <div class="detail-box summary-box">
+                <span class="summary-label">{{ __('employees.field_insurance_deduction_percent') }}</span>
+                <div class="summary-value">{{ number_format((float) ($employee->insurance_deduction_percent ?? 0), 2) }}%</div>
+            </div>
+
+            <div class="detail-box summary-box">
                 <span class="summary-label">{{ __('employees.label_passport') }}</span>
                 <div class="summary-value">{{ $employee->passport_number ?? '-' }}</div>
             </div>

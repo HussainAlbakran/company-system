@@ -22,6 +22,8 @@ class PayrollCalculationService
      *     overtime_amount: float,
      *     leave_deduction: float,
      *     other_deduction: float,
+     *     insurance_percent: float,
+     *     insurance_deduction: float,
      *     advance_deduction: float,
      *     deductions_total: float,
      *     gross: float,
@@ -54,6 +56,9 @@ class PayrollCalculationService
         $dailyRate = $base > 0 ? $base / 30 : 0;
         $leaveDeduction = $leaveDeductionDays * $dailyRate;
 
+        $insurancePercent = max(0, min(100, (float) ($employee->insurance_deduction_percent ?? 0)));
+        $insuranceDeduction = round($base * ($insurancePercent / 100), 2);
+
         $advanceDeduction = $this->advancePayroll->deductionForPayrollRegister(
             $employee,
             $month,
@@ -62,7 +67,7 @@ class PayrollCalculationService
         );
 
         $gross = $base + $allowancesTotal + $overtimeAmount;
-        $deductionsTotal = $leaveDeduction + $otherDeduction + $advanceDeduction;
+        $deductionsTotal = $leaveDeduction + $otherDeduction + $insuranceDeduction + $advanceDeduction;
         $finalSalary = round($gross - $deductionsTotal, 2);
 
         return [
@@ -75,6 +80,8 @@ class PayrollCalculationService
             'overtime_amount' => round($overtimeAmount, 2),
             'leave_deduction' => round($leaveDeduction, 2),
             'other_deduction' => round($otherDeduction, 2),
+            'insurance_percent' => round($insurancePercent, 2),
+            'insurance_deduction' => $insuranceDeduction,
             'advance_deduction' => round($advanceDeduction, 2),
             'deductions_total' => round($deductionsTotal, 2),
             'gross' => round($gross, 2),

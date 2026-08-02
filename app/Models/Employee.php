@@ -23,6 +23,7 @@ class Employee extends Model
         'risk_allowance',
         'transfer_allowance',
         'overtime_allowance',
+        'insurance_deduction_percent',
         'status',
         'department_id',
         'factory_id',
@@ -53,6 +54,7 @@ class Employee extends Model
         'risk_allowance' => 'decimal:2',
         'transfer_allowance' => 'decimal:2',
         'overtime_allowance' => 'decimal:2',
+        'insurance_deduction_percent' => 'decimal:2',
         'leave_balance' => 'integer',
     ];
 
