@@ -519,7 +519,7 @@ class SalesContractController extends Controller
         // Leave a small margin under post_max_size for other form fields.
         $limitBytes = max(1024 * 100, $limitBytes - (1024 * 100));
 
-        $desiredBytes = 10 * 1024 * 1024; // 10 MB app target
+        $desiredBytes = 20 * 1024 * 1024; // 20 MB app target
         $effectiveBytes = min($desiredBytes, $limitBytes);
 
         return max(1, (int) floor($effectiveBytes / 1024));
