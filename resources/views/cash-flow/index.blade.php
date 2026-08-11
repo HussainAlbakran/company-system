@@ -133,6 +133,7 @@
             <a href="{{ route('custody-settlements.records') }}" class="btn btn-secondary btn-sm">{{ __('cash_flow.btn_settlement_records') }}</a>
             <a href="{{ route('employee-advances.create') }}" class="btn btn-warning btn-sm">{{ __('cash_flow.btn_issue_advance') }}</a>
             <a href="{{ route('employee-advances.index') }}" class="btn btn-secondary btn-sm">{{ __('cash_flow.btn_advance_records') }}</a>
+            <a href="{{ route('cash-flow.contract-payments.create') }}" class="btn btn-secondary btn-sm">{{ __('cash_flow.btn_record_contract_payment') }}</a>
         </div>
 
         <div class="cf-kpi-grid">

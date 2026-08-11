@@ -10,6 +10,7 @@ use App\Http\Controllers\ArchitectTaskController;
 use App\Http\Controllers\AssetController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\CashFlowController;
+use App\Http\Controllers\CashFlowContractPaymentsController;
 use App\Http\Controllers\EmployeeAdvanceController;
 use App\Http\Controllers\FinancialCustodyController;
 use App\Http\Controllers\FinancialCustodyInvoiceController;
@@ -114,6 +115,14 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
             Route::get('/cash-flow/maintenance', [CashFlowController::class, 'maintenance'])->name('cash-flow.maintenance');
             Route::post('/cash-flow', [CashFlowController::class, 'store'])->name('cash-flow.store');
             Route::delete('/cash-flow/{entry}', [CashFlowController::class, 'destroy'])->name('cash-flow.destroy');
+
+            // تسجيل دفعات العقود من شاشة المدخول والصرف
+            Route::get('/cash-flow/contract-payments/create', [CashFlowContractPaymentsController::class, 'create'])
+                ->name('cash-flow.contract-payments.create');
+            Route::post('/cash-flow/contract-payments', [CashFlowContractPaymentsController::class, 'store'])
+                ->name('cash-flow.contract-payments.store');
+            Route::delete('/cash-flow/contract-payments/{payment}', [CashFlowContractPaymentsController::class, 'destroy'])
+                ->name('cash-flow.contract-payments.destroy');
 
             Route::get('/financial-custodies', [FinancialCustodyController::class, 'index'])->name('financial-custodies.index');
             Route::get('/financial-custodies/create', [FinancialCustodyController::class, 'create'])->name('financial-custodies.create');

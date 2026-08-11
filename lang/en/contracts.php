@@ -38,6 +38,8 @@ return [
     'payment_installments_2' => '2 installments',
     'payment_installments_3' => '3 installments',
     'payment_installments_4' => '4 installments',
+    'payment_installments_5' => '5 installments',
+    'payment_installments_6' => '6 installments',
     'payment_government' => 'Government payment',
     'payment_unknown' => 'Unknown',
     'payment_installments' => 'Installments',

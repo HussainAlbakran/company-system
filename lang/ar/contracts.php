@@ -38,6 +38,8 @@ return [
     'payment_installments_2' => 'قسطان',
     'payment_installments_3' => 'ثلاثة أقساط',
     'payment_installments_4' => 'أربعة أقساط',
+    'payment_installments_5' => 'خمسة أقساط',
+    'payment_installments_6' => 'ستة أقساط',
     'payment_government' => 'دفع حكومي',
     'payment_unknown' => 'غير محدد',
     'payment_installments' => 'دفعات',

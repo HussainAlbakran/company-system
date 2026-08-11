@@ -160,6 +160,18 @@ class CashFlowLedgerService
         );
     }
 
+    public function removeContractPayment(ContractPayment $payment): void
+    {
+        if (! $this->hasLedgerSourceColumns()) {
+            return;
+        }
+
+        CashFlowEntry::query()
+            ->where('source_type', CashFlowEntry::SOURCE_CONTRACT_PAYMENT)
+            ->where('source_id', $payment->id)
+            ->delete();
+    }
+
     public function syncPurchase(Purchase $purchase): ?CashFlowEntry
     {
         if (! $this->hasLedgerSourceColumns()) {

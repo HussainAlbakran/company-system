@@ -11,6 +11,8 @@
         <option value="installments_2" @selected(in_array($paymentType, ['installments_2', 'installments'], true))>{{ __('contracts.payment_installments_2') }}</option>
         <option value="installments_3" @selected($paymentType === 'installments_3')>{{ __('contracts.payment_installments_3') }}</option>
         <option value="installments_4" @selected($paymentType === 'installments_4')>{{ __('contracts.payment_installments_4') }}</option>
+        <option value="installments_5" @selected($paymentType === 'installments_5')>{{ __('contracts.payment_installments_5') }}</option>
+        <option value="installments_6" @selected($paymentType === 'installments_6')>{{ __('contracts.payment_installments_6') }}</option>
         <option value="government" @selected($paymentType === 'government')>{{ __('contracts.payment_government') }}</option>
     </select>
 </div>
@@ -72,7 +74,7 @@
         const hintText = document.getElementById('installment_plan_hint_text');
         const projectValue = parseFloat(document.getElementById('project_value')?.value) || 0;
 
-        const isInstallment = ['installments_2', 'installments_3', 'installments_4', 'installments'].includes(paymentType);
+        const isInstallment = ['installments_2', 'installments_3', 'installments_4', 'installments_5', 'installments_6', 'installments'].includes(paymentType);
         const isGovernment = paymentType === 'government';
         const isFull = paymentType === 'full';
 
@@ -85,6 +87,8 @@
             let count = 2;
             if (paymentType === 'installments_3') count = 3;
             if (paymentType === 'installments_4') count = 4;
+            if (paymentType === 'installments_5') count = 5;
+            if (paymentType === 'installments_6') count = 6;
             const share = count > 0 ? (projectValue / count).toFixed(2) : '0.00';
             hintText.textContent = contractPaymentI18n.installmentHint
                 .replace(':count', count)

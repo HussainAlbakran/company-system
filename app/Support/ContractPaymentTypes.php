@@ -12,6 +12,10 @@ class ContractPaymentTypes
 
     public const INSTALLMENTS_4 = 'installments_4';
 
+    public const INSTALLMENTS_5 = 'installments_5';
+
+    public const INSTALLMENTS_6 = 'installments_6';
+
     public const GOVERNMENT = 'government';
 
     /** @deprecated legacy value */
@@ -22,6 +26,8 @@ class ContractPaymentTypes
         self::INSTALLMENTS_2,
         self::INSTALLMENTS_3,
         self::INSTALLMENTS_4,
+        self::INSTALLMENTS_5,
+        self::INSTALLMENTS_6,
         self::GOVERNMENT,
     ];
 
@@ -32,6 +38,8 @@ class ContractPaymentTypes
             self::INSTALLMENTS_LEGACY, self::INSTALLMENTS_2 => 2,
             self::INSTALLMENTS_3 => 3,
             self::INSTALLMENTS_4 => 4,
+            self::INSTALLMENTS_5 => 5,
+            self::INSTALLMENTS_6 => 6,
             self::GOVERNMENT => null,
             default => null,
         };
@@ -44,6 +52,8 @@ class ContractPaymentTypes
             self::INSTALLMENTS_2,
             self::INSTALLMENTS_3,
             self::INSTALLMENTS_4,
+            self::INSTALLMENTS_5,
+            self::INSTALLMENTS_6,
         ], true);
     }
 
@@ -54,6 +64,8 @@ class ContractPaymentTypes
             self::INSTALLMENTS_LEGACY, self::INSTALLMENTS_2 => 'contracts.payment_installments_2',
             self::INSTALLMENTS_3 => 'contracts.payment_installments_3',
             self::INSTALLMENTS_4 => 'contracts.payment_installments_4',
+            self::INSTALLMENTS_5 => 'contracts.payment_installments_5',
+            self::INSTALLMENTS_6 => 'contracts.payment_installments_6',
             self::GOVERNMENT => 'contracts.payment_government',
             default => 'contracts.payment_unknown',
         };
