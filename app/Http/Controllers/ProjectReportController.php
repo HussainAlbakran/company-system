@@ -110,8 +110,9 @@ class ProjectReportController extends Controller
 
     /**
      * Mark project as completed and move it to the previous-projects archive.
+     * Requires a completion letter upload for a safe completion trail.
      */
-    public function complete(Project $project)
+    public function complete(Request $request, Project $project)
     {
         $this->authorizeBoard();
 
@@ -121,22 +122,69 @@ class ProjectReportController extends Controller
                 ->with('success', __('project_reports.flash_already_completed'));
         }
 
-        $project->update([
-            'current_stage' => 'completed',
-            'status' => 'completed',
-            'completed_at' => now(),
+        $maxKb = $this->maxUploadKilobytes();
+
+        $validated = $request->validate([
+            'completion_letter' => [
+                'required',
+                'file',
+                'max:'.$maxKb,
+                // Keep it strict: termination letters are usually PDF / Word.
+                'mimes:pdf,doc,docx,txt',
+            ],
+        ], [
+            'completion_letter.required' => __('project_reports.error_completion_letter_required'),
+            'completion_letter.file' => __('project_reports.error_completion_letter_type'),
+            'completion_letter.max' => __('project_reports.error_completion_letter_too_large', [
+                'max' => $this->formatMegabytes($maxKb),
+            ]),
+        ], [
+            'completion_letter' => __('project_reports.field_completion_letter'),
         ]);
 
-        AuditHelper::log(
-            'project_completed',
-            'Project',
-            $project->id,
-            'تم اكتمال المشروع وأرشفته ضمن المشاريع السابقة: '.$project->name
-        );
+        $letterFile = $validated['completion_letter'];
+        $storedPath = $this->storeCompletionLetterFile($project, $letterFile);
+
+        $this->completeProjectWithLetter($project, $storedPath);
 
         return redirect()
             ->route('project-reports.archive', ['year' => now()->year])
             ->with('success', __('project_reports.flash_completed'));
+    }
+
+    private function storeCompletionLetterFile(Project $project, $file): string
+    {
+        $directory = 'project_completion_letters/'.$project->id;
+        Storage::disk('local')->makeDirectory($directory);
+
+        $storedPath = $file->store($directory, 'local');
+
+        if (! is_string($storedPath) || $storedPath === '' || ! Storage::disk('local')->exists($storedPath)) {
+            throw new \RuntimeException(__('project_reports.error_store_failed'));
+        }
+
+        return $storedPath;
+    }
+
+    private function completeProjectWithLetter(Project $project, ?string $completionLetterPath): void
+    {
+        if ($project->isCompleted()) {
+            return;
+        }
+
+        $project->update([
+            'current_stage' => 'completed',
+            'status' => 'completed',
+            'completed_at' => now(),
+            'completion_letter_path' => $completionLetterPath,
+        ]);
+
+        AuditHelper::log(
+            'project_completed_with_letter',
+            'Project',
+            $project->id,
+            'تم اكتمال المشروع وأرشفته ضمن المشاريع السابقة: '.$project->name.' | خطاب الإنهاء: '.(string) $completionLetterPath
+        );
     }
 
     /**
@@ -209,7 +257,7 @@ class ProjectReportController extends Controller
                         });
                 }),
             ],
-            'report_type' => ['required', Rule::in(ProjectReport::TYPES)],
+            'report_type' => ['required', Rule::in(array_merge(ProjectReport::TYPES, ['completion_letter']))],
             'report_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'file' => [
@@ -242,6 +290,8 @@ class ProjectReportController extends Controller
                 ->withErrors(['project_id' => __('project_reports.error_project_completed')]);
         }
 
+        $isCompletionLetter = ($validated['report_type'] === 'completion_letter');
+
         $file = $request->file('file');
         $extension = strtolower((string) $file->getClientOriginalExtension());
 
@@ -255,52 +305,91 @@ class ProjectReportController extends Controller
                 ]);
         }
 
-        try {
-            $directory = 'project_reports/'.$project->id;
-            Storage::disk('local')->makeDirectory($directory);
-
-            $storedPath = $file->store($directory, 'local');
-
-            if (! is_string($storedPath) || $storedPath === '' || ! Storage::disk('local')->exists($storedPath)) {
+        if ($isCompletionLetter) {
+            $allowedCompletionExtensions = ['pdf', 'doc', 'docx', 'txt'];
+            if (! in_array($extension, $allowedCompletionExtensions, true)) {
                 return back()
                     ->withInput($request->except('file'))
-                    ->withErrors(['file' => __('project_reports.error_store_failed')]);
+                    ->withErrors([
+                        'file' => __('project_reports.error_completion_letter_type'),
+                    ]);
             }
+        }
 
-            $report = DB::transaction(function () use ($validated, $project, $file, $storedPath) {
-                $report = ProjectReport::query()->create([
-                    'project_id' => $project->id,
-                    'uploaded_by' => auth()->id(),
-                    'report_type' => $validated['report_type'],
-                    'report_date' => $validated['report_date'],
-                    'original_name' => $file->getClientOriginalName(),
-                    'stored_path' => $storedPath,
-                    'mime_type' => $file->getClientMimeType() ?: $file->getMimeType(),
-                    'file_size' => $file->getSize(),
-                    'notes' => $validated['notes'] ?? null,
-                ]);
+        try {
+            if ($isCompletionLetter) {
+                $storedPath = $this->storeCompletionLetterFile($project, $file);
+
+                // Mark project completed and archive it after storing the letter.
+                DB::transaction(function () use ($project, $storedPath) {
+                    $this->completeProjectWithLetter($project, $storedPath);
+                });
 
                 AuditHelper::log(
-                    'create',
-                    'ProjectReport',
-                    $report->id,
-                    sprintf(
-                        'route=project-reports.store | project_id=%s | report_type=%s | file=%s | uploaded_by=%s',
-                        $project->id,
-                        $report->report_type,
-                        $report->original_name,
-                        (string) auth()->id()
-                    )
+                    'project_completed_letter_uploaded',
+                    'Project',
+                    $project->id,
+                    'completion_letter stored and project archived'
                 );
+            } else {
+                $directory = 'project_reports/'.$project->id;
+                Storage::disk('local')->makeDirectory($directory);
 
-                return $report;
-            });
+                $storedPath = $file->store($directory, 'local');
+
+                if (! is_string($storedPath) || $storedPath === '' || ! Storage::disk('local')->exists($storedPath)) {
+                    return back()
+                        ->withInput($request->except('file'))
+                        ->withErrors(['file' => __('project_reports.error_store_failed')]);
+                }
+
+                $report = DB::transaction(function () use ($validated, $project, $file, $storedPath) {
+                    $report = ProjectReport::query()->create([
+                        'project_id' => $project->id,
+                        'uploaded_by' => auth()->id(),
+                        'report_type' => $validated['report_type'],
+                        'report_date' => $validated['report_date'],
+                        'original_name' => $file->getClientOriginalName(),
+                        'stored_path' => $storedPath,
+                        'mime_type' => $file->getClientMimeType() ?: $file->getMimeType(),
+                        'file_size' => $file->getSize(),
+                        'notes' => $validated['notes'] ?? null,
+                    ]);
+
+                    AuditHelper::log(
+                        'create',
+                        'ProjectReport',
+                        $report->id,
+                        sprintf(
+                            'route=project-reports.store | project_id=%s | report_type=%s | file=%s | uploaded_by=%s',
+                            $project->id,
+                            $report->report_type,
+                            $report->original_name,
+                            (string) auth()->id()
+                        )
+                    );
+
+                    return $report;
+                });
+            }
         } catch (\Throwable $e) {
             report($e);
 
             return back()
                 ->withInput($request->except('file'))
                 ->withErrors(['file' => __('project_reports.error_store_failed')]);
+        }
+
+        if ($isCompletionLetter) {
+            if (auth()->user()->canViewProjectReportsBoard()) {
+                return redirect()
+                    ->route('project-reports.show', $project)
+                    ->with('success', __('project_reports.flash_completed'));
+            }
+
+            return redirect()
+                ->route('project-reports.create')
+                ->with('success', __('project_reports.flash_completed'));
         }
 
         if (auth()->user()->canViewProjectReportsBoard()) {
@@ -312,6 +401,33 @@ class ProjectReportController extends Controller
         return redirect()
             ->route('project-reports.create')
             ->with('success', __('project_reports.flash_created'));
+    }
+
+    public function downloadCompletionLetter(Project $project)
+    {
+        $this->authorizeBoard();
+
+        abort_unless(
+            ! empty($project->completion_letter_path) && Storage::disk('local')->exists($project->completion_letter_path),
+            404,
+            __('project_reports.file_missing')
+        );
+
+        AuditHelper::log(
+            'read',
+            'Project',
+            $project->id,
+            sprintf(
+                'route=project-reports.completion-letter | project_id=%s | by=%s',
+                $project->id,
+                (string) auth()->id()
+            )
+        );
+
+        return Storage::disk('local')->download(
+            $project->completion_letter_path,
+            basename((string) $project->completion_letter_path)
+        );
     }
 
     /**

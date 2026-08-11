@@ -77,6 +77,12 @@
                                 {{ __('project_reports.types.'.$type) }}
                             </option>
                         @endforeach
+                        <option
+                            value="completion_letter"
+                            {{ old('report_type') === 'completion_letter' ? 'selected' : '' }}
+                        >
+                            {{ __('project_reports.types.completion_letter') }}
+                        </option>
                     </select>
                 </div>
 
@@ -95,6 +101,7 @@
                     <label for="notes">{{ __('project_reports.field_notes') }}</label>
                     <textarea name="notes" id="notes" rows="3">{{ old('notes') }}</textarea>
                 </div>
+
             </div>
 
             <div class="actions-row" style="margin-top:16px;">

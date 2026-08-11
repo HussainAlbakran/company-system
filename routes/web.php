@@ -371,6 +371,8 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
                 ->name('project-reports.material-attachment');
             Route::post('/project-reports/project/{project}/complete', [ProjectReportController::class, 'complete'])
                 ->name('project-reports.complete');
+            Route::get('/project-reports/project/{project}/completion-letter', [ProjectReportController::class, 'downloadCompletionLetter'])
+                ->name('project-reports.completion-letter');
             Route::delete('/project-reports/{projectReport}', [ProjectReportController::class, 'destroy'])
                 ->name('project-reports.destroy');
         });

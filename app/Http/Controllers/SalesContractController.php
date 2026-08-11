@@ -23,7 +23,11 @@ class SalesContractController extends Controller
     public function index()
     {
         $this->authorizeContractsModule();
+        // Hide contracts linked to completed/archived projects.
         $contracts = SalesContract::with(['project', 'creator', 'payments'])
+            ->whereHas('project', function ($query) {
+                $query->active();
+            })
             ->latest()
             ->paginate(10);
 

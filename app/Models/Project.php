@@ -26,6 +26,7 @@ class Project extends Model
         'status',
         'completed_at',
         'project_pdf',
+        'completion_letter_path',
         'current_stage',
         'notes',
         'required_concrete_quantity',

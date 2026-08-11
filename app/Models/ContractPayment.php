@@ -17,6 +17,11 @@ class ContractPayment extends Model
         'notes',
     ];
 
+    protected $casts = [
+        'payment_date' => 'date',
+        'amount' => 'decimal:2',
+    ];
+
     /**
      * العقد المرتبط
      */

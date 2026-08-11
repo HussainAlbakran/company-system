@@ -141,6 +141,10 @@
         {{-- جميع طلبات المشتريات --}}
         <div id="project-purchases" style="margin-top:22px;">
             <h3 style="margin:0 0 10px; font-size:18px; color:#000;">{{ __('project_reports.section_purchases') }}</h3>
+            <div style="margin:0 0 14px; font-size:14px; color:#111827;">
+                <strong>{{ __('project_reports.total_all_purchases') }}:</strong>
+                {{ number_format((float) ($purchases->sum('cost') + ($maintenanceItems->sum('cost') ?? 0)), 2) }}
+            </div>
 
             <h4 style="margin:0 0 8px; font-size:15px; color:#111827;">{{ __('project_reports.subsection_material_requests') }}</h4>
             <div class="table-wrap" style="margin-bottom:16px;">
@@ -318,9 +322,22 @@
             <div id="project-complete" style="margin-top:28px; padding-top:18px; border-top:1px solid #e5e7eb;">
                 <h3 style="margin:0 0 8px; font-size:18px; color:#000;">{{ __('project_reports.complete_title') }}</h3>
                 <p style="margin:0 0 12px; color:#4b5563;">{{ __('project_reports.complete_hint') }}</p>
-                <form action="{{ route('project-reports.complete', $project) }}" method="POST"
+                <form action="{{ route('project-reports.complete', $project) }}" method="POST" enctype="multipart/form-data"
                       onsubmit="return confirm(@json(__('project_reports.confirm_complete')))">
                     @csrf
+                    <div class="form-grid" style="margin-bottom:12px;">
+                        <div class="form-group" style="grid-column:1 / -1;">
+                            <label for="completion_letter">{{ __('project_reports.field_completion_letter') }}</label>
+                            <input
+                                type="file"
+                                name="completion_letter"
+                                id="completion_letter"
+                                required
+                                accept=".pdf,.doc,.docx,.txt"
+                            >
+                            <small class="text-muted d-block mt-1">{{ __('project_reports.field_completion_letter_hint') }}</small>
+                        </div>
+                    </div>
                     <button type="submit" class="btn btn-success">
                         {{ __('project_reports.complete_btn') }}
                     </button>
@@ -341,6 +358,35 @@
                     </a>
                 @endif
             </div>
+
+            @if(auth()->user()->canViewProjectReportsBoard() && ! empty($project->completion_letter_path))
+                <div style="margin-top:16px;">
+                    <h3 style="margin:0 0 10px; font-size:18px; color:#000;">{{ __('project_reports.section_completion_letter') }}</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>{{ __('project_reports.th_file') }}</th>
+                                    <th>{{ __('project_reports.th_actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="color:#000; font-weight:600; word-break:break-all;">
+                                        {{ basename($project->completion_letter_path) }}
+                                    </td>
+                                    <td>
+                                        <a href="{{ route('project-reports.completion-letter', $project) }}"
+                                           class="btn btn-secondary btn-sm">
+                                            {{ __('project_reports.print_completion_letter') }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         @endif
     </section>
 </div>
