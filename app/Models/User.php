@@ -157,7 +157,9 @@ class User extends Authenticatable implements FilamentUser
 
     public function canViewProjectValueOnly(): bool
     {
-        return $this->role === 'operations_manager';
+        // قيمة العقد فقط (بدون التفاصيل المالية الكاملة): العمليات + المبيعات.
+        return $this->role === 'operations_manager'
+            || $this->hasAnyRole(['sales_manager', 'sales']);
     }
 
     public function canAccessDesignsModule(): bool

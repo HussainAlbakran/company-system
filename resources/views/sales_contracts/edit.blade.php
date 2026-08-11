@@ -90,7 +90,10 @@
 
             <div class="form-group form-group-full">
                 <label>{{ __('contracts.field_new_contract_file') }}</label>
-                <input type="file" name="contract_file">
+                <input type="file" name="contract_file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                <small style="display:block; margin-top:6px; color:#4b5563;">
+                    {{ __('contracts.field_contract_file_hint', ['max' => $maxUploadMb ?? '2']) }}
+                </small>
             </div>
 
             @if($finFull)
@@ -102,6 +105,11 @@
                     'firstPaymentPercentage' => $contract->first_payment_percentage,
                     'firstPaymentAmount' => $contract->first_payment_amount,
                     'firstPaymentDueDate' => $contract->first_payment_due_date,
+                ])
+            @elseif($u->canViewProjectValueOnly())
+                @include('sales_contracts._payment-fields', [
+                    'finFull' => false,
+                    'selectedPaymentType' => $contract->payment_type,
                 ])
             @else
                 <input type="hidden" name="payment_type" value="{{ $contract->payment_type }}">

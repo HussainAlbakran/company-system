@@ -38,12 +38,27 @@ class SalesContractController extends Controller
     {
         $this->authorizeContractsModule();
 
-        return view('sales_contracts.create');
+        return view('sales_contracts.create', [
+            'maxUploadMb' => $this->formatMegabytes($this->maxContractUploadKilobytes()),
+        ]);
     }
 
     public function store(Request $request, StageNotificationService $stageNotificationService)
     {
         $this->authorizeContractsModule();
+
+        $maxKb = $this->maxContractUploadKilobytes();
+
+        if ($request->hasFile('contract_file') && ! $request->file('contract_file')->isValid()) {
+            return back()
+                ->withInput($request->except('contract_file'))
+                ->withErrors([
+                    'contract_file' => $this->contractUploadErrorMessage(
+                        (int) $request->file('contract_file')->getError(),
+                        $maxKb
+                    ),
+                ]);
+        }
 
         $request->validate([
             'contract_no' => 'required|string|max:255|unique:sales_contracts,contract_no',
@@ -59,7 +74,11 @@ class SalesContractController extends Controller
             'expected_end_date' => 'nullable|date|after_or_equal:expected_start_date',
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
-            'contract_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'contract_file' => [
+                'nullable',
+                'file',
+                'max:'.$maxKb,
+            ],
 
             'payment_type' => ['required', Rule::in(ContractPaymentTypes::ALL)],
             'full_payment_amount' => 'nullable|numeric|min:0',
@@ -67,7 +86,23 @@ class SalesContractController extends Controller
             'first_payment_percentage' => 'nullable|numeric|min:0|max:100',
             'first_payment_amount' => 'nullable|numeric|min:0',
             'first_payment_due_date' => 'nullable|date',
+        ], [
+            'contract_file.max' => __('contracts.error_contract_file_too_large', [
+                'max' => $this->formatMegabytes($maxKb),
+            ]),
+            'contract_file.uploaded' => __('contracts.error_contract_file_too_large', [
+                'max' => $this->formatMegabytes($maxKb),
+            ]),
         ]);
+
+        if ($request->hasFile('contract_file')) {
+            $extensionError = $this->contractFileExtensionError($request->file('contract_file'));
+            if ($extensionError !== null) {
+                return back()
+                    ->withInput($request->except('contract_file'))
+                    ->withErrors(['contract_file' => $extensionError]);
+            }
+        }
 
         $user = auth()->user();
         $canFullFin = $user->canViewProjectFinancials();
@@ -95,7 +130,22 @@ class SalesContractController extends Controller
         $contractFilePath = null;
 
         if ($request->hasFile('contract_file')) {
-            $contractFilePath = $request->file('contract_file')->store('contracts', 'public');
+            try {
+                Storage::disk('public')->makeDirectory('contracts');
+                $contractFilePath = $request->file('contract_file')->store('contracts', 'public');
+
+                if (! is_string($contractFilePath) || $contractFilePath === '' || ! Storage::disk('public')->exists($contractFilePath)) {
+                    return back()
+                        ->withInput($request->except('contract_file'))
+                        ->withErrors(['contract_file' => __('contracts.error_contract_file_store_failed')]);
+                }
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()
+                    ->withInput($request->except('contract_file'))
+                    ->withErrors(['contract_file' => __('contracts.error_contract_file_store_failed')]);
+            }
         }
 
         $startDate = $request->actual_start_date ?: $request->expected_start_date ?: now()->toDateString();
@@ -228,7 +278,10 @@ class SalesContractController extends Controller
 
         $contract = SalesContract::with(['project', 'payments'])->findOrFail($id);
 
-        return view('sales_contracts.edit', compact('contract'));
+        return view('sales_contracts.edit', [
+            'contract' => $contract,
+            'maxUploadMb' => $this->formatMegabytes($this->maxContractUploadKilobytes()),
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -236,6 +289,18 @@ class SalesContractController extends Controller
         $this->authorizeContractsModule();
 
         $contract = SalesContract::findOrFail($id);
+        $maxKb = $this->maxContractUploadKilobytes();
+
+        if ($request->hasFile('contract_file') && ! $request->file('contract_file')->isValid()) {
+            return back()
+                ->withInput($request->except('contract_file'))
+                ->withErrors([
+                    'contract_file' => $this->contractUploadErrorMessage(
+                        (int) $request->file('contract_file')->getError(),
+                        $maxKb
+                    ),
+                ]);
+        }
 
         $request->validate([
             'contract_no' => 'required|string|max:255|unique:sales_contracts,contract_no,' . $contract->id,
@@ -251,7 +316,11 @@ class SalesContractController extends Controller
             'expected_end_date' => 'nullable|date|after_or_equal:expected_start_date',
             'description' => 'nullable|string',
             'notes' => 'nullable|string',
-            'contract_file' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:10240',
+            'contract_file' => [
+                'nullable',
+                'file',
+                'max:'.$maxKb,
+            ],
 
             'payment_type' => ['required', Rule::in(ContractPaymentTypes::ALL)],
             'full_payment_amount' => 'nullable|numeric|min:0',
@@ -259,16 +328,50 @@ class SalesContractController extends Controller
             'first_payment_percentage' => 'nullable|numeric|min:0|max:100',
             'first_payment_amount' => 'nullable|numeric|min:0',
             'first_payment_due_date' => 'nullable|date',
+        ], [
+            'contract_file.max' => __('contracts.error_contract_file_too_large', [
+                'max' => $this->formatMegabytes($maxKb),
+            ]),
+            'contract_file.uploaded' => __('contracts.error_contract_file_too_large', [
+                'max' => $this->formatMegabytes($maxKb),
+            ]),
         ]);
+
+        if ($request->hasFile('contract_file')) {
+            $extensionError = $this->contractFileExtensionError($request->file('contract_file'));
+            if ($extensionError !== null) {
+                return back()
+                    ->withInput($request->except('contract_file'))
+                    ->withErrors(['contract_file' => $extensionError]);
+            }
+        }
 
         $contractFilePath = $contract->contract_file;
 
         if ($request->hasFile('contract_file')) {
-            if ($contract->contract_file && Storage::disk('public')->exists($contract->contract_file)) {
-                Storage::disk('public')->delete($contract->contract_file);
-            }
+            try {
+                Storage::disk('public')->makeDirectory('contracts');
 
-            $contractFilePath = $request->file('contract_file')->store('contracts', 'public');
+                if ($contract->contract_file && Storage::disk('public')->exists($contract->contract_file)) {
+                    Storage::disk('public')->delete($contract->contract_file);
+                }
+
+                $stored = $request->file('contract_file')->store('contracts', 'public');
+
+                if (! is_string($stored) || $stored === '' || ! Storage::disk('public')->exists($stored)) {
+                    return back()
+                        ->withInput($request->except('contract_file'))
+                        ->withErrors(['contract_file' => __('contracts.error_contract_file_store_failed')]);
+                }
+
+                $contractFilePath = $stored;
+            } catch (\Throwable $e) {
+                report($e);
+
+                return back()
+                    ->withInput($request->except('contract_file'))
+                    ->withErrors(['contract_file' => __('contracts.error_contract_file_store_failed')]);
+            }
         }
 
         $user = auth()->user();
@@ -303,6 +406,24 @@ class SalesContractController extends Controller
                 'first_payment_amount' => $isInstallment ? $request->first_payment_amount : null,
                 'first_payment_due_date' => $isInstallment ? $request->first_payment_due_date : null,
             ];
+        } elseif ($canValueOnly) {
+            // المبيعات: تحديث طريقة الدفع وعدد الأقساط بدون تفاصيل مالية كاملة.
+            $paymentType = $request->payment_type;
+            $paymentPayload['payment_type'] = $paymentType;
+            $paymentPayload['installment_count'] = ContractPaymentTypes::installmentCountFor($paymentType);
+
+            if ($paymentType === ContractPaymentTypes::FULL) {
+                $paymentPayload['first_payment_title'] = null;
+                $paymentPayload['first_payment_percentage'] = null;
+                $paymentPayload['first_payment_amount'] = null;
+                $paymentPayload['first_payment_due_date'] = null;
+            } elseif ($paymentType === ContractPaymentTypes::GOVERNMENT) {
+                $paymentPayload['full_payment_amount'] = null;
+                $paymentPayload['first_payment_title'] = null;
+                $paymentPayload['first_payment_percentage'] = null;
+                $paymentPayload['first_payment_amount'] = null;
+                $paymentPayload['first_payment_due_date'] = null;
+            }
         }
 
         $contract->update([
@@ -387,5 +508,71 @@ class SalesContractController extends Controller
         return redirect()
             ->route('sales-contracts.index')
             ->with('success', __('contracts.flash_deleted'));
+    }
+
+    private function maxContractUploadKilobytes(): int
+    {
+        $phpBytes = $this->phpSizeToBytes((string) ini_get('upload_max_filesize'));
+        $postBytes = $this->phpSizeToBytes((string) ini_get('post_max_size'));
+        $limitBytes = min($phpBytes, $postBytes);
+
+        // Leave a small margin under post_max_size for other form fields.
+        $limitBytes = max(1024 * 100, $limitBytes - (1024 * 100));
+
+        $desiredBytes = 10 * 1024 * 1024; // 10 MB app target
+        $effectiveBytes = min($desiredBytes, $limitBytes);
+
+        return max(1, (int) floor($effectiveBytes / 1024));
+    }
+
+    private function phpSizeToBytes(string $value): int
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return 2 * 1024 * 1024;
+        }
+
+        $unit = strtolower(substr($value, -1));
+        $number = (float) $value;
+
+        return (int) match ($unit) {
+            'g' => $number * 1024 * 1024 * 1024,
+            'm' => $number * 1024 * 1024,
+            'k' => $number * 1024,
+            default => (float) $value,
+        };
+    }
+
+    private function formatMegabytes(int $kilobytes): string
+    {
+        $mb = $kilobytes / 1024;
+
+        return rtrim(rtrim(number_format($mb, 1, '.', ''), '0'), '.');
+    }
+
+    private function contractUploadErrorMessage(int $errorCode, int $maxKb): string
+    {
+        return match ($errorCode) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => __('contracts.error_contract_file_too_large', [
+                'max' => $this->formatMegabytes($maxKb),
+            ]),
+            UPLOAD_ERR_PARTIAL => __('contracts.error_contract_file_partial'),
+            UPLOAD_ERR_NO_FILE => __('contracts.error_contract_file_required'),
+            default => __('contracts.error_contract_file_upload_failed'),
+        };
+    }
+
+    private function contractFileExtensionError($file): ?string
+    {
+        $allowed = ['pdf', 'jpg', 'jpeg', 'png'];
+        $extension = strtolower((string) $file->getClientOriginalExtension());
+
+        if ($extension === '' || ! in_array($extension, $allowed, true)) {
+            return __('contracts.error_contract_file_type', [
+                'types' => implode(', ', $allowed),
+            ]);
+        }
+
+        return null;
     }
 }

@@ -114,7 +114,10 @@
 
             <div class="col-md-12 mb-3" style="grid-column:1/-1;">
                 <label>{{ __('contracts.field_contract_file') }}</label>
-                <input type="file" name="contract_file" class="form-control">
+                <input type="file" name="contract_file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png">
+                <small style="display:block; margin-top:6px; color:#4b5563;">
+                    {{ __('contracts.field_contract_file_hint', ['max' => $maxUploadMb ?? '2']) }}
+                </small>
             </div>
         </div>
 
