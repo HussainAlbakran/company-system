@@ -10,6 +10,7 @@ use App\Models\Project;
 use App\Models\ProjectReport;
 use App\Models\ProjectUpdate;
 use App\Models\Purchase;
+use App\Models\SalesContract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -481,7 +482,7 @@ class ProjectReportController extends Controller
     {
         $this->authorizeBoard();
 
-        $project->load(['salesContract:id,project_id,contract_no,client_name,project_value']);
+        $project->load(['salesContract:id,project_id,contract_no,client_name,project_value,contract_file,updated_at,created_at']);
 
         $reports = ProjectReport::query()
             ->with('uploader:id,name,email')
@@ -505,6 +506,7 @@ class ProjectReportController extends Controller
             ->get();
 
         $designFiles = $this->collectDesignFiles($project);
+        $contractFile = $this->resolveContractFile($project);
 
         $purchases = Purchase::query()
             ->with(['creator:id,name', 'architectMaterialRequest:id,status'])
@@ -537,10 +539,91 @@ class ProjectReportController extends Controller
             'delayReports' => $reports->get(ProjectReport::TYPE_DELAY, collect()),
             'payments' => $payments,
             'designFiles' => $designFiles,
+            'contractFile' => $contractFile,
             'purchases' => $purchases,
             'maintenanceItems' => $maintenanceItems,
             'materialRequests' => $materialRequests,
         ]);
+    }
+
+    /**
+     * @return array{contract_no: string, name: string, date: \Illuminate\Support\Carbon|null}|null
+     */
+    private function resolveContractFile(Project $project): ?array
+    {
+        $contract = $this->findProjectSalesContract($project);
+        if (! $contract || empty($contract->contract_file)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($contract->contract_file)) {
+            return null;
+        }
+
+        return [
+            'contract_no' => (string) ($contract->contract_no ?: '-'),
+            'name' => basename((string) $contract->contract_file),
+            'date' => optional($contract->updated_at ?? $contract->created_at)->timezone(config('app.timezone')),
+        ];
+    }
+
+    private function findProjectSalesContract(Project $project): ?SalesContract
+    {
+        $project->loadMissing('salesContract');
+
+        if ($project->salesContract) {
+            return $project->salesContract;
+        }
+
+        return SalesContract::query()
+            ->where('project_id', $project->id)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public function downloadContractFile(Project $project)
+    {
+        abort_unless(
+            auth()->check() && auth()->user()->canOpenProjectContractFile(),
+            403,
+            __('project_reports.abort_board')
+        );
+
+        $contract = $this->findProjectSalesContract($project);
+
+        abort_unless(
+            $contract
+            && ! empty($contract->contract_file)
+            && Storage::disk('public')->exists($contract->contract_file),
+            404,
+            __('project_reports.file_missing')
+        );
+
+        AuditHelper::log(
+            'read',
+            'SalesContract',
+            $contract->id,
+            sprintf(
+                'route=project-reports.contract-file | project_id=%s | by=%s',
+                $project->id,
+                (string) auth()->id()
+            )
+        );
+
+        $path = $contract->contract_file;
+        $downloadName = basename((string) $path);
+        $absolutePath = Storage::disk('public')->path($path);
+        $extension = strtolower(pathinfo($downloadName, PATHINFO_EXTENSION));
+        $inlineExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        // Open in browser when possible; otherwise force download.
+        if (in_array($extension, $inlineExtensions, true) && is_file($absolutePath)) {
+            return response()->file($absolutePath, [
+                'Content-Disposition' => 'inline; filename="'.$downloadName.'"',
+            ]);
+        }
+
+        return Storage::disk('public')->download($path, $downloadName);
     }
 
     /**

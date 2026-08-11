@@ -5,7 +5,54 @@
     </div>
 
     <div class="nav-links">
-        @if(!auth()->user()->isBasicUser())
+        @php($navUser = auth()->user())
+
+        {{-- الإدارة العليا: قائمة مخصّصة فقط --}}
+        @if($navUser->isSuperAdmin())
+            <div class="nav-section-label">{{ __('navigation.control_center') }}</div>
+            <a href="{{ route('dashboard') }}"
+               class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.dashboard') }}</span>
+            </a>
+
+            <a href="{{ route('project-reports.board') }}"
+               class="nav-link {{ request()->routeIs('project-reports.board') || request()->routeIs('project-reports.show') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.project_reports') }}</span>
+            </a>
+
+            <a href="{{ route('project-reports.archive') }}"
+               class="nav-link {{ request()->routeIs('project-reports.archive') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.project_reports_archive') }}</span>
+            </a>
+
+            <a href="{{ route('project-reports.create') }}"
+               class="nav-link {{ request()->routeIs('project-reports.create') || request()->routeIs('project-reports.store') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.project_reports_register') }}</span>
+            </a>
+
+            <a href="{{ route('leaves.index') }}"
+               class="nav-link {{ request()->routeIs('leaves.index') || request()->routeIs('leaves.approve') || request()->routeIs('leaves.reject') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.leave_management') }}</span>
+            </a>
+
+            <a href="{{ route('administration.index') }}"
+               class="nav-link {{ request()->routeIs('administration.*') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.administration') }}</span>
+            </a>
+
+            <a href="{{ route('profile.show') }}"
+               class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                <span class="nav-link-icon"></span>
+                <span>{{ __('navigation.profile') }}</span>
+            </a>
+
+        @elseif(! $navUser->isBasicUser())
         <div class="nav-section-label">{{ __('navigation.control_center') }}</div>
         <a href="{{ route('dashboard') }}"
            class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
@@ -13,7 +60,7 @@
             <span>{{ __('navigation.dashboard') }}</span>
         </a>
 
-        @if(auth()->user()->canAccessContractsModule())
+        @if($navUser->canAccessContractsModule())
             <a href="{{ route('sales-contracts.index') }}"
                class="nav-link {{ request()->routeIs('sales-contracts.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -21,7 +68,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessEngineeringModule())
+        @if($navUser->canAccessEngineeringModule())
             <a href="{{ route('architect.index') }}"
                class="nav-link {{ request()->routeIs('architect.index') || request()->routeIs('architect.project-material-requirements') || request()->routeIs('architect.material-requests.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -35,7 +82,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canViewProjectReportsBoard())
+        @if($navUser->canViewProjectReportsBoard())
             <a href="{{ route('project-reports.board') }}"
                class="nav-link {{ request()->routeIs('project-reports.board') || request()->routeIs('project-reports.show') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -49,7 +96,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canSubmitProjectReports())
+        @if($navUser->canSubmitProjectReports())
             <a href="{{ route('project-reports.create') }}"
                class="nav-link {{ request()->routeIs('project-reports.create') || request()->routeIs('project-reports.store') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -57,7 +104,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageProduction())
+        @if($navUser->canManageProduction())
             <a href="{{ route('factory.index') }}"
                class="nav-link {{ request()->routeIs('factory.*') || request()->routeIs('factory.installation-requests.*') || request()->routeIs('production-orders.*') || request()->routeIs('production-entries.*') || request()->routeIs('production-supplies.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -68,7 +115,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageInstallations())
+        @if($navUser->canManageInstallations())
             <a href="{{ route('installations.index') }}"
                class="nav-link {{ request()->routeIs('installations.*') || request()->routeIs('installations.factory-requests.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -76,7 +123,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessGeneralPurchasesModule())
+        @if($navUser->canAccessGeneralPurchasesModule())
             <a href="{{ route('general-purchases.index') }}"
                class="nav-link {{ request()->routeIs('general-purchases.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -84,7 +131,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessContractPurchasesModule())
+        @if($navUser->canAccessContractPurchasesModule())
             <a href="{{ route('purchases.index') }}"
                class="nav-link {{ request()->routeIs('purchases.*') && !request()->routeIs('general-purchases.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -92,7 +139,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessProcurementModule())
+        @if($navUser->canAccessProcurementModule())
             <a href="{{ route('warehouse.index') }}"
                class="nav-link {{ request()->routeIs('warehouse.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -100,7 +147,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageAssets())
+        @if($navUser->canManageAssets())
             <a href="{{ route('assets.index') }}"
                class="nav-link {{ request()->routeIs('assets.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -108,7 +155,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageEmployees())
+        @if($navUser->canManageEmployees())
             <a href="{{ route('employees.index') }}"
                class="nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -116,7 +163,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageDepartments())
+        @if($navUser->canManageDepartments())
             <a href="{{ route('departments.index') }}"
                class="nav-link {{ request()->routeIs('departments.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -124,7 +171,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageLeaveApprovals())
+        @if($navUser->canManageLeaveApprovals())
             <a href="{{ route('leaves.index') }}"
                class="nav-link {{ request()->routeIs('leaves.index') || request()->routeIs('leaves.approve') || request()->routeIs('leaves.reject') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -132,7 +179,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessLeaveRequestNavigation())
+        @if($navUser->canAccessLeaveRequestNavigation())
         <a href="{{ route('leaves.create') }}"
            class="nav-link {{ request()->routeIs('leaves.create') || request()->routeIs('leaves.store') ? 'active' : '' }}">
             <span class="nav-link-icon"></span>
@@ -140,16 +187,15 @@
         </a>
         @endif
 
-        @if(auth()->user()->isAdminLike())
+        @if($navUser->isAdminLike())
             <a href="{{ route('administration.index') }}"
                class="nav-link {{ request()->routeIs('administration.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
                 <span>{{ __('navigation.administration') }}</span>
             </a>
-
         @endif
 
-        @if(auth()->user()->canAccessCashFlowModule())
+        @if($navUser->canAccessCashFlowModule())
             <a href="{{ route('cash-flow.index') }}"
                class="nav-link {{ request()->routeIs('cash-flow.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -163,7 +209,6 @@
         @endif
 
         @php
-            $navUser = auth()->user();
             $hasOpenCustody = $navUser?->employee
                 && \App\Models\FinancialCustody::hasOpenForEmployee($navUser->employee->id);
         @endphp
@@ -175,7 +220,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canManageUsers())
+        @if($navUser->canManageUsers())
             <a href="{{ route('users.index') }}"
                class="nav-link {{ request()->routeIs('users.*') && !request()->routeIs('users.approvals') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -195,7 +240,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canViewAuditLogs())
+        @if($navUser->canViewAuditLogs())
             <a href="{{ route('audit.index') }}"
                class="nav-link {{ request()->routeIs('audit.*') ? 'active' : '' }}">
                 <span class="nav-link-icon"></span>
@@ -203,7 +248,7 @@
             </a>
         @endif
 
-        @if(auth()->user()->canAccessAiAssistantNavigation())
+        @if($navUser->canAccessAiAssistantNavigation())
         <a href="{{ route('ai.page') }}"
            class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
             <span class="nav-link-icon"></span>
@@ -224,7 +269,7 @@
         </a>
         @endif
 
-        @if(auth()->user()->isBasicUser())
+        @if($navUser->isBasicUser())
             <div class="nav-section-label">{{ __('navigation.services') }}</div>
             <a href="{{ route('leaves.create') }}"
                class="nav-link {{ request()->routeIs('leaves.create') || request()->routeIs('leaves.store') ? 'active' : '' }}">

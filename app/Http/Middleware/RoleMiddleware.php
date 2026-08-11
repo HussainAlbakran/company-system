@@ -16,7 +16,8 @@ class RoleMiddleware
             abort(403, __('common.unauthorized'));
         }
 
-        if (method_exists($user, 'isAdminLike') && $user->isAdminLike()) {
+        // مدير النظام فقط يتجاوز قيود الأدوار؛ الإدارة العليا تبقى على المسارات المصرّح لها صراحةً.
+        if (method_exists($user, 'isSystemAdmin') && $user->isSystemAdmin()) {
             return $next($request);
         }
 

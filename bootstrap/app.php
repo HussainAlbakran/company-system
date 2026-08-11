@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAdminFinanceAccess;
 use App\Http\Middleware\EnsureHrModuleAccess;
 use App\Http\Middleware\RestrictFinanceUserAccess;
+use App\Http\Middleware\RestrictSuperAdminAccess;
 use App\Http\Middleware\EnsureUserIsApproved;
 use App\Http\Middleware\RestrictBasicUserAccess;
 use App\Http\Middleware\AuditRequestActivity;
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.finance' => EnsureAdminFinanceAccess::class,
             'basic_user_restricted' => RestrictBasicUserAccess::class,
             'finance.restricted' => RestrictFinanceUserAccess::class,
+            'super_admin.restricted' => RestrictSuperAdminAccess::class,
             'set_locale' => SetLocale::class,
         ]);
 

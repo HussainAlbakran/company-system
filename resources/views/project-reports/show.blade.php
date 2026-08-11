@@ -62,6 +62,9 @@
             <a href="#project-designs" class="btn btn-success btn-sm">
                 {{ __('project_reports.btn_designs') }}
             </a>
+            <a href="#project-contract-file" class="btn btn-secondary btn-sm">
+                {{ __('project_reports.btn_contract_file') }}
+            </a>
         </div>
 
         @if(session('success'))
@@ -133,6 +136,46 @@
                                 <td colspan="5" class="empty-row">{{ __('project_reports.empty_designs') }}</td>
                             </tr>
                         @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- ملف العقد --}}
+        <div id="project-contract-file" style="margin-top:22px;">
+            <h3 style="margin:0 0 10px; font-size:18px; color:#000;">{{ __('project_reports.section_contract_file') }}</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{{ __('project_reports.th_number') }}</th>
+                            <th>{{ __('contracts.th_contract_no') }}</th>
+                            <th>{{ __('project_reports.th_file') }}</th>
+                            <th>{{ __('project_reports.th_date') }}</th>
+                            <th>{{ __('project_reports.th_actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(! empty($contractFile))
+                            <tr>
+                                <td style="color:#000; font-weight:700;">1</td>
+                                <td style="color:#000; font-weight:600;">{{ $contractFile['contract_no'] }}</td>
+                                <td style="color:#000; word-break:break-all;">{{ $contractFile['name'] }}</td>
+                                <td style="color:#000;">{{ optional($contractFile['date'])->format('Y-m-d H:i') ?? '-' }}</td>
+                                <td>
+                                    <a href="{{ route('project-reports.contract-file', $project) }}"
+                                       target="_blank"
+                                       rel="noopener"
+                                       class="btn btn-success btn-sm">
+                                        {{ __('project_reports.open_file') }}
+                                    </a>
+                                </td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td colspan="5" class="empty-row">{{ __('project_reports.empty_contract_file') }}</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>

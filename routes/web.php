@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicHomeController::class, 'index'])->name('home');
 Route::get('/locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
 
-Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restricted'])->group(function () {
+Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restricted', 'super_admin.restricted'])->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -382,6 +382,8 @@ Route::middleware(['auth', 'approved', 'basic_user_restricted', 'finance.restric
                 ->name('project-reports.complete');
             Route::get('/project-reports/project/{project}/completion-letter', [ProjectReportController::class, 'downloadCompletionLetter'])
                 ->name('project-reports.completion-letter');
+            Route::get('/project-reports/project/{project}/contract-file', [ProjectReportController::class, 'downloadContractFile'])
+                ->name('project-reports.contract-file');
             Route::delete('/project-reports/{projectReport}', [ProjectReportController::class, 'destroy'])
                 ->name('project-reports.destroy');
         });

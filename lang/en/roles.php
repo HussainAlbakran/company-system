@@ -20,4 +20,5 @@ return [
     'abort_unauthorized' => 'You are not authorized to access this resource.',
     'hr_module_only' => 'This page is available to system administrators, executive administration, and HR only.',
     'basic_user_denied' => 'This section is not available.',
+    'super_admin_route_denied' => 'This section is not available for upper management.',
 ];

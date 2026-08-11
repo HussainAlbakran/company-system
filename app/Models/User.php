@@ -120,6 +120,12 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasAnyRole([self::ROLE_SUPER_ADMIN, self::ROLE_ADMIN]);
     }
 
+    /** مدير النظام فقط (بدون الإدارة العليا) */
+    public function isSystemAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
     public function isHR(): bool
     {
         return $this->role === 'hr' || $this->role === 'hr_manager';
@@ -152,6 +158,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canViewProjectFinancials(): bool
     {
+        // الإدارة العليا ترى القيم في تقارير المشاريع؛ التفاصيل المالية التشغيلية لمدير النظام.
         return $this->isAdminLike();
     }
 
@@ -165,7 +172,6 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessDesignsModule(): bool
     {
         return in_array($this->role, [
-            'super_admin',
             'admin',
             'engineering_manager',
             'engineer',
@@ -221,12 +227,12 @@ class User extends Authenticatable implements FilamentUser
 
     public function canManageUsers(): bool
     {
-        return $this->isAdminLike();
+        return $this->isSystemAdmin();
     }
 
     public function canAccessContractsModule(): bool
     {
-        return $this->isAdminLike()
+        return $this->isSystemAdmin()
             || $this->hasAnyRole(['sales_manager', 'sales'])
             || $this->hasAnyRole(['manager']); // legacy compatibility
     }
@@ -234,7 +240,7 @@ class User extends Authenticatable implements FilamentUser
     /** مشتريات العقود وطلبات المواد المرتبطة (بدون المستودع) */
     public function canAccessContractPurchasesModule(): bool
     {
-        return $this->isAdminLike()
+        return $this->isSystemAdmin()
             || $this->isFinance()
             || $this->hasAnyRole(['procurement_manager', 'procurement'])
             || $this->hasAnyRole(['manager']); // legacy compatibility
@@ -243,7 +249,7 @@ class User extends Authenticatable implements FilamentUser
     /** المشتريات العامة فقط (بدون مشتريات العقود أو المستودع) */
     public function canAccessGeneralPurchasesModule(): bool
     {
-        return $this->isAdminLike()
+        return $this->isSystemAdmin()
             || $this->isFinance()
             || $this->hasAnyRole(['procurement_manager', 'procurement'])
             || $this->hasAnyRole(['manager']); // legacy compatibility
@@ -251,7 +257,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessEngineeringModule(): bool
     {
-        return $this->isAdminLike()
+        return $this->isSystemAdmin()
             || $this->hasAnyRole(['engineering_manager', 'engineer', 'operations_manager'])
             || $this->hasAnyRole(['engineer']); // legacy compatibility
     }
@@ -278,9 +284,12 @@ class User extends Authenticatable implements FilamentUser
         ]);
     }
 
-    public function canAccessProjectReportsModule(): bool
+    /**
+     * فتح ملف عقد المشروع من تقارير المشاريع (الإدارة العليا + مدير النظام).
+     */
+    public function canOpenProjectContractFile(): bool
     {
-        return $this->canViewProjectReportsBoard() || $this->canSubmitProjectReports();
+        return $this->canViewProjectReportsBoard();
     }
 
     public function canAccessProcurementModule(): bool
@@ -289,7 +298,7 @@ class User extends Authenticatable implements FilamentUser
             return false;
         }
 
-        return $this->isAdminLike()
+        return $this->isSystemAdmin()
             || $this->hasAnyRole(['procurement_manager', 'procurement'])
             || $this->hasAnyRole(['manager']); // legacy compatibility
     }
@@ -301,24 +310,28 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessOperationsModule(): bool
     {
-        return $this->isAdminLike()
+        return $this->isSystemAdmin()
             || $this->role === 'operations_manager'
             || $this->hasAnyRole(['factory_manager', 'manager']); // legacy compatibility
     }
 
     public function canManageEmployees(): bool
     {
-        return $this->canAccessHRModule();
+        return $this->hasAnyRole([
+            self::ROLE_ADMIN,
+            'hr_manager',
+            'hr',
+        ]);
     }
 
     public function canManageDepartments(): bool
     {
-        return $this->canAccessHRModule();
+        return $this->canManageEmployees();
     }
 
     public function canManageAssets(): bool
     {
-        return $this->canAccessHRModule();
+        return $this->canManageEmployees();
     }
 
     public function canManageLeaveApprovals(): bool
@@ -328,6 +341,11 @@ class User extends Authenticatable implements FilamentUser
 
     public function canCreateLeaveRequest(): bool
     {
+        // الإدارة العليا تعتمد إدارة الإجازات فقط، بدون تقديم طلب إجازة شخصي.
+        if ($this->isSuperAdmin()) {
+            return false;
+        }
+
         return $this->isApprovedAndActive();
     }
 
@@ -348,18 +366,22 @@ class User extends Authenticatable implements FilamentUser
 
     public function canViewAuditLogs(): bool
     {
-        return $this->isAdminLike();
+        return $this->isSystemAdmin();
     }
 
-    /** المدخول والصرف — مدير النظام والإدارة والمالية */
+    /** المدخول والصرف — مدير النظام والمالية */
     public function canAccessCashFlowModule(): bool
     {
-        return $this->isAdminLike() || $this->isFinance();
+        return $this->isSystemAdmin() || $this->isFinance();
     }
 
     public function aiAllowedModules(): array
     {
-        if ($this->isAdminLike()) {
+        if ($this->isSuperAdmin()) {
+            return [];
+        }
+
+        if ($this->isSystemAdmin()) {
             return ['employees', 'departments', 'assets', 'leaves', 'contracts', 'engineering', 'projects', 'factory', 'installation', 'purchases', 'warehouse', 'cash_flow'];
         }
 
