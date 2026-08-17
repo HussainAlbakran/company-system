@@ -20,3 +20,7 @@ Schedule::command('alerts:send-passport-now')
 Schedule::command('alerts:weekly-project-reports')
     ->weeklyOn(4, '12:00')
     ->withoutOverlapping();
+
+Schedule::command('audit:prune-old-logs')
+    ->dailyAt('02:15')
+    ->withoutOverlapping();

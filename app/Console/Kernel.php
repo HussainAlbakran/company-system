@@ -45,6 +45,10 @@ class Kernel extends ConsoleKernel
                 ->where('hidden_until', '<=', now())
                 ->delete();
         })->hourly();
+
+        $schedule->command('audit:prune-old-logs')
+            ->dailyAt('02:15')
+            ->withoutOverlapping();
     }
 
     protected function commands(): void

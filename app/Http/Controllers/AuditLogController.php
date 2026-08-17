@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Services\AuditLogPruneService;
 use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
@@ -15,9 +16,15 @@ class AuditLogController extends Controller
         }
     }
 
-    public function index(Request $request)
+    public function index(Request $request, AuditLogPruneService $pruneService)
     {
         $this->authorizeAdmin();
+
+        try {
+            $pruneService->prune(AuditLogPruneService::CHUNK_SIZE, 40);
+        } catch (\Throwable $e) {
+            // Never block the audit page if cleanup fails.
+        }
 
         $logsQuery = AuditLog::with('user')->latest();
 

@@ -26,6 +26,9 @@
             <p style="margin:8px 0 0; color:#6b7280;">
                 {{ __('audit.page_subtitle') }}
             </p>
+            <p style="margin:6px 0 0; color:#6b7280; font-size:13px;">
+                {{ __('audit.retention_notice') }}
+            </p>
         </div>
 
         <a href="{{ route('dashboard') }}" class="btn btn-secondary">

@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Helpers\AuditHelper;
+use App\Services\AuditLogPruneService;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuditRequestActivity
@@ -33,6 +35,12 @@ class AuditRequestActivity
 
     public function handle(Request $request, Closure $next): Response
     {
+        if (! Cache::has('audit_logs:prune:due')) {
+            dispatch(function (): void {
+                app(AuditLogPruneService::class)->pruneIfDue();
+            })->afterResponse();
+        }
+
         $response = $next($request);
 
         $user = $request->user();

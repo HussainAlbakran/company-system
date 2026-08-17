@@ -4,6 +4,7 @@ return [
     'abort_unauthorized' => 'You are not authorized to access the audit log.',
     'page_title' => 'Activity audit log',
     'page_subtitle' => 'View all system activity: create, update, delete, view, approve, and reject.',
+    'retention_notice' => 'Audit log rows are deleted automatically after 30 days.',
     'back_to_dashboard' => 'Back to dashboard',
     'filter_title' => 'Filter log',
     'filter_user' => 'User',
